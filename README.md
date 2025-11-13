@@ -55,6 +55,11 @@ project-root/
 │   │   │   ├─ drawings/
 │   │   │   ├─ recipes/
 │   │   │   └─ agenda/
+│   │   ├─ assets/
+│   │   │   ├─ fonts/
+│   │   │   ├─ icons/
+│   │   │   ├─ images/
+│   │   │   └─ videos/
 │   │   ├─ components/
 │   │   ├─ pages/
 │   │   ├─ hooks/
