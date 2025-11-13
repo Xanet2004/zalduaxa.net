@@ -50,11 +50,6 @@ project-root/
 │   └─ ...
 ├─ frontend/                  # React + TypeScript + Vite
 │   ├─ src/
-│   │   ├─ portfolio/
-│   │   │   ├─ projects/
-│   │   │   ├─ drawings/
-│   │   │   ├─ recipes/
-│   │   │   └─ agenda/
 │   │   ├─ assets/
 │   │   │   ├─ fonts/
 │   │   │   ├─ icons/
@@ -62,6 +57,11 @@ project-root/
 │   │   │   └─ videos/
 │   │   ├─ components/
 │   │   ├─ pages/
+│   │   │   ├─ Home/            # Portfolio + presentation
+│   │   │   ├─ projects/        # Dinamically add projects / drawings / recipes pages using id or maybe names
+│   │   │   ├─ drawings/        # Dinamically generating pages. (Reads the information and builds the page using a template if that page doesnt exist)
+│   │   │   ├─ recipes/
+│   │   │   └─ agenda/
 │   │   ├─ hooks/
 │   │   ├─ services/
 │   │   └─ utils/
@@ -75,8 +75,10 @@ project-root/
 │   │   │   └─ <project-id>/
 │   │   └─ code/
 │   │       └─ <project-id>/
-│   └─ drawings/
-│       └─ <drawing-id>/
+│   ├─ drawings/
+│   │   └─ <drawing-id>/
+│   └─ recipes/
+│       └─ <recipes-id>/    # Dinamically generate recipe pages
 ├─ database/
 │   └─ mysql/
 ├─ .gitignore
