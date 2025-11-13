@@ -36,3 +36,90 @@ git commit -m "feat(frontend): add responsive navbar"
 git commit -m "fix(backend): correct user authentication error"
 git commit -m "docs: update README with project structure"
 git commit -m "style: fix indentation in main.css"
+```
+
+## Project structure
+### Local development
+```
+project-root/
+├─ .git/
+├─ backend/                  # Java Spring Boot
+│   ├─ src/
+│   ├─ resources/
+│   ├─ application.yml
+│   └─ ...
+├─ frontend/                  # React + TypeScript + Vite
+│   ├─ src/
+│   │   ├─ portfolio/
+│   │   │   ├─ projects/
+│   │   │   ├─ drawings/
+│   │   │   ├─ recipes/
+│   │   │   └─ agenda/
+│   │   ├─ components/
+│   │   ├─ pages/
+│   │   ├─ hooks/
+│   │   ├─ services/
+│   │   └─ utils/
+│   ├─ vite.config.ts
+│   └─ package.json
+├─ storage/                   # Projects, drawings, etc. (local)
+│   ├─ projects/
+│   │   ├─ minecraft-mods/
+│   │   │   └─ <project-id>/
+│   │   ├─ games/
+│   │   │   └─ <project-id>/
+│   │   └─ code/
+│   │       └─ <project-id>/
+│   └─ drawings/
+│       └─ <drawing-id>/
+├─ database/
+│   └─ mysql/
+├─ .gitignore
+├─ backend.zip
+├─ package-lock.json
+└─ README.md
+```
+
+### Production
+
+```
+project-root/
+├─ backend/                  # Java Spring Boot
+│   ├─ src/
+│   ├─ resources/
+│   ├─ application.yml
+│   └─ ...
+├─ frontend/                  # React + TypeScript + Vite
+│   ├─ src/
+│   │   ├─ portfolio/
+│   │   │   ├─ projects/
+│   │   │   ├─ drawings/
+│   │   │   ├─ recipes/
+│   │   │   └─ agenda/
+│   │   ├─ components/
+│   │   ├─ pages/
+│   │   ├─ hooks/
+│   │   ├─ services/
+│   │   └─ utils/
+│   ├─ vite.config.ts
+│   └─ package.json
+├─ storage/ (host volume)     # Mounted only in backend container
+│   ├─ projects/
+│   │   ├─ minecraft-mods/
+│   │   │   └─ <project-id>/
+│   │   ├─ games/
+│   │   │   └─ <project-id>/
+│   │   └─ code/
+│   │       └─ <project-id>/
+│   └─ drawings/
+│       └─ <drawing-id>/
+├─ database/
+│   └─ mysql/                 # Mounted in db container
+├─ docker/
+│   ├─ Dockerfile.backend
+│   ├─ Dockerfile.frontend
+│   ├─ docker-compose.yml
+│   └─ scripts/
+├─ .gitignore
+├─ README.md
+```
