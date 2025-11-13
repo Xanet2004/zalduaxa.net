@@ -1,0 +1,75 @@
+/* global.css */
+@import './tokens.css'; /* tokens-extended.css si quieres la versión completa */
+
+/* -------------------- Base resets -------------------- */
+body {
+    background-color: var(--bg-default);
+    color: var(--text-primary);
+    font-family: var(--font-family-sans);
+    font-size: var(--font-size-md);
+    line-height: var(--line-height-md);
+    margin: 0;
+    padding: 0;
+}
+
+a {
+    color: var(--primary);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+}
+
+a:hover {
+    color: var(--primary-hover);
+}
+
+button {
+    font-family: inherit;
+    font-size: inherit;
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-md);
+    border: none;
+    cursor: pointer;
+    transition: background-color var(--transition-fast), color var(--transition-fast);
+    background-color: var(--primary);
+    color: var(--text-on-primary);
+}
+
+button:hover {
+    background-color: var(--primary-hover);
+}
+
+/* Opcional: botón secundario */
+button.secondary {
+    background-color: var(--secondary);
+    color: var(--text-on-secondary);
+}
+
+button.secondary:hover {
+    background-color: var(--secondary-hover);
+}
+
+/* Cards */
+.card {
+    background-color: var(--bg-surface);
+    border-radius: var(--radius-lg);
+    padding: var(--space-md);
+    box-shadow: var(--shadow-md);
+    border: var(--border-width-thin) solid var(--border-default);
+}
+
+/* Links de estado */
+.text-error {
+    color: var(--error);
+}
+
+.text-success {
+    color: var(--success);
+}
+
+.text-warning {
+    color: var(--warning);
+}
+
+.text-info {
+    color: var(--info);
+}

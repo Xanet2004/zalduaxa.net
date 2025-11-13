@@ -1,0 +1,139 @@
+/* -----------------------------------------------
+   Extended Design Tokens
+   Base → Derivados
+--------------------------------------------------*/
+
+:root{
+    /* -------------------- Colors Base -------------------- */
+    /* Reds */
+    --red-5: #ff1111;
+    --red-25: #ff3333;
+    --red-50: #ff5555;
+    --red-75: #ff7777;
+    --red-100: #ff9999;
+
+    /* Greens */
+    --green-5: #00c853;
+    --green-25: #33d97a;
+    --green-50: #66e4a2;
+    --green-75: #99efc9;
+    --green-100: #ccf9f0;
+
+    /* Blues */
+    --blue-5: #2979ff;
+    --blue-25: #5390ff;
+    --blue-50: #7fb0ff;
+    --blue-75: #a6cfff;
+    --blue-100: #cceeff;
+
+    /* Yellows / Warnings */
+    --yellow-5: #ffd600;
+    --yellow-25: #ffe033;
+    --yellow-50: #ffe966;
+    --yellow-75: #fff299;
+    --yellow-100: #fff9cc;
+
+    /* Purples / Accents */
+    --purple-5: #9c27b0;
+    --purple-25: #ad4dc0;
+    --purple-50: #bf72cf;
+    --purple-75: #d394e0;
+    --purple-100: #e5b8f0;
+
+    /* Neutrals / Grayscale */
+    --neutral-5: #111111;
+    --neutral-25: #333333;
+    --neutral-50: #555555;
+    --neutral-75: #777777;
+    --neutral-100: #999999;
+    --neutral-200: #bbbbbb;
+    --neutral-300: #dddddd;
+    --neutral-400: #f2f2f2;
+    --neutral-500: #ffffff;
+
+    /* -------------------- Semantic Colors -------------------- */
+    --primary: var(--blue-5);
+    --primary-hover: var(--blue-25);
+    --primary-active: var(--blue-50);
+    --secondary: var(--purple-5);
+    --secondary-hover: var(--purple-25);
+    --secondary-active: var(--purple-50);
+    --accent: var(--green-5);
+    --accent-hover: var(--green-25);
+    --accent-active: var(--green-50);
+
+    /* Feedback */
+    --error: var(--red-5);
+    --error-hover: var(--red-25);
+    --error-active: var(--red-50);
+
+    --success: var(--green-5);
+    --success-hover: var(--green-25);
+    --success-active: var(--green-50);
+
+    --warning: var(--yellow-5);
+    --warning-hover: var(--yellow-25);
+    --warning-active: var(--yellow-50);
+
+    --info: var(--blue-25);
+    --info-hover: var(--blue-50);
+    --info-active: var(--blue-75);
+
+    /* Text Colors */
+    --text-primary: var(--neutral-200);
+    --text-secondary: var(--neutral-100);
+    --text-muted: var(--neutral-50);
+    --text-on-primary: var(--neutral-500);
+    --text-on-secondary: var(--neutral-500);
+
+    /* Background Colors */
+    --bg-default: var(--neutral-500);
+    --bg-surface: var(--neutral-400);
+    --bg-muted: var(--neutral-300);
+    --bg-hover: var(--neutral-200);
+    --bg-active: var(--neutral-100);
+
+    /* Border Colors */
+    --border-default: var(--neutral-50);
+    --border-muted: var(--neutral-100);
+    --border-focus: var(--primary);
+
+    /* Shadows */
+    --shadow-xs: 0 1px 2px rgba(0,0,0,0.15);
+    --shadow-sm: 0 2px 4px rgba(0,0,0,0.2);
+    --shadow-md: 0 4px 8px rgba(0,0,0,0.25);
+    --shadow-lg: 0 8px 16px rgba(0,0,0,0.3);
+    --shadow-xl: 0 16px 32px rgba(0,0,0,0.35);
+
+    /* State Variants */
+    --disabled: var(--neutral-75);
+    --disabled-text: var(--neutral-50);
+    --hover-opacity: 0.85;
+    --active-opacity: 0.7;
+}
+
+/* -------------------- Dark Mode Override -------------------- */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --neutral-5: #121212;
+    --neutral-25: #1E1E1E;
+    --neutral-50: #333333;
+    --neutral-75: #555555;
+    --neutral-100: #AAAAAA;
+    --neutral-200: #CCCCCC;
+    --neutral-300: #E0E0E0;
+    --neutral-400: #F2F2F2;
+    --neutral-500: #FFFFFF;
+
+    --bg-default: var(--neutral-25);
+    --bg-surface: var(--neutral-50);
+    --bg-muted: var(--neutral-75);
+    --text-primary: var(--neutral-500);
+    --text-secondary: var(--neutral-200);
+    --text-muted: var(--neutral-100);
+
+    --primary-hover: var(--blue-50);
+    --secondary-hover: var(--purple-50);
+    --accent-hover: var(--green-50);
+  }
+}
