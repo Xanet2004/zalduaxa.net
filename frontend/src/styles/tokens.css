@@ -110,6 +110,10 @@
     --disabled-text: var(--neutral-50);
     --hover-opacity: 0.85;
     --active-opacity: 0.7;
+
+    /* -------------------- Size variables -------------------- */
+    --header-height: 32px;
+    --footer-height: 32px;
 }
 
 /* -------------------- Dark Mode Override -------------------- */

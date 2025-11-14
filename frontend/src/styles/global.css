@@ -3,6 +3,7 @@
 
 /* -------------------- Base resets -------------------- */
 body {
+    min-height: 100dvh;
     background-color: var(--bg-default);
     color: var(--text-primary);
     font-family: var(--font-family-sans);
@@ -12,6 +13,12 @@ body {
     padding: 0;
 }
 
+.page-container {
+    min-height: calc(100dvh - var(--header-height) - var(--footer-height));
+    display: flow-root;
+}
+
+
 a {
     color: var(--primary);
     text-decoration: none;
@@ -20,6 +27,10 @@ a {
 
 a:hover {
     color: var(--primary-hover);
+}
+
+li {
+    list-style: none;
 }
 
 button {

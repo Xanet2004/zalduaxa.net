@@ -7,8 +7,8 @@ import '@/styles/global.css'
 import Home from '@/pages/Home.tsx'
 import Profile from '@/pages/Profile.tsx'
 import NotFound from '@/pages/NotFound.tsx'
-import Header from '@/components/Header.tsx'
-import Footer from '@/components/Footer.tsx'
+import Header from '@/components/Header/Header'
+import Footer from '@/components/Footer/Footer'
 
 const router = createBrowserRouter([
   {
@@ -16,14 +16,18 @@ const router = createBrowserRouter([
     element: (
       <>
         <Header/>
-        <Home/>
+          <main className="page-container">
+            <Home />
+          </main>
         <Footer/>
       </>
     ),
     errorElement: (
       <>
         <Header />
-        <NotFound />
+        <main className="page-container">
+          <NotFound />
+        </main>
         <Footer />
       </>
     )
@@ -33,7 +37,9 @@ const router = createBrowserRouter([
     element: (
       <>
         <Header/>
-        <Profile/>
+        <main className="page-container">
+          <Profile />
+        </main>
         <Footer/>
       </>
     )
