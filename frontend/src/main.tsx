@@ -2,13 +2,14 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 // import './index.css'
-import '@/styles/tokens.css'
-import '@/styles/global.css'
-import Home from '@/pages/Home.tsx'
-import Profile from '@/pages/Profile.tsx'
-import NotFound from '@/pages/NotFound.tsx'
-import Header from '@/components/Header/Header'
 import Footer from '@/components/Footer/Footer'
+import Header from '@/components/Header/Header'
+import Home from '@/pages/Home'
+import NotFound from '@/pages/NotFound'
+import Profile from '@/pages/Profile'
+import Projects from '@/pages/projects/Projects'
+import '@/styles/global.css'
+import '@/styles/tokens.css'
 
 const router = createBrowserRouter([
   {
@@ -39,6 +40,18 @@ const router = createBrowserRouter([
         <Header/>
         <main className="page-container">
           <Profile />
+        </main>
+        <Footer/>
+      </>
+    )
+  },
+  {
+    path: '/projects',
+    element: (
+      <>
+        <Header/>
+        <main className="page-container">
+          <Projects />
         </main>
         <Footer/>
       </>

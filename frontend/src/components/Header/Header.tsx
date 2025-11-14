@@ -7,7 +7,7 @@ export default function Header() {
             <div><Link to="/">Home</Link></div>
             <li className="nav-items">
                 <Link to="/profile">Profile</Link>
-                <Link to="/profile">Projects</Link> {/* projects could open a list of project types */}
+                <Link to="/projects">Projects</Link> {/* projects could open a list of project types */}
                 <Link to="/profile">Art</Link>
                 <Link to="/profile">Creations</Link>
                 <Link to="/profile">Recipes</Link>
