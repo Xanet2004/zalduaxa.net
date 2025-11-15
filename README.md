@@ -5,7 +5,7 @@ This project contains the **backend**, **frontend**, and **database (DDBB)** for
 This version includes a basic interaction between frontend backend and DDBB.
 
 The user should be able to see all public projects.
-The guest shoulf be able to see all public and private projects.
+The guest should be able to see all public and private projects.
 The admin should be able to add new projects.
 
 ## Git structure
