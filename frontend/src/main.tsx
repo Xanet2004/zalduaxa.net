@@ -5,7 +5,9 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import Footer from '@/components/Footer/Footer'
 import Header from '@/components/Header/Header'
 import Home from '@/pages/Home'
-import NotFound from '@/pages/NotFound'
+import NotFound from '@/pages/error/NotFound'
+import SignUp from '@/pages/session/SignUp'
+import LogIn from '@/pages/session/LogIn'
 import Profile from '@/pages/Profile'
 import Projects from '@/pages/projects/Projects'
 import '@/styles/global.css'
@@ -52,6 +54,30 @@ const router = createBrowserRouter([
         <Header/>
         <main className="page-container">
           <Projects />
+        </main>
+        <Footer/>
+      </>
+    )
+  },
+  {
+    path: '/signup',
+    element: (
+      <>
+        <Header/>
+        <main className="page-container">
+          <SignUp />
+        </main>
+        <Footer/>
+      </>
+    )
+  },
+  {
+    path: '/login',
+    element: (
+      <>
+        <Header/>
+        <main className="page-container">
+          <LogIn />
         </main>
         <Footer/>
       </>

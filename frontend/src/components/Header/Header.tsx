@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { Link } from "react-router-dom";
 import './header.css'
 
 export default function Header() {
+    const [isSigned] = useState(false);
     return (
         <nav>
             <div><Link to="/">Home</Link></div>
@@ -14,7 +16,25 @@ export default function Header() {
                 <Link to="/profile">Agenda</Link>
             </li>
             <li>
-                <Link to="/">Home</Link>
+                {
+                    !isSigned &&
+                    (
+                        <>
+                            <Link to="/login">Log in</Link>
+                            <Link to="/signup">Sign up</Link> 
+                        </>
+                    )
+                }
+                {
+                    isSigned &&
+                    (
+                        <>
+                            <Link to="/signup">Sign out</Link> 
+                            <Link to="/signup">Log out</Link> 
+                        </>
+                    )
+                    /* could show a more accessible list */
+                }
             </li>
         </nav>
     );

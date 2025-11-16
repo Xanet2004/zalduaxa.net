@@ -4,7 +4,6 @@
 
 | Table | Fields | Description |
 |-------|--------|-------------|
-| **providers** | `id` (PK), `code`, `name` | Storage types (e.g., local, S3, GCS) |
 | **visibilities** | `id` (PK), `code`, `name` | Resource visibility (public/private) |
 | **statuses** | `id` (PK), `code`, `name` | Project status (draft/published) |
 | **collaborator_roles** | `id` (PK), `code`, `name` | Collaborator roles (editor/viewer) |

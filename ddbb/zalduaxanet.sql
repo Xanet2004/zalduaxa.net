@@ -1,12 +1,6 @@
+DROP SCHEMA IF EXISTS `zalduaxanetDB`;
 CREATE SCHEMA IF NOT EXISTS `zalduaxanetDB` DEFAULT CHARACTER SET utf8;
 USE `zalduaxanetDB`;
-
--- Lookup tables (avoid ENUM)
-CREATE TABLE providers (
-  id INT PRIMARY KEY AUTO_INCREMENT,
-  code VARCHAR(50) NOT NULL UNIQUE, -- eg: 'local', 's3', 'gcs'
-  name VARCHAR(100) NULL
-);
 
 CREATE TABLE visibilities (
   id INT PRIMARY KEY AUTO_INCREMENT,
@@ -45,6 +39,7 @@ CREATE TABLE users (
   username VARCHAR(255) UNIQUE,
   full_name VARCHAR(255),
   email VARCHAR(255) UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
   phone VARCHAR(255),
   profile_picture VARCHAR(255),
   linkedin VARCHAR(255),
@@ -56,6 +51,18 @@ CREATE TABLE users (
   updated_at DATETIME,
   deleted_at DATETIME,
   CONSTRAINT fk_users_role FOREIGN KEY (role_id) REFERENCES roles(id)
+);
+
+CREATE TABLE sessions (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  user_id INT NOT NULL,
+  token VARCHAR(255) NOT NULL UNIQUE,
+  ip_address VARCHAR(100),
+  user_agent VARCHAR(500),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  expires_at DATETIME,
+  last_activity DATETIME,
+  CONSTRAINT fk_sessions_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE storage (
@@ -191,8 +198,14 @@ CREATE TABLE audit_logs (
 );
 
 -- Optional: seed common lookup values
-INSERT INTO providers (code, name) VALUES ('local', 'Local filesystem'), ('s3', 'Amazon S3'), ('gcs', 'Google Cloud Storage');
 INSERT INTO visibilities (code, name) VALUES ('public','Public'), ('private','Private');
 INSERT INTO statuses (code, name) VALUES ('draft','Draft'), ('published','Published');
 INSERT INTO collaborator_roles (code, name) VALUES ('editor','Editor'), ('viewer','Viewer');
 INSERT INTO resource_types (code, name) VALUES ('project','Project'), ('recipe','Recipe'), ('drawing','Drawing');
+
+INSERT INTO users 
+(username, full_name, email, password_hash, created_at)
+VALUES 
+('admin', 'Administrator', 'admin@example.com', 'TEST', NOW());
+INSERT INTO sessions (user_id, token, ip_address, user_agent, expires_at)
+VALUES (1, 'TOKEN_GENERADO', '192.168.1.50', 'Chrome on Windows', DATE_ADD(NOW(), INTERVAL 30 DAY));
