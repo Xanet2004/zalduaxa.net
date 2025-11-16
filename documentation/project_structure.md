@@ -1,5 +1,7 @@
 # Project Structure
 `Not updated`
+[Back to menu](/README.md)
+
 ### Local development
 ```
 project-root/

@@ -1,5 +1,5 @@
 # Database Schema: `zalduaxanetDB`
-
+[Back to menu](/README.md)
 ## Lookup Tables
 
 | Table | Fields | Description |
