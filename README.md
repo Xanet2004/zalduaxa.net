@@ -18,3 +18,7 @@ The admin should be able to add new projects.
 DDBB scheme in [dbdiagram.io](https://dbdiagram.io/d/zalduaxanet-69190b9f6735e11170fd8a62)
 
 [DDBB structure](/documentation/ddbb.md)
+
+## Todo
+
+[Todo](/documentation/todo.md)
