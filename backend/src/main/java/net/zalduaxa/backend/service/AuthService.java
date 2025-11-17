@@ -56,12 +56,22 @@ public class AuthService {
 
         User user = optionalUser.get();
 
-        // Verificar contraseña
         if (!passAuth.authenticate(req.getPassword().toCharArray(), user.getPasswordHash())) {
             throw new Exception("Incorrect password");
         }
 
-        // Login exitoso
         return user;
+    }
+
+    public User logout(String token, JwtService jwtService) throws Exception {
+        if (token == null || token.isEmpty()) {
+            throw new Exception("Token missing");
+        }
+
+        // validar token
+        String username = jwtService.getUsername(token);
+
+        return userRepo.findByUsername(username)
+            .orElseThrow(() -> new Exception("User not found"));
     }
 }
