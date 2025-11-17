@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -37,8 +38,8 @@ public class AuthController {
     @Autowired
     private SessionRepository sessionRepository;
 
-    @PostMapping(value = "/register", consumes = "application/json")
-    public ResponseEntity<?> register(@RequestBody RequestUser req) {
+    @PostMapping(value = "/signup", consumes = "application/json")
+    public ResponseEntity<?> signup(@RequestBody RequestUser req) {
         try {
             User user = authService.register(req);
             return ResponseEntity.ok(Map.of("message", "User registered successfully"));
@@ -111,6 +112,23 @@ public class AuthController {
             }
 
             return ResponseEntity.ok(Map.of("message", "User is not longer in session"));
+
+        } catch (Exception e) {
+            return ResponseEntity.status(401).body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/session")
+    public ResponseEntity<?> getSession(HttpServletResponse response, HttpServletRequest request) {
+        try {
+            User user = authService.logout(extractToken(request), jwtService);
+            Optional<Session> sessionOpt = sessionRepository.findByUserId(user.getId().longValue());
+            // ? Check user has a session
+            if(!sessionRepository.existsById(sessionOpt.get().getId())) return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("message", "User is not in session"));
+
+            return ResponseEntity.ok(Map.of("user", new ResponseUser(user)));
 
         } catch (Exception e) {
             return ResponseEntity.status(401).body(Map.of("message", e.getMessage()));
