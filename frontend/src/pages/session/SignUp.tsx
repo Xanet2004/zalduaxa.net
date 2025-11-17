@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { register } from '@/scripts/register';
+import { frontendValidation } from '@/scripts/frontendValidation';
 
 export default function SignUp() {
     const [form, setForm] = useState({
@@ -9,8 +11,8 @@ export default function SignUp() {
         repeated_password: "",
     });
 
-    const [error, setError] = useState("");
-    const [success, setSuccess] = useState("");
+    const [registerError, setRegisterError] = useState("");
+    const [registerSuccess, setRegisterSuccess] = useState("");
     const [loading, setLoading] = useState(false);
 
     function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -19,47 +21,15 @@ export default function SignUp() {
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
-        setError("");
-        setSuccess("");
+        setRegisterError("");
+        setRegisterSuccess("");
         
-        // Frontend validation
-        if (!form.username || !form.fullName || !form.email) {
-            return setError("All fields are required.");
-        }
-
-        if (form.password.length < 6) {
-            return setError("Password must be at least 6 characters.");
-        }
-
-        if (form.password !== form.repeated_password) {
-            return setError("Passwords do not match.");
-        }
-
-        setLoading(true);
-
-        try {
-            const res = await fetch(
-                `${import.meta.env.VITE_API_URL}/auth/register`,
-                {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(form),
-                }
-            );
-
-            let data;
-            try { data = await res.json(); }
-            catch { data = {}; }
-
-            if (!res.ok) {
-                throw new Error(data.message || "Error creating user");
-            }
-
-            setSuccess("Account created successfully! You can now log in.");
-        } catch (err) {
-            setError(err instanceof Error ? err.message : "Unknown error");
-        } finally {
-            setLoading(false);
+        let msg = frontendValidation(form);
+        if(msg == "success"){
+            setLoading(true);
+            register(form, setRegisterError, setRegisterSuccess, setLoading);
+        } else {
+            setRegisterError(msg);
         }
     }
 
@@ -88,8 +58,8 @@ export default function SignUp() {
                 </button>
             </form>
 
-            {error && <p style={{ color: "red" }}>{error}</p>}
-            {success && <p style={{ color: "green" }}>{success}</p>}
+            {registerError && <p style={{ color: "red" }}>{registerError}</p>}
+            {registerSuccess && <p style={{ color: "green" }}>{registerSuccess}</p>}
         </div>
     );
 }
