@@ -1,6 +1,8 @@
-package net.zalduaxa.backend.model;
+package net.zalduaxa.backend.model.user;
 
 import jakarta.persistence.*;
+import net.zalduaxa.backend.model.role.Role;
+
 import java.time.LocalDateTime;
 
 @Entity

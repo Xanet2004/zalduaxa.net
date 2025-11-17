@@ -206,6 +206,6 @@ INSERT INTO resource_types (code, name) VALUES ('project','Project'), ('recipe',
 INSERT INTO users 
 (username, full_name, email, password_hash, created_at)
 VALUES 
-('admin', 'Administrator', 'admin@example.com', 'TEST', NOW());
+('admin', 'Administrator', 'admin@example.com', '$31$16$XsG0CGXihDfHSGoPgd-135PxUPZzKHt7ZXoVhnae_WM', NOW()); #administrator
 INSERT INTO sessions (user_id, token, ip_address, user_agent, expires_at)
 VALUES (1, 'TOKEN_GENERADO', '192.168.1.50', 'Chrome on Windows', DATE_ADD(NOW(), INTERVAL 30 DAY));

@@ -1,4 +1,4 @@
-package net.zalduaxa.backend.model;
+package net.zalduaxa.backend.model.requestUser;
 
 import java.time.LocalDateTime;
 

@@ -1,11 +1,13 @@
 package net.zalduaxa.backend.service;
 
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import net.zalduaxa.backend.model.RequestUser;
-import net.zalduaxa.backend.model.User;
-import net.zalduaxa.backend.model.UserRepository;
+import net.zalduaxa.backend.model.requestUser.RequestUser;
+import net.zalduaxa.backend.model.user.User;
+import net.zalduaxa.backend.model.user.UserRepository;
 import net.zalduaxa.backend.utils.PasswordAuthentication;
 
 @Service
@@ -44,5 +46,22 @@ public class AuthService {
         user.setPasswordHash(passAuth.hash(req.getPassword().toCharArray()));
 
         return userRepo.save(user);
+    }
+
+    public User login(RequestUser req) throws Exception {
+        Optional<User> optionalUser = userRepo.findByUsername(req.getUsername());
+        if (optionalUser.isEmpty()) {
+            throw new Exception("Username does not exist");
+        }
+
+        User user = optionalUser.get();
+
+        // Verificar contraseña
+        if (!passAuth.authenticate(req.getPassword().toCharArray(), user.getPasswordHash())) {
+            throw new Exception("Incorrect password");
+        }
+
+        // Login exitoso
+        return user;
     }
 }
