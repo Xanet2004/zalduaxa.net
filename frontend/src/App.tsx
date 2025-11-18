@@ -1,6 +1,7 @@
 import { StrictMode, useEffect, useState } from 'react'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 
+import { SessionProvider } from '@/context/SessionContext'
 import { getSession } from '@/scripts/getSession'
 
 import Footer from '@/components/Footer/Footer'
@@ -13,12 +14,9 @@ import LogIn from '@/pages/session/LogIn'
 import SignUp from '@/pages/session/SignUp'
 import '@/styles/global.css'
 import '@/styles/tokens.css'
-import type { User } from './types/user'
 import LogOut from './pages/session/LogOut'
 
 export default function App() {
-    const [user, setUser] = useState<User | null>();
-
     const router = createBrowserRouter([
         {
             path: '/',
@@ -105,17 +103,13 @@ export default function App() {
 
     useEffect(() => {
         getSession();
-        const saved = sessionStorage.getItem('user');
-        if (saved) {
-            setUser(JSON.parse(saved));
-        }
     }, [])
 
     return (
         <StrictMode>
-            {/* <p>{sessionStorage.getItem('user')}</p> */}
-            {user && <p>{user.username}</p>}
-            <RouterProvider router={router} />
+            <SessionProvider>
+                <RouterProvider router={router} />
+            </SessionProvider>
         </StrictMode>
     );
 }

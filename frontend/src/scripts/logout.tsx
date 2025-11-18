@@ -1,25 +1,20 @@
-export async function logout(setLogoutError: (arg0: string) => void, setLogoutSuccess: (arg0: string) => void, setLoading: (arg0: boolean) => void) {
+import { useNavigate } from "react-router-dom";
+import { useSession } from "@/context/SessionContext";
+
+export async function logout() {
+    const navigate = useNavigate();
+    const { setUser } = useSession();
     try {
-        setLoading(true);
-
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/logout`, {
+        await fetch(`${import.meta.env.VITE_API_URL}/auth/logout`, {
             method: "POST",
+            headers: { "Content-Type": "application/json" },
             credentials: "include",
-            headers: { "Content-Type": "application/json" }
         });
-
-        let data;
-        try { data = await res.json(); }
-        catch { data = {}; }
-
-        if (!res.ok) {
-            throw new Error(data.message || "Error creating user");
-        }
-
-        setLogoutSuccess(data);
     } catch (err) {
-        setLogoutError(err instanceof Error ? err.message : "Unknown error");
+        console.error(err);
     } finally {
-        setLoading(false);
+        sessionStorage.removeItem("user");
+        setUser(null);
+        navigate("/");
     }
 }

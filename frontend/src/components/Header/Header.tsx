@@ -1,21 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Link } from "react-router-dom";
 import './header.css';
-import type { User } from '@/types/user';
+import { useSession } from "@/context/SessionContext";
 
 export default function Header() {
-    const [user, setUser] = useState<User | null>(null);
-    
-    useEffect(() => {
-        const saved = sessionStorage.getItem('user');
-        if (saved) {
-            setUser(JSON.parse(saved));
-            console.log(user == null)
-        }
-    }, [])
+    const { user } = useSession();
 
     return (
         <nav>
+            <p>{user && user.username}</p>
             <div><Link to="/">Home</Link></div>
             <li className="nav-items">
                 <Link to="/profile">Profile</Link>

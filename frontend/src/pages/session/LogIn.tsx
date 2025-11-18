@@ -1,19 +1,17 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { login } from '@/scripts/login';
-import { getSession } from "@/scripts/getSession";
+import { useSession } from "@/context/SessionContext";
 
 export default function LogIn() {
+    const navigate = useNavigate();
     const [form, setForm] = useState({
         username: "",
         password: "",
     });
-
-    const navigate = useNavigate();
-
-    const [loginError, setLoginError] = useState("");
-    const [loginSuccess, setLoginSuccess] = useState("");
+    const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+    const { refreshUser } = useSession(); 
 
     function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
         setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -21,19 +19,17 @@ export default function LogIn() {
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
-        setLoginError("");
-        setLoginSuccess("");
-        setLoading(true);
         try {
-            await login(form, setLoginError, setLoginSuccess, setLoading);
-            await getSession();
-            navigate("/");
+            setLoading(true);
+            const loginError = await login(form);
+            if (loginError) {
+                setError(loginError as string);
+            }
+            await refreshUser();
+            setLoading(false);
         } catch (err) {
             console.error(err);
-        } finally {
-            setLoading(false);
         }
-
     }
     return (
         <div>
@@ -51,10 +47,7 @@ export default function LogIn() {
                 </button>
             </form>
 
-            <p>{JSON.stringify(sessionStorage.getItem('user'), null, 2)}</p>
-
-            {loginError && <p style={{ color: "red" }}>{loginError}</p>}
-            {loginSuccess && <p style={{ color: "green" }}>{loginSuccess}</p>}
+            {error && <p style={{ color: "red" }}>{error}</p>}
         </div>
     );
 }
