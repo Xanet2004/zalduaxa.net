@@ -9,5 +9,12 @@ export interface User {
     linkedin?: string;
     phone?: string;
     profilePicture?: string;
-    role?: string;
+    role?: Role;
+}
+
+interface Role {
+    id: number;
+    name: string;
+    description?: string;
+    createdAt?: Date;
 }

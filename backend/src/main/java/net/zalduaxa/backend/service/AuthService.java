@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import net.zalduaxa.backend.model.requestUser.RequestUser;
+import net.zalduaxa.backend.model.role.Role;
+import net.zalduaxa.backend.model.role.RoleRepository;
 import net.zalduaxa.backend.model.user.User;
 import net.zalduaxa.backend.model.user.UserRepository;
 import net.zalduaxa.backend.utils.PasswordAuthentication;
@@ -15,6 +17,9 @@ public class AuthService {
 
     @Autowired
     private UserRepository userRepo;
+
+    @Autowired
+    private RoleRepository roleRepo;
     private PasswordAuthentication passAuth;
 
     public AuthService() {
@@ -44,6 +49,7 @@ public class AuthService {
         user.setFullName(req.getFullName());
         user.setEmail(req.getEmail());
         user.setPasswordHash(passAuth.hash(req.getPassword().toCharArray()));
+        user.setRole(roleRepo.findByName("guest"));
 
         return userRepo.save(user);
     }

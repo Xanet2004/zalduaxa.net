@@ -2,12 +2,13 @@
 [Back to menu](/README.md)
 
 ## Users
-- [ ] Create user (POST /users) — admin or normal registration
+- [o] Create user (POST /users) — admin or normal registration
 - [ ] Read/list users (GET /users)
 - [ ] Update user (PUT /users/:id)
 - [ ] Delete/deactivate user (DELETE /users/:id)
-- [ ] Login / authentication (token or session)
-- [ ] Role & permission system
+- [o] Login / authentication (token or session)
+- [ ] Login error output
+- [o] Role & permission system
 - [ ] List roles (GET /roles) — for assigning roles when creating users
 
 ## Storage

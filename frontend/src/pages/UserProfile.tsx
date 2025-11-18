@@ -23,6 +23,20 @@ export default function UserProfile() {
                             );
                         }
 
+                        if (key === "role" && typeof value === "object") {
+                            return (
+                                <div key={key}>
+                                <p><strong>Role:</strong></p>
+                                <ul>
+                                    <li><strong>ID:</strong> {(value as any).id}</li>
+                                    <li><strong>Name:</strong> {(value as any).name}</li>
+                                    <li><strong>Description:</strong> {(value as any).description}</li>
+                                </ul>
+                                </div>
+                            );
+                        }
+
+
                         return (
                             <p key={key}>
                                 <strong>{key}:</strong> {value as string}

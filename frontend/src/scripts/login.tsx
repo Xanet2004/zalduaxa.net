@@ -11,6 +11,8 @@ export async function login(form: { username: string; password: string; }) {
         try { data = await res.json(); }
         catch { data = {}; }
 
+        console.log(data)
+
         if (!res.ok) {
             throw new Error(data.message || "Error creating user");
         }

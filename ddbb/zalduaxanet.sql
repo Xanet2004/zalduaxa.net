@@ -181,3 +181,7 @@ INSERT INTO visibilities (code, name) VALUES ('public','Public'), ('private','Pr
 INSERT INTO statuses (code, name) VALUES ('draft','Draft'), ('published','Published');
 INSERT INTO collaborator_roles (code, name) VALUES ('editor','Editor'), ('viewer','Viewer');
 INSERT INTO resource_types (code, name) VALUES ('project','Project'), ('recipe','Recipe'), ('drawing','Drawing');
+INSERT INTO roles (name, description, created_at) VALUES
+  ('admin', 'Full system access', CURRENT_TIMESTAMP),
+  ('member', 'Registered user with access to private content', CURRENT_TIMESTAMP),
+  ('guest', 'Public-only access', CURRENT_TIMESTAMP);
