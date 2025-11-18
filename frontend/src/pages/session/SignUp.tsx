@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { register } from '@/scripts/register';
+import { signup } from '@/scripts/signup';
 import { frontendValidation } from '@/scripts/frontendValidation';
 
 export default function SignUp() {
@@ -11,8 +11,8 @@ export default function SignUp() {
         repeated_password: "",
     });
 
-    const [registerError, setRegisterError] = useState("");
-    const [registerSuccess, setRegisterSuccess] = useState("");
+    const [signupError, setSignupError] = useState("");
+    const [signupSuccess, setSignupSuccess] = useState("");
     const [loading, setLoading] = useState(false);
 
     function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -21,15 +21,15 @@ export default function SignUp() {
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
-        setRegisterError("");
-        setRegisterSuccess("");
+        setSignupError("");
+        setSignupSuccess("");
         
         let msg = frontendValidation(form);
         if(msg == "success"){
             setLoading(true);
-            register(form, setRegisterError, setRegisterSuccess, setLoading);
+            signup(form, setSignupError, setSignupSuccess, setLoading);
         } else {
-            setRegisterError(msg);
+            setSignupError(msg);
         }
     }
 
@@ -58,8 +58,8 @@ export default function SignUp() {
                 </button>
             </form>
 
-            {registerError && <p style={{ color: "red" }}>{registerError}</p>}
-            {registerSuccess && <p style={{ color: "green" }}>{registerSuccess}</p>}
+            {signupError && <p style={{ color: "red" }}>{signupError}</p>}
+            {signupSuccess && <p style={{ color: "green" }}>{signupSuccess}</p>}
         </div>
     );
 }

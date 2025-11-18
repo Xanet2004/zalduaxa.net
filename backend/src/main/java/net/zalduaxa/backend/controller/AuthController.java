@@ -25,7 +25,11 @@ import net.zalduaxa.backend.model.user.User;
 import net.zalduaxa.backend.service.AuthService;
 import net.zalduaxa.backend.service.JwtService;
 
-@CrossOrigin(maxAge = 3600)
+@CrossOrigin(
+    origins = "http://localhost:5173",
+    allowCredentials = "true",
+    maxAge = 3600
+)
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
@@ -89,7 +93,7 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletResponse response, HttpServletRequest request) {
         try {
-            User user = authService.logout(extractToken(request), jwtService);
+            User user = authService.getUserFromToken(extractToken(request), jwtService);
             Optional<Session> sessionOpt = sessionRepository.findByUserId(user.getId().longValue());
             // ? Check user has a session
             if(!sessionRepository.existsById(sessionOpt.get().getId())) return ResponseEntity
@@ -121,7 +125,7 @@ public class AuthController {
     @GetMapping("/session")
     public ResponseEntity<?> getSession(HttpServletResponse response, HttpServletRequest request) {
         try {
-            User user = authService.logout(extractToken(request), jwtService);
+            User user = authService.getUserFromToken(extractToken(request), jwtService);
             Optional<Session> sessionOpt = sessionRepository.findByUserId(user.getId().longValue());
             // ? Check user has a session
             if(!sessionRepository.existsById(sessionOpt.get().getId())) return ResponseEntity

@@ -63,12 +63,11 @@ public class AuthService {
         return user;
     }
 
-    public User logout(String token, JwtService jwtService) throws Exception {
+    public User getUserFromToken(String token, JwtService jwtService) throws Exception {
         if (token == null || token.isEmpty()) {
             throw new Exception("Token missing");
         }
 
-        // validar token
         String username = jwtService.getUsername(token);
 
         return userRepo.findByUsername(username)

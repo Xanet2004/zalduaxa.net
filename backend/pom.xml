@@ -68,6 +68,13 @@
 			<scope>runtime</scope>
 		</dependency>
 
+		<!-- postgreSQL -->
+		 <dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+			<version>42.6.0</version>
+		</dependency>
+
 		<!-- JWT -->
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>

@@ -1,9 +1,19 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from "react-router-dom";
-import './header.css'
+import './header.css';
+import type { User } from '@/types/user';
 
 export default function Header() {
-    const [isSigned] = useState(false);
+    const [user, setUser] = useState<User | null>(null);
+    
+    useEffect(() => {
+        const saved = sessionStorage.getItem('user');
+        if (saved) {
+            setUser(JSON.parse(saved));
+            console.log(user == null)
+        }
+    }, [])
+
     return (
         <nav>
             <div><Link to="/">Home</Link></div>
@@ -17,7 +27,7 @@ export default function Header() {
             </li>
             <li>
                 {
-                    !isSigned &&
+                    user == null &&
                     (
                         <>
                             <Link to="/login">Log in</Link>
@@ -26,11 +36,11 @@ export default function Header() {
                     )
                 }
                 {
-                    isSigned &&
+                    user != null &&
                     (
                         <>
+                            <Link to="/logout">Log out</Link> 
                             <Link to="/signup">Sign out</Link> 
-                            <Link to="/signup">Log out</Link> 
                         </>
                     )
                     /* could show a more accessible list */
