@@ -7,7 +7,7 @@ import { getSession } from '@/scripts/getSession'
 import Footer from '@/components/Footer/Footer'
 import Header from '@/components/Header/Header'
 import Home from '@/pages/Home'
-import Profile from '@/pages/Profile'
+import UserProfile from '@/pages/UserProfile'
 import NotFound from '@/pages/error/NotFound'
 import Projects from '@/pages/projects/Projects'
 import LogIn from '@/pages/session/LogIn'
@@ -40,12 +40,12 @@ export default function App() {
             )
         },
         {
-            path: '/profile',
+            path: '/user-profile',
             element: (
                 <>
                     <Header />
                     <main className="page-container">
-                        <Profile />
+                        <UserProfile />
                     </main>
                     <Footer />
                 </>
