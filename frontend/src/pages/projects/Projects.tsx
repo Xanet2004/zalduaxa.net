@@ -2,72 +2,77 @@ import { useEffect, useState } from 'react';
 import { useSession } from "@/context/SessionContext";
 import { getProjectTypes } from '@/scripts/getProjectTypes';
 import ProjectTypeCard from '@/components/ProjectTypeCard/ProjectTypeCard';
-
-interface ProjectTypes{
-
-}
+import { addProjectType } from '@/scripts/addProjectType';
+import type { ProjectType } from '@/types/projectType';
 
 export default function Projects() {
     const { user } = useSession();
     const isAdmin = user?.role?.name == 'admin';
-    const [isAdding, setIsAdding] = useState<boolean>();
-    const [projectTypes, setProjectTypes] = useState<ProjectTypes>();
+    const [isAddingProjectType, setIsAddingProjectType] = useState<boolean>();
+    const [projectTypes, setProjectTypes] = useState<ProjectType[] | null>(null);
 
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const { refreshUser } = useSession(); 
 
-    useEffect(() => {
-        try {
-            setLoading(true);
-            const projectTypes = getProjectTypes();
-            console.log(projectTypes)
-            setLoading(false);
-        } catch (err) {
-            console.error(err);
-        }
-    }, [])
+    function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+        setAddProjectTypeForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    }
 
-    // async function handleSubmit(e: React.FormEvent) {
-    //     e.preventDefault();
-    //     try {
-    //         setLoading(true);
-    //         const loginError = await getProjectTypes();
-    //         if (loginError) {
-    //             setError(loginError as string);
-    //         }
-    //         await refreshUser();
-    //         setLoading(false);
-    //     } catch (err) {
-    //         console.error(err);
-    //     }
-    // }
+    const [addProjectTypeForm, setAddProjectTypeForm] = useState({
+        name: "",
+        description: "",
+        imagePath: "",
+    });
+
+    useEffect(() => {
+        const fetchProjectTypes = async () => {
+            try {
+                setLoading(true);
+                const data: ProjectType[] = await getProjectTypes();
+                setProjectTypes(data);
+            } catch (err) {
+                console.error(err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchProjectTypes();
+    }, []);
+    
+    async function handleAddProjectType(e: React.FormEvent) {
+        e.preventDefault();
+        setLoading(true);
+        await addProjectType(addProjectTypeForm);
+        setLoading(false);
+    }
 
     return (
         <div>
             <h1>Projects</h1>
             <div>
-                {/* {projects.map(p => (
-                    <ProjectTypeCard key={p.url} {...p} />
-                ))} */}
+                {projectTypes && projectTypes.map((pt: ProjectType) => (
+                    <ProjectTypeCard key={pt.id} {...pt} />
+                ))}
             </div>
             {
                 isAdmin && 
                 (
-                    <button onClick={() => setIsAdding(true)}>AddProject</button>
+                    <button onClick={() => setIsAddingProjectType(true)}>AddProject</button>
                 )
             }
             {
-                isAdding &&
+                isAddingProjectType &&
                 (
-                    <form>
-                        <p>name</p><input type="text"/>
-                        <p>type</p><select name="asd" id="asd"></select>
-                        <p>newType</p><input type="text"/>
-                        <p>tools</p><select name="asd" id="asd"></select>
-                        <p>newTool</p><input type="text"/>
-                        <p>project</p><input type="file" name="" id="" />
-                        <p></p>
+                    <form onSubmit={handleAddProjectType}>
+                        <p>name</p>
+                        <input name="name" value={addProjectTypeForm.name} onChange={handleChange}/>
+                        <p>description</p>
+                        <input name="description" value={addProjectTypeForm.description} onChange={handleChange}/>
+                        <p>image</p>
+                        <input name="imagePath" value={addProjectTypeForm.imagePath} onChange={handleChange}/>
+
                         <button type="submit" disabled={loading}>
                             {loading ? "Adding..." : "Add project"}
                         </button>

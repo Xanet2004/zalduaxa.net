@@ -1,8 +1,5 @@
 export async function getProjectTypes() {
     try {
-        console.log(import.meta.env.VITE_API_URL)
-        console.log(`${import.meta.env.VITE_API_URL}/project/projectTypes`)
-
         const res = await fetch(`${import.meta.env.VITE_API_URL}/project/projectTypes`, {
             method: "GET",
             headers: { "Content-Type": "application/json" },
@@ -15,7 +12,7 @@ export async function getProjectTypes() {
         console.log(data)
 
         if (!res.ok) {
-            throw new Error(data.message || "Error loading projects");
+            throw new Error(data.message || "Error loading project types");
         }
 
         return data;
