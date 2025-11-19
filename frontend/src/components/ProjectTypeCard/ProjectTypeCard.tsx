@@ -2,7 +2,6 @@ import type { ProjectType } from "@/types/projectType";
 import { Link } from "react-router-dom";
 
 export default function ProjectTypeCard(props: ProjectType) {
-    console.log("card", props);
     return (
         <Link to={`/projects/${props.name}`}>
             <h2>{props.name}</h2>

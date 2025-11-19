@@ -3,12 +3,14 @@ import { useSession } from "@/context/SessionContext";
 import { getProjectTypes } from '@/scripts/getProjectTypes';
 import ProjectTypeCard from '@/components/ProjectTypeCard/ProjectTypeCard';
 import { addProjectType } from '@/scripts/addProjectType';
+import { deleteProjectType } from '@/scripts/deleteProjectType';
 import type { ProjectType } from '@/types/projectType';
 
 export default function Projects() {
     const { user } = useSession();
     const isAdmin = user?.role?.name == 'admin';
     const [isAddingProjectType, setIsAddingProjectType] = useState<boolean>();
+    const [isDeletingProjectType, setIsDeletingProjectType] = useState<boolean>();
     const [projectTypes, setProjectTypes] = useState<ProjectType[] | null>(null);
 
     const [error, setError] = useState<string | null>(null);
@@ -16,7 +18,13 @@ export default function Projects() {
     const { refreshUser } = useSession(); 
 
     function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-        setAddProjectTypeForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+        const { name, value } = e.target;
+
+        if (isAddingProjectType) {
+            setAddProjectTypeForm(prev => ({ ...prev, [name]: value }));
+        } else if (isDeletingProjectType) {
+            setDeleteProjectTypeForm(prev => ({ ...prev, [name]: value }));
+        }
     }
 
     const [addProjectTypeForm, setAddProjectTypeForm] = useState({
@@ -25,12 +33,16 @@ export default function Projects() {
         imagePath: "",
     });
 
+    const [deleteProjectTypeForm, setDeleteProjectTypeForm] = useState({
+        name: ""
+    });
+
     useEffect(() => {
         const fetchProjectTypes = async () => {
             try {
                 setLoading(true);
-                const data: ProjectType[] = await getProjectTypes();
-                setProjectTypes(data);
+                const data = await getProjectTypes();
+                setProjectTypes(data as ProjectType[]);
             } catch (err) {
                 console.error(err);
             } finally {
@@ -45,6 +57,17 @@ export default function Projects() {
         e.preventDefault();
         setLoading(true);
         await addProjectType(addProjectTypeForm);
+        const data = await getProjectTypes();
+        setProjectTypes(data as ProjectType[]);
+        setLoading(false);
+    }
+
+    async function handleDeleteProjectType(e: React.FormEvent) {
+        e.preventDefault();
+        setLoading(true);
+        await deleteProjectType(deleteProjectTypeForm);
+        const data = await getProjectTypes();
+        setProjectTypes(data as ProjectType[]);
         setLoading(false);
     }
 
@@ -52,14 +75,20 @@ export default function Projects() {
         <div>
             <h1>Projects</h1>
             <div>
-                {projectTypes && projectTypes.map((pt: ProjectType) => (
+                  {Array.isArray(projectTypes) && projectTypes.map(pt => (
                     <ProjectTypeCard key={pt.id} {...pt} />
                 ))}
             </div>
             {
                 isAdmin && 
                 (
-                    <button onClick={() => setIsAddingProjectType(true)}>AddProject</button>
+                    <button onClick={() => {setIsAddingProjectType(true); setIsDeletingProjectType(false);}}>Add Project</button>
+                )
+            }
+            {
+                isAdmin && 
+                (
+                    <button onClick={() => {setIsAddingProjectType(false); setIsDeletingProjectType(true);}}>Delete Project</button>
                 )
             }
             {
@@ -74,7 +103,20 @@ export default function Projects() {
                         <input name="imagePath" value={addProjectTypeForm.imagePath} onChange={handleChange}/>
 
                         <button type="submit" disabled={loading}>
-                            {loading ? "Adding..." : "Add project"}
+                            {loading ? "Adding..." : "Add project type"}
+                        </button>
+                    </form>
+                )
+            }
+            {
+                isDeletingProjectType &&
+                (
+                    <form onSubmit={handleDeleteProjectType}>
+                        <p>name</p>
+                        <input name="name" value={deleteProjectTypeForm.name} onChange={handleChange}/>
+
+                        <button type="submit" disabled={loading}>
+                            {loading ? "Deleting..." : "Delete project type"}
                         </button>
                     </form>
                 )

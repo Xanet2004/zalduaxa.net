@@ -50,11 +50,7 @@ public class ProjectController {
     public ResponseEntity<List<ProjectType>> getProjectTypes(){
         List<ProjectType> projectTypes = projectTypeRepo.findAll();
 
-        if (projectTypes.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        } else {
-            return new ResponseEntity<>(projectTypes, HttpStatus.OK);
-        }
+        return new ResponseEntity<>(projectTypes, HttpStatus.OK);
     }
 
     @PostMapping(value = "/addProjectType", produces = { "application/json", "application/xml" })
@@ -65,7 +61,7 @@ public class ProjectController {
             User user = authService.getUserFromToken(extractToken(request), jwtService);
             Optional<Session> sessionOpt = sessionRepository.findByUserId(user.getId().longValue());
             // ? Check user has a session
-            if(!sessionRepository.existsById(sessionOpt.get().getId())) return new ResponseEntity<>(projectTypes, HttpStatus.OK);
+            if(!sessionRepository.existsById(sessionOpt.get().getId())) return new ResponseEntity<>("The project is not created", HttpStatus.BAD_REQUEST);
 
             if(user.getRole().getName().equals("admin")){
                 projectType.setName(requestProjectType.getName());
@@ -76,6 +72,27 @@ public class ProjectController {
             }
 
             return ResponseEntity.ok(Map.of("message", "You need to be admin to add a new project type"));
+
+        } catch (Exception e) {
+            return new ResponseEntity<>(projectTypes, HttpStatus.OK);
+        }
+    }
+
+    @PostMapping(value = "/deleteProjectType", produces = { "application/json", "application/xml" })
+    public ResponseEntity<?> deleteProjectType(@RequestBody RequestProjectType projectTypeName, HttpServletResponse response, HttpServletRequest request){
+        List<ProjectType> projectTypes = projectTypeRepo.findAll();
+        try {
+            User user = authService.getUserFromToken(extractToken(request), jwtService);
+            Optional<Session> sessionOpt = sessionRepository.findByUserId(user.getId().longValue());
+            // ? Check user has a session
+            if(!sessionRepository.existsById(sessionOpt.get().getId())) return new ResponseEntity<>(projectTypes, HttpStatus.OK);
+
+            if(user.getRole().getName().equals("admin")){
+                projectTypeRepo.deleteById(projectTypeRepo.findByName(projectTypeName.getName()).getId());
+                return ResponseEntity.ok(Map.of("message", "Project type succesfully deleted"));
+            }
+
+            return ResponseEntity.ok(Map.of("message", "You need to be admin to delete a new project type"));
 
         } catch (Exception e) {
             return new ResponseEntity<>(projectTypes, HttpStatus.OK);
