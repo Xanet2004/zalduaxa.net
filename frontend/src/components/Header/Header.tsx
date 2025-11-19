@@ -1,5 +1,5 @@
-import { useSession } from "@/context/SessionContext";
 import { Link } from "react-router-dom";
+import { useSession } from "@/context/SessionContext";
 import './header.css';
 
 export default function Header() {

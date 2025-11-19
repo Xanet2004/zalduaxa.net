@@ -1,4 +1,4 @@
-package net.zalduaxa.backend.model;
+package net.zalduaxa.backend.model.project;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

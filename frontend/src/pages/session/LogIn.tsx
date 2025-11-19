@@ -27,7 +27,7 @@ export default function LogIn() {
             }
             await refreshUser();
             setLoading(false);
-            navigate('/');
+            if (!loginError) navigate('/');
         } catch (err) {
             console.error(err);
         }

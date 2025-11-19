@@ -1,4 +1,4 @@
-package net.zalduaxa.backend.model;
+package net.zalduaxa.backend.model.project;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

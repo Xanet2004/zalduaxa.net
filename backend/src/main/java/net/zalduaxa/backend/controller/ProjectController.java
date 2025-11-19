@@ -10,24 +10,24 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import net.zalduaxa.backend.model.Project;
-import net.zalduaxa.backend.model.ProjectRepository;
+import net.zalduaxa.backend.model.projectType.ProjectType;
+import net.zalduaxa.backend.model.projectType.ProjectTypeRepository;
 
 @CrossOrigin(maxAge = 3600)
 @RestController
-@RequestMapping("/api")
-public class FrontendController {
+@RequestMapping("/project")
+public class ProjectController {
     @Autowired
-    ProjectRepository project_repository;
+    ProjectTypeRepository projectTypeRepo;
 
-    @GetMapping(value = "/projects", produces = { "application/json", "application/xml" })
-    public ResponseEntity<List<Project>> getProjectTypes(){
-        List<Project> project_list = project_repository.findAll();
+    @GetMapping(value = "/projectTypes", produces = { "application/json", "application/xml" })
+    public ResponseEntity<List<ProjectType>> getProjectTypes(){
+        List<ProjectType> projectTypes = projectTypeRepo.findAll();
 
-        if (project_list.isEmpty()) {
+        if (projectTypes.isEmpty()) {
             return ResponseEntity.notFound().build();
         } else {
-            return new ResponseEntity<>(project_list, HttpStatus.OK);
+            return new ResponseEntity<>(projectTypes, HttpStatus.OK);
         }
     }
 }
