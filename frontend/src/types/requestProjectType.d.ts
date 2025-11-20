@@ -1,6 +1,6 @@
-export interface ProjectType{
+export interface RequestProjectType{
     id?: integer,
     name: string,
     description: string,
-    imagePath: string
+    image: File | null
 }

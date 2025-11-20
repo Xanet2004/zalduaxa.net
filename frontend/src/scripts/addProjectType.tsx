@@ -1,10 +1,15 @@
 export async function addProjectType(form: any) {
     try {
+        const formData = new FormData();
+        formData.append("name", form.name);
+        formData.append("description", form.description);
+        formData.append("image", form.image);
+
+
         const res = await fetch(`${import.meta.env.VITE_API_URL}/project/addProjectType`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
             credentials: "include",
-            body: JSON.stringify(form)
+            body: formData
         });
 
         let data;

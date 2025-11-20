@@ -1,5 +1,7 @@
 package net.zalduaxa.backend.controller;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -12,7 +14,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -54,7 +59,12 @@ public class ProjectController {
     }
 
     @PostMapping(value = "/addProjectType", produces = { "application/json", "application/xml" })
-    public ResponseEntity<?> addProjectType(@RequestBody RequestProjectType requestProjectType, HttpServletResponse response, HttpServletRequest request){
+    public ResponseEntity<?> addProjectType(
+        @RequestParam("name") String name,
+        @RequestParam("description") String description,
+        @RequestPart("image") MultipartFile image,
+        HttpServletRequest request) {
+
         List<ProjectType> projectTypes = projectTypeRepo.findAll();
         ProjectType projectType = new ProjectType();
         try {
@@ -64,9 +74,9 @@ public class ProjectController {
             if(!sessionRepository.existsById(sessionOpt.get().getId())) return new ResponseEntity<>("The project is not created", HttpStatus.BAD_REQUEST);
 
             if(user.getRole().getName().equals("admin")){
-                projectType.setName(requestProjectType.getName());
-                projectType.setDescription(requestProjectType.getDescription());
-                projectType.setImagePath(requestProjectType.getImagePath());
+                projectType.setName(name);
+                projectType.setDescription(description);
+                projectType.setImagePath(saveRequestImage(image));
                 projectTypeRepo.save(projectType);
                 return ResponseEntity.ok(Map.of("message", "Project succesfully created"));
             }
@@ -77,6 +87,28 @@ public class ProjectController {
             return new ResponseEntity<>(projectTypes, HttpStatus.OK);
         }
     }
+
+    private String saveRequestImage(MultipartFile image) {
+        String folderPath = "C:\\Users\\xanet\\Work\\web\\zalduaxa.net\\storage\\projects";
+        File folder = new File(folderPath);
+        if (!folder.exists()) {
+            folder.mkdirs();
+        }
+
+        String fileName = image.getOriginalFilename(); 
+        File destination = new File(folderPath + "\\" + fileName);
+
+        try {
+            image.transferTo(destination);
+            // Devuelve solo el path relativo que coincida con tu ResourceHandler
+            return "projects/" + fileName;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+
 
     @PostMapping(value = "/deleteProjectType", produces = { "application/json", "application/xml" })
     public ResponseEntity<?> deleteProjectType(@RequestBody RequestProjectType projectTypeName, HttpServletResponse response, HttpServletRequest request){

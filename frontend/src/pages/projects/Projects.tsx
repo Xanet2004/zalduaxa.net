@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
-import { useSession } from "@/context/SessionContext";
-import { getProjectTypes } from '@/scripts/getProjectTypes';
 import ProjectTypeCard from '@/components/ProjectTypeCard/ProjectTypeCard';
+import { useSession } from "@/context/SessionContext";
 import { addProjectType } from '@/scripts/addProjectType';
 import { deleteProjectType } from '@/scripts/deleteProjectType';
+import { getProjectTypes } from '@/scripts/getProjectTypes';
 import type { ProjectType } from '@/types/projectType';
+import type { RequestProjectType } from '@/types/requestProjectType';
+import { useEffect, useState } from 'react';
 
 export default function Projects() {
     const { user } = useSession();
@@ -18,19 +19,23 @@ export default function Projects() {
     const { refreshUser } = useSession();
 
     function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-        const { name, value } = e.target;
+        const { name, files, value } = e.target;
 
         if (isAddingProjectType) {
-            setAddProjectTypeForm(prev => ({ ...prev, [name]: value }));
+            if (name === "image" && files) {
+                setAddProjectTypeForm(prev => ({ ...prev, image: files[0] }));
+            } else {
+                setAddProjectTypeForm(prev => ({ ...prev, [name]: value }));
+            }
         } else if (isDeletingProjectType) {
             setDeleteProjectTypeForm(prev => ({ ...prev, [name]: value }));
         }
     }
 
-    const [addProjectTypeForm, setAddProjectTypeForm] = useState({
+    const [addProjectTypeForm, setAddProjectTypeForm] = useState<RequestProjectType>({
         name: "",
         description: "",
-        imagePath: "",
+        image: null,
     });
 
     const [deleteProjectTypeForm, setDeleteProjectTypeForm] = useState({
@@ -100,7 +105,7 @@ export default function Projects() {
                         <p>description</p>
                         <input name="description" value={addProjectTypeForm.description} onChange={handleChange}/>
                         <p>image</p>
-                        <input name="imagePath" value={addProjectTypeForm.imagePath} onChange={handleChange}/>
+                        <input name="image" type='file' onChange={handleChange}/>
 
                         <button type="submit" disabled={loading}>
                             {loading ? "Adding..." : "Add project type"}

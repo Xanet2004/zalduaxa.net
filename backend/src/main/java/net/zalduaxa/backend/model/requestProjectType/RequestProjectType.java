@@ -1,11 +1,13 @@
 package net.zalduaxa.backend.model.requestProjectType;
 
+import org.springframework.web.multipart.MultipartFile;
+
 public class RequestProjectType {
 
     private Integer id;
     private String name;
     private String description;
-    private String imagePath;
+    private MultipartFile image;
 
     public RequestProjectType() {}
 
@@ -13,10 +15,10 @@ public class RequestProjectType {
         this.name = name;
         this.description = description;
     }
-    public RequestProjectType(String name, String description, String imagePath) {
+    public RequestProjectType(String name, String description, MultipartFile image) {
         this.name = name;
         this.description = description;
-        this.imagePath = imagePath;
+        this.image = image;
     }
 
     // Getters and Setters
@@ -37,12 +39,12 @@ public class RequestProjectType {
         this.description = description;
     }
 
-    public String getImagePath() {
-        return imagePath;
+    public MultipartFile getImage() {
+        return image;
     }
 
-    public void setImagePath(String imagePath) {
-        this.imagePath = imagePath;
+    public void setImage(MultipartFile image) {
+        this.image = image;
     }
 
     public Integer getId() {
