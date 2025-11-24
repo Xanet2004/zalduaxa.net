@@ -1,4 +1,4 @@
-import { StrictMode, useEffect, useState } from 'react'
+import { StrictMode, useEffect } from 'react'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 
 import { SessionProvider } from '@/context/SessionContext'
@@ -15,6 +15,7 @@ import SignUp from '@/pages/session/SignUp'
 import '@/styles/global.css'
 import '@/styles/tokens.css'
 import LogOut from './pages/session/LogOut'
+import Project from './pages/project/Project'
 
 export default function App() {
     const router = createBrowserRouter([
@@ -94,6 +95,18 @@ export default function App() {
                     <Header />
                     <main className="page-container">
                         <LogOut />
+                    </main>
+                    <Footer />
+                </>
+            )
+        },
+        {
+            path: '/projects/*',
+            element: (
+                <>
+                    <Header />
+                    <main className="page-container">
+                        <Project />
                     </main>
                     <Footer />
                 </>

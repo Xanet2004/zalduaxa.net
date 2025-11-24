@@ -7,7 +7,7 @@ import type { ProjectType } from '@/types/projectType';
 import type { RequestProjectType } from '@/types/requestProjectType';
 import { useEffect, useState } from 'react';
 
-export default function Projects() {
+export default function Project() {
     const { user } = useSession();
     const isAdmin = user?.role?.name == 'admin';
     const [isAddingProjectType, setIsAddingProjectType] = useState<boolean>();
@@ -79,22 +79,30 @@ export default function Projects() {
 
     return (
         <div>
-            <h1>Projects</h1>
+            <h1>Project</h1>
             <div>
-                  {Array.isArray(projectTypes) && projectTypes.map(pt => (
+                <p>Project 1</p>
+                <p>Project 2</p>
+                <p>Project 3</p>
+                <p>Project 4</p>
+                <p>Project 5</p>
+                <p>Project 6</p>
+                <p>Project 7</p>
+                <p>Project ...</p>
+                  {/* {Array.isArray(projectTypes) && projectTypes.map(pt => (
                     <ProjectTypeCard key={pt.id} {...pt} />
-                ))}
+                ))} */}
             </div>
             {
                 isAdmin && 
                 (
-                    <button onClick={() => {setIsAddingProjectType(true); setIsDeletingProjectType(false);}}>Add Project Type</button>
+                    <button onClick={() => {setIsAddingProjectType(true); setIsDeletingProjectType(false);}}>Add Project</button>
                 )
             }
             {
                 isAdmin && 
                 (
-                    <button onClick={() => {setIsAddingProjectType(false); setIsDeletingProjectType(true);}}>Delete Project Type</button>
+                    <button onClick={() => {setIsAddingProjectType(false); setIsDeletingProjectType(true);}}>Delete Project</button>
                 )
             }
             {
