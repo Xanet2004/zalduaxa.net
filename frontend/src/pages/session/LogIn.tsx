@@ -44,7 +44,7 @@ export default function LogIn() {
                 <input type="password" name="password" value={form.password} onChange={handleChange} />
 
                 <button type="submit" disabled={loading}>
-                    {loading ? "Creating..." : "Create account"}
+                    {loading ? "Logging in..." : "Log in"}
                 </button>
             </form>
 

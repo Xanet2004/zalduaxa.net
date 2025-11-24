@@ -76,7 +76,7 @@ public class ProjectController {
             if(user.getRole().getName().equals("admin")){
                 projectType.setName(name);
                 projectType.setDescription(description);
-                projectType.setImagePath(saveRequestImage(image));
+                projectType.setImagePath(saveRequestImage(name, image));
                 projectTypeRepo.save(projectType);
                 return ResponseEntity.ok(Map.of("message", "Project succesfully created"));
             }
@@ -88,27 +88,24 @@ public class ProjectController {
         }
     }
 
-    private String saveRequestImage(MultipartFile image) {
-        String folderPath = "C:\\Users\\xanet\\Work\\web\\zalduaxa.net\\storage\\projects";
+    private String saveRequestImage(String projectTypeName, MultipartFile image) {
+        String folderPath = "C:\\Users\\xanet\\Work\\web\\zalduaxa.net\\storage\\projectTypes" + "\\" + slugify(projectTypeName);
         File folder = new File(folderPath);
         if (!folder.exists()) {
             folder.mkdirs();
         }
 
-        String fileName = image.getOriginalFilename(); 
+        String fileName = "icon.png"; 
         File destination = new File(folderPath + "\\" + fileName);
 
         try {
             image.transferTo(destination);
-            // Devuelve solo el path relativo que coincida con tu ResourceHandler
-            return "projects/" + fileName;
+            return "projectTypes/" + projectTypeName + '/' + fileName;
         } catch (IOException e) {
             e.printStackTrace();
             return null;
         }
     }
-
-
 
     @PostMapping(value = "/deleteProjectType", produces = { "application/json", "application/xml" })
     public ResponseEntity<?> deleteProjectType(@RequestBody RequestProjectType projectTypeName, HttpServletResponse response, HttpServletRequest request){
@@ -120,6 +117,7 @@ public class ProjectController {
             if(!sessionRepository.existsById(sessionOpt.get().getId())) return new ResponseEntity<>(projectTypes, HttpStatus.OK);
 
             if(user.getRole().getName().equals("admin")){
+                deleteProjectTypeImage(projectTypeName.getName(), projectTypeRepo.findByName(projectTypeName.getName()).getImagePath());
                 projectTypeRepo.deleteById(projectTypeRepo.findByName(projectTypeName.getName()).getId());
                 return ResponseEntity.ok(Map.of("message", "Project type succesfully deleted"));
             }
@@ -129,6 +127,20 @@ public class ProjectController {
         } catch (Exception e) {
             return new ResponseEntity<>(projectTypes, HttpStatus.OK);
         }
+    }
+
+    private Boolean deleteProjectTypeImage(String projectTypeName, String imagePath) {
+        String folderPath = "C:\\Users\\xanet\\Work\\web\\zalduaxa.net\\storage\\projectTypes" + "\\" + slugify(projectTypeName);
+        File folder = new File(folderPath);
+        if (!folder.exists()) {
+            folder.mkdirs();
+        }
+
+        String fileName = "icon.png"; 
+        File file = new File(folderPath + "\\" + fileName);
+
+        file.delete();
+        return true;
     }
 
     private String extractToken(HttpServletRequest request) {
@@ -147,4 +159,18 @@ public class ProjectController {
 
         return null;
     }
+
+    public static String slugify(String input) {
+    String text = input.toLowerCase();
+
+    text = java.text.Normalizer.normalize(text, java.text.Normalizer.Form.NFD);
+    text = text.replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
+    text = text.replaceAll("\\s+", "-");
+    text = text.replaceAll("[^a-z0-9-_]", "");
+    text = text.replaceAll("-{2,}", "-");
+    text = text.replaceAll("^-|-$", "");
+
+    return text;
+}
+
 }

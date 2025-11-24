@@ -17,9 +17,9 @@ public class ProjectType {
 
     @Column(nullable = false)
     private String name;
-
     private String description;
 
+    @Column(name = "image_path")
     private String imagePath;
 
     // Constructors
