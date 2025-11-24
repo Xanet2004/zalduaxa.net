@@ -23,7 +23,7 @@ export default function LogIn() {
             setLoading(true);
             const loginError = await login(form);
             if (loginError) {
-                setError(loginError as string);
+                setError(loginError instanceof Error ? loginError.message : String(loginError));
             }
             await refreshUser();
             setLoading(false);

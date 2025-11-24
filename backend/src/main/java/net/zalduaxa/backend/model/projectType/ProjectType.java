@@ -17,6 +17,8 @@ public class ProjectType {
 
     @Column(nullable = false)
     private String name;
+    @Column(name = "storage_path")
+    private String storagePath;
     private String description;
 
     @Column(name = "image_path")
@@ -25,14 +27,16 @@ public class ProjectType {
     // Constructors
     public ProjectType() {}
 
-    public ProjectType(String name, String description) {
+    public ProjectType(String name, String description, String storagePath) {
         this.name = name;
         this.description = description;
+        this.storagePath = storagePath;
     }
-    public ProjectType(String name, String description, String imagePath) {
+    public ProjectType(String name, String description, String imagePath, String storagePath) {
         this.name = name;
         this.description = description;
         this.imagePath = imagePath;
+        this.storagePath = storagePath;
     }
 
     // Getters and Setters
@@ -66,5 +70,13 @@ public class ProjectType {
 
     public void setImagePath(String imagePath) {
         this.imagePath = imagePath;
+    }
+
+    public String getStoragePath() {
+        return storagePath;
+    }
+
+    public void setStoragePath(String storagePath) {
+        this.storagePath = storagePath;
     }
 }

@@ -6,6 +6,7 @@ public class RequestProjectType {
 
     private Integer id;
     private String name;
+    private String storagePath;
     private String description;
     private MultipartFile image;
 

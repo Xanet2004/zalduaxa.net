@@ -81,6 +81,7 @@ CREATE TABLE project_types (
   id SERIAL PRIMARY KEY,
   name VARCHAR(255),
   description VARCHAR(255),
+  storage_path VARCHAR(255),
   image_path VARCHAR(255)
 );
 

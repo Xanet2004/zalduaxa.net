@@ -2,6 +2,7 @@ export async function addProjectType(form: any) {
     try {
         const formData = new FormData();
         formData.append("name", form.name);
+        formData.append("storage_path", form.storage_path);
         formData.append("description", form.description);
         formData.append("image", form.image);
 

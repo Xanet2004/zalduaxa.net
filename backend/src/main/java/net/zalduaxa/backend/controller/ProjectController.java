@@ -39,6 +39,11 @@ import net.zalduaxa.backend.service.JwtService;
 @RestController
 @RequestMapping("/project")
 public class ProjectController {
+
+    private static final String STORAGE_PATH = "C:\\Users\\xanet\\Work\\web\\zalduaxa.net\\storage";
+    private static final String PROJECT_TYPES_PATH = STORAGE_PATH + "\\projectTypes";
+    private static final String PROJECTS_PATH = STORAGE_PATH + "\\projects";
+
     @Autowired
     ProjectTypeRepository projectTypeRepo;
 
@@ -62,6 +67,7 @@ public class ProjectController {
     public ResponseEntity<?> addProjectType(
         @RequestParam("name") String name,
         @RequestParam("description") String description,
+        @RequestParam("storage_path") String storagePath,
         @RequestPart("image") MultipartFile image,
         HttpServletRequest request) {
 
@@ -71,12 +77,13 @@ public class ProjectController {
             User user = authService.getUserFromToken(extractToken(request), jwtService);
             Optional<Session> sessionOpt = sessionRepository.findByUserId(user.getId().longValue());
             // ? Check user has a session
-            if(!sessionRepository.existsById(sessionOpt.get().getId())) return new ResponseEntity<>("The project is not created", HttpStatus.BAD_REQUEST);
+            if(!sessionRepository.existsById(sessionOpt.get().getId())) return new ResponseEntity<>("The user has no permissions", HttpStatus.BAD_REQUEST);
 
             if(user.getRole().getName().equals("admin")){
                 projectType.setName(name);
                 projectType.setDescription(description);
-                projectType.setImagePath(saveRequestImage(name, image));
+                projectType.setStoragePath(slugify(storagePath));
+                projectType.setImagePath(saveRequestImage(slugify(storagePath), image));
                 projectTypeRepo.save(projectType);
                 return ResponseEntity.ok(Map.of("message", "Project succesfully created"));
             }
@@ -88,24 +95,24 @@ public class ProjectController {
         }
     }
 
-    private String saveRequestImage(String projectTypeName, MultipartFile image) {
-        String folderPath = "C:\\Users\\xanet\\Work\\web\\zalduaxa.net\\storage\\projectTypes" + "\\" + slugify(projectTypeName);
-        File folder = new File(folderPath);
+    private String saveRequestImage(String folderName, MultipartFile image) {        
+        File folder = new File(PROJECT_TYPES_PATH, folderName);
         if (!folder.exists()) {
-            folder.mkdirs();
+            boolean created = folder.mkdirs();
+            if(!created){
+                throw new RuntimeException("Cannot create folder " + folder.getAbsolutePath());
+            }
         }
-
-        String fileName = "icon.png"; 
-        File destination = new File(folderPath + "\\" + fileName);
-
+        File destination = new File(folder, "icon.png");
         try {
             image.transferTo(destination);
-            return "projectTypes/" + projectTypeName + '/' + fileName;
+            return "projectTypes/" + folderName + "/icon.png";
         } catch (IOException e) {
             e.printStackTrace();
-            return null;
+            throw new RuntimeException("Failed to save file", e);
         }
     }
+
 
     @PostMapping(value = "/deleteProjectType", produces = { "application/json", "application/xml" })
     public ResponseEntity<?> deleteProjectType(@RequestBody RequestProjectType projectTypeName, HttpServletResponse response, HttpServletRequest request){
@@ -117,8 +124,10 @@ public class ProjectController {
             if(!sessionRepository.existsById(sessionOpt.get().getId())) return new ResponseEntity<>(projectTypes, HttpStatus.OK);
 
             if(user.getRole().getName().equals("admin")){
-                deleteProjectTypeImage(projectTypeName.getName(), projectTypeRepo.findByName(projectTypeName.getName()).getImagePath());
-                projectTypeRepo.deleteById(projectTypeRepo.findByName(projectTypeName.getName()).getId());
+                for (ProjectType projectType : projectTypes) {
+                    deleteProjectTypeFolder(projectType.getStoragePath());
+                    projectTypeRepo.deleteById(projectType.getId());
+                }
                 return ResponseEntity.ok(Map.of("message", "Project type succesfully deleted"));
             }
 
@@ -129,17 +138,14 @@ public class ProjectController {
         }
     }
 
-    private Boolean deleteProjectTypeImage(String projectTypeName, String imagePath) {
-        String folderPath = "C:\\Users\\xanet\\Work\\web\\zalduaxa.net\\storage\\projectTypes" + "\\" + slugify(projectTypeName);
+    private Boolean deleteProjectTypeFolder(String storagePath) {
+        String folderPath = PROJECT_TYPES_PATH + "\\" + storagePath;
         File folder = new File(folderPath);
         if (!folder.exists()) {
             folder.mkdirs();
         }
 
-        String fileName = "icon.png"; 
-        File file = new File(folderPath + "\\" + fileName);
-
-        file.delete();
+        folder.delete();
         return true;
     }
 
@@ -161,16 +167,16 @@ public class ProjectController {
     }
 
     public static String slugify(String input) {
-    String text = input.toLowerCase();
+        String text = input.toLowerCase();
 
-    text = java.text.Normalizer.normalize(text, java.text.Normalizer.Form.NFD);
-    text = text.replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
-    text = text.replaceAll("\\s+", "-");
-    text = text.replaceAll("[^a-z0-9-_]", "");
-    text = text.replaceAll("-{2,}", "-");
-    text = text.replaceAll("^-|-$", "");
+        text = java.text.Normalizer.normalize(text, java.text.Normalizer.Form.NFD);
+        text = text.replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
+        text = text.replaceAll("\\s+", "-");
+        text = text.replaceAll("[^a-z0-9-_]", "");
+        text = text.replaceAll("-{2,}", "-");
+        text = text.replaceAll("^-|-$", "");
 
-    return text;
-}
+        return text;
+    }
 
 }
