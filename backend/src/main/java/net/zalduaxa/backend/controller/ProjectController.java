@@ -82,8 +82,14 @@ public class ProjectController {
             if(user.getRole().getName().equals("admin")){
                 projectType.setName(name);
                 projectType.setDescription(description);
-                projectType.setStoragePath(slugify(storagePath));
-                projectType.setImagePath(saveRequestImage(slugify(storagePath), image));
+                if(!storagePath.equals("")){
+                    projectType.setStoragePath(slugify(storagePath));
+                    projectType.setImagePath(saveRequestImage(slugify(storagePath), image));
+                }
+                else{
+                    projectType.setStoragePath(slugify(name));
+                    projectType.setImagePath(saveRequestImage(slugify(name), image));
+                }
                 projectTypeRepo.save(projectType);
                 return ResponseEntity.ok(Map.of("message", "Project succesfully created"));
             }
@@ -121,7 +127,9 @@ public class ProjectController {
             User user = authService.getUserFromToken(extractToken(request), jwtService);
             Optional<Session> sessionOpt = sessionRepository.findByUserId(user.getId().longValue());
             // ? Check user has a session
-            if(!sessionRepository.existsById(sessionOpt.get().getId())) return new ResponseEntity<>(projectTypes, HttpStatus.OK);
+            if(sessionOpt.isEmpty() || !sessionRepository.existsById(sessionOpt.get().getId())) return new ResponseEntity<>(Map.of("message", "Invalid session"), HttpStatus.BAD_REQUEST);
+
+            if(projectTypes.size() == 1 && !projectTypeRepo.existsById(projectTypes.get(0).getId())) return new ResponseEntity<>(Map.of("message", "Project type not found"), HttpStatus.BAD_REQUEST);
 
             if(user.getRole().getName().equals("admin")){
                 for (ProjectType projectType : projectTypes) {
@@ -130,7 +138,6 @@ public class ProjectController {
                 }
                 return ResponseEntity.ok(Map.of("message", "Project type succesfully deleted"));
             }
-
             return ResponseEntity.ok(Map.of("message", "You need to be admin to delete a new project type"));
 
         } catch (Exception e) {
