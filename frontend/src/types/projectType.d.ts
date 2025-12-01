@@ -3,5 +3,4 @@ export interface ProjectType{
     name: string,
     description: string,
     storagePath: string,
-    imagePath: string
 }

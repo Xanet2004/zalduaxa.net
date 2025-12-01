@@ -21,21 +21,12 @@ public class ProjectType {
     private String storagePath;
     private String description;
 
-    @Column(name = "image_path")
-    private String imagePath;
-
     // Constructors
     public ProjectType() {}
 
     public ProjectType(String name, String description, String storagePath) {
         this.name = name;
         this.description = description;
-        this.storagePath = storagePath;
-    }
-    public ProjectType(String name, String description, String imagePath, String storagePath) {
-        this.name = name;
-        this.description = description;
-        this.imagePath = imagePath;
         this.storagePath = storagePath;
     }
 
@@ -62,14 +53,6 @@ public class ProjectType {
 
     public void setDescription(String description) {
         this.description = description;
-    }
-
-    public String getImagePath() {
-        return imagePath;
-    }
-
-    public void setImagePath(String imagePath) {
-        this.imagePath = imagePath;
     }
 
     public String getStoragePath() {

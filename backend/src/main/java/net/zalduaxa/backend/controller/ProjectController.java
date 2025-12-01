@@ -76,28 +76,27 @@ public class ProjectController {
             if (sessionOpt.isEmpty() || !sessionRepository.existsById(sessionOpt.get().getId()))
                 return new ResponseEntity<>(Map.of("message", "Invalid session"), HttpStatus.BAD_REQUEST);
 
-            if ("admin".equals(user.getRole().getName())) {
-                ProjectType projectType = new ProjectType();
-                projectType.setName(name);
-                projectType.setDescription(description);
+            if (!"admin".equals(user.getRole().getName())) 
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "You need to be admin to add a new project type"));
 
-                String slug = !storagePath.isEmpty() ? slugify(storagePath) : slugify(name);
-                projectType.setStoragePath(slug);
-                projectType.setImagePath(saveRequestImage(slug, image));
+            if (projectTypeRepo.findByName(name) != null)
+                return new ResponseEntity<>(Map.of("message", "Project Type already exists"), HttpStatus.BAD_REQUEST);
 
-                projectTypeRepo.save(projectType);
-                return ResponseEntity.ok(Map.of("message", "Project successfully created"));
-            }
-
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", "You need to be admin to add a new project type"));
+            ProjectType projectType = new ProjectType();
+            projectType.setName(name);
+            projectType.setDescription(description);
+            saveRequestImage(storagePath, image);
+            String slug = !storagePath.isEmpty() ? slugify(storagePath) : slugify(name);
+            projectType.setStoragePath(slug);
+            projectTypeRepo.save(projectType);
+            return ResponseEntity.ok(Map.of("message", "Project successfully created"));
 
         } catch (Exception e) {
             return new ResponseEntity<>(projectTypes, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    private String saveRequestImage(String folderName, MultipartFile image) {
+    private Boolean saveRequestImage(String folderName, MultipartFile image) {
         try {
             File folder = new File(PROJECT_TYPES_PATH, folderName);
             if (!folder.exists() && !folder.mkdirs()) {
@@ -105,7 +104,7 @@ public class ProjectController {
             }
             File destination = new File(folder, "icon.png");
             image.transferTo(destination);
-            return "projectTypes/" + folderName + "/icon.png";
+            return true;
         } catch (IOException e) {
             throw new RuntimeException("Failed to save file", e);
         }
@@ -142,12 +141,14 @@ public class ProjectController {
         }
     }
 
-    private Boolean deleteProjectTypeFolder(String storagePath) {
-        File folder = new File(PROJECT_TYPES_PATH + "\\" + storagePath);
-        if (!folder.exists())
-            return false;
-        folder.delete();
-        return true;
+    private void deleteProjectTypeFolder(String storagePath) {
+        java.nio.file.Path dir = java.nio.file.Paths.get(PROJECT_TYPES_PATH + '\\' + storagePath);
+        if (!java.nio.file.Files.exists(dir)) return;
+        try (java.util.stream.Stream<java.nio.file.Path> paths = java.nio.file.Files.walk(dir)) {
+            paths.sorted(java.util.Comparator.reverseOrder()).forEach(p -> {
+                try { java.nio.file.Files.delete(p); } catch (java.io.IOException e) { throw new RuntimeException(e); }
+            });
+        } catch (java.io.IOException e) { throw new RuntimeException(e); }
     }
 
     private String extractToken(HttpServletRequest request) {
