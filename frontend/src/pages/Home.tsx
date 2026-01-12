@@ -1,4 +1,4 @@
-export default function Home(userSession?: any) {
+export default function Home() {
     return (
         <div>
             <h1>HOME</h1>
