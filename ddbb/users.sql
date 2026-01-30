@@ -1,5 +1,5 @@
 SELECT *
-FROM zalduaxanetdb.users;
+FROM zalduaxanet.users;
 
 SELECT *
-FROM zalduaxanetdb.sessions;
+FROM zalduaxanet.sessions;

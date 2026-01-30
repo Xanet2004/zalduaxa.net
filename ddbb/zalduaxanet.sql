@@ -1,8 +1,8 @@
 -- Drop old schema and create new one
-DROP SCHEMA IF EXISTS zalduaxanetDB CASCADE;
-CREATE SCHEMA zalduaxanetDB;
+DROP SCHEMA IF EXISTS zalduaxanet CASCADE;
+CREATE SCHEMA zalduaxanet;
 
-SET search_path TO zalduaxanetDB;
+SET search_path TO zalduaxanet;
 
 -- Lookup tables
 CREATE TABLE visibilities (

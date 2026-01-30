@@ -1,1 +1,1 @@
-TRUNCATE TABLE zalduaxanetdb.sessions;
+TRUNCATE TABLE zalduaxanet.sessions;
