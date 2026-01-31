@@ -34,34 +34,7 @@ docker ps
 docker logs -f zalduaxa-net-postgres-dev
 ```
 
-### 1.2 Backend database configuration (dev)
-
-If your backend runs locally, it should connect to PostgreSQL via `localhost`:
-
-**Example (application-dev.properties):**
-```properties
-spring.datasource.url=jdbc:postgresql://localhost:5432/zalduaxa_net_dev
-spring.datasource.username=app
-spring.datasource.password=app
-```
-
-Run backend with the dev profile (example):
-
-```bash
-./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
-```
-
-### 1.3 Frontend (dev)
-
-Run frontend normally (example):
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-### 1.4 Stop development DB
+### 1.2 Stop development DB
 
 ```bash
 docker compose -f docker-compose.dev.yml down
