@@ -1,2 +1,2 @@
 SELECT *
-FROM zalduaxanet.projects;
+FROM zalduaxanet.project;

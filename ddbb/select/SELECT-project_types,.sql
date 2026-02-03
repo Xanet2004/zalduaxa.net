@@ -1,2 +1,2 @@
 SELECT *
-FROM zalduaxanet.project_types;
+FROM zalduaxanet.project_type;

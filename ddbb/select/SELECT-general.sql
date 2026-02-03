@@ -1,11 +1,11 @@
 SELECT *
-FROM zalduaxanet.users;
+FROM zalduaxanet.user;
 
 SELECT *
-FROM zalduaxanet.sessions;
+FROM zalduaxanet.session;
 
 SELECT *
-FROM zalduaxanet.projects;
+FROM zalduaxanet.project;
 
 SELECT *
-FROM zalduaxanet.project_types;
+FROM zalduaxanet.project_type;

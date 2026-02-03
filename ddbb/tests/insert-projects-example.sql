@@ -1,13 +1,13 @@
-INSERT INTO zalduaxanet.project_types (name, description, storage_path)
+INSERT INTO zalduaxanet.project_type (name, description, storage_path)
 SELECT
   'web',
   'Web projects',
   '/storage/projects/web'
 WHERE NOT EXISTS (
-  SELECT 1 FROM zalduaxanet.project_types WHERE name = 'web'
+  SELECT 1 FROM zalduaxanet.project_type WHERE name = 'web'
 );
 
-INSERT INTO zalduaxanet.projects (
+INSERT INTO zalduaxanet.project (
   storage_id,
   owner_id,
   name,
@@ -25,15 +25,15 @@ INSERT INTO zalduaxanet.projects (
 )
 SELECT
   (SELECT id FROM zalduaxanet.storage WHERE name = 'local-storage' ORDER BY id DESC LIMIT 1),
-  (SELECT id FROM zalduaxanet.users WHERE username = 'admin' ORDER BY id DESC LIMIT 1),
+  (SELECT id FROM zalduaxanet.user WHERE username = 'admin' ORDER BY id DESC LIMIT 1),
   'Example Project',
   'example-project',
-  (SELECT id FROM zalduaxanet.project_types WHERE name = 'web' ORDER BY id DESC LIMIT 1),
+  (SELECT id FROM zalduaxanet.project_type WHERE name = 'web' ORDER BY id DESC LIMIT 1),
   'Example project inserted with seed script.',
   '/storage/projects/web/example-project/icon.png',
   '/storage/projects/web/example-project',
-  (SELECT id FROM zalduaxanet.visibilities WHERE code = 'public' ORDER BY id DESC LIMIT 1),
-  (SELECT id FROM zalduaxanet.statuses WHERE code = 'draft' ORDER BY id DESC LIMIT 1),
+  (SELECT id FROM zalduaxanet.visibilitie WHERE code = 'public' ORDER BY id DESC LIMIT 1),
+  (SELECT id FROM zalduaxanet.status WHERE code = 'draft' ORDER BY id DESC LIMIT 1),
   '0.1.0',
   '{"tags":["demo"],"visibility":"public"}'::json,
   CURRENT_TIMESTAMP,
