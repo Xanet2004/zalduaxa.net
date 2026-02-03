@@ -14,7 +14,7 @@ import jakarta.persistence.Table;
 import net.zalduaxa.backend.model.user.User;
 
 @Entity
-@Table(name = "sessions")
+@Table(name = "session")
 public class Session {
 
     @Id

@@ -7,7 +7,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "Project")
+@Table(name = "project")
 public class Project {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,8 +25,6 @@ public class Project {
         this.name = name;
         this.slug = slug;
         this.type = type;
-        this.iconPath = iconPath;
-        this.path = path;
         this.createdDate = createdDate;
         this.updatedDate = updatedDate;
     }
@@ -55,18 +53,6 @@ public class Project {
     public void setType(String type) {
         this.type = type;
     }
-    public String getIconPath() {
-        return iconPath;
-    }
-    public void setIconPath(String iconPath) {
-        this.iconPath = iconPath;
-    }
-    public String getPath() {
-        return path;
-    }
-    public void setPath(String path) {
-        this.path = path;
-    }
     public String getCreatedDate() {
         return createdDate;
     }
@@ -79,6 +65,4 @@ public class Project {
     public void setUpdatedDate(String updatedDate) {
         this.updatedDate = updatedDate;
     }
-
-    
 }
