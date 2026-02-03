@@ -174,8 +174,6 @@ public class ProjectController {
     @GetMapping("/{slug}/projects")
     public Map<String, Object> getProjectsByType(@PathVariable String slug) {
         // TODO: implement slug on project types, fix/upgrade/clean project storage path system
-        // ? slug = identificador estable para URL (web)
-        // ? storage_path = ruta real (/storage/projects/web) o subcarpeta (projects/web)
 
         // var projects = projectRepo.findByTypeId(projectTypeRepo.findByTypeId(null));
         // return Map.of("projects", projects);

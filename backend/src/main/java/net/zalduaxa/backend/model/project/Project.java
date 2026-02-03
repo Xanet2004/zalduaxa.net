@@ -15,8 +15,6 @@ public class Project {
     private String name;
     private String slug;
     private String type;
-    private String iconPath;
-    private String path;
     private String createdDate;
     private String updatedDate;
 
