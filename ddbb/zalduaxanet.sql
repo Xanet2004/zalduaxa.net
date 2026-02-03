@@ -225,3 +225,17 @@ INSERT INTO users (
     CURRENT_TIMESTAMP,
     CURRENT_TIMESTAMP
 );
+
+  -- Crear almacenamiento local por defecto
+INSERT INTO storage (name, bucket, base_path, config, description, created_at, updated_at)
+SELECT
+  'local-storage',
+  'local-bucket',
+  '/storage',
+  '{"provider":"local"}'::json,
+  'Default local storage',
+  CURRENT_TIMESTAMP,
+  CURRENT_TIMESTAMP
+WHERE NOT EXISTS (
+  SELECT 1 FROM storage WHERE name = 'local-storage'
+);
