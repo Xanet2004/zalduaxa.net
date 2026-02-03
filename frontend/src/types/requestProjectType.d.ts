@@ -1,7 +1,7 @@
 export interface RequestProjectType{
     id?: integer,
     name: string,
-    storage_path: string,
+    slug: string,
     description: string,
     image: File | null
 }

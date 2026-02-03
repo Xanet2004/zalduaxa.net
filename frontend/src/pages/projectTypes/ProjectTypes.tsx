@@ -34,7 +34,7 @@ export default function Projects() {
 
     const [addProjectTypeForm, setAddProjectTypeForm] = useState<RequestProjectType>({
         name: "",
-        storage_path: "",
+        slug: "",
         description: "",
         image: null,
     });
@@ -104,7 +104,7 @@ export default function Projects() {
                         <p>name</p>
                         <input name="name" value={addProjectTypeForm.name} onChange={handleChange}/>
                         <p>storaged name</p>
-                        <input name="storage_path" value={addProjectTypeForm.storage_path} onChange={handleChange}/>
+                        <input name="slug" value={addProjectTypeForm.slug} onChange={handleChange}/>
                         <p>description</p>
                         <input name="description" value={addProjectTypeForm.description} onChange={handleChange}/>
                         <p>image</p>
