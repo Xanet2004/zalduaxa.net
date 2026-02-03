@@ -17,17 +17,17 @@ public class ProjectType {
 
     @Column(nullable = false)
     private String name;
-    @Column(name = "storage_path")
-    private String storagePath;
+    @Column(name = "slug", unique = true)
+    private String slug;
     private String description;
 
     // Constructors
     public ProjectType() {}
 
-    public ProjectType(String name, String description, String storagePath) {
+    public ProjectType(String name, String description, String slug) {
         this.name = name;
         this.description = description;
-        this.storagePath = storagePath;
+        this.slug = slug;
     }
 
     // Getters and Setters
@@ -55,11 +55,11 @@ public class ProjectType {
         this.description = description;
     }
 
-    public String getStoragePath() {
-        return storagePath;
+    public String getSlug() {
+        return slug;
     }
 
-    public void setStoragePath(String storagePath) {
-        this.storagePath = storagePath;
+    public void setSlug(String slug) {
+        this.slug = slug;
     }
 }

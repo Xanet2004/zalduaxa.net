@@ -68,7 +68,7 @@ public class ProjectController {
     public ResponseEntity<?> addProjectType(
             @RequestParam("name") String name,
             @RequestParam("description") String description,
-            @RequestParam("storage_path") String storagePath,
+            @RequestParam("slug") String slug,
             @RequestPart("image") MultipartFile image,
             HttpServletRequest request) {
 
@@ -91,9 +91,9 @@ public class ProjectController {
             ProjectType projectType = new ProjectType();
             projectType.setName(name);
             projectType.setDescription(description);
-            saveRequestImage(storagePath, image);
-            String slug = !storagePath.isEmpty() ? slugify(storagePath) : slugify(name);
-            projectType.setStoragePath(slug);
+            slug = !slug.isEmpty() ? slugify(slug) : slugify(name);
+            saveRequestImage(slug, image);
+            projectType.setSlug(slug);
             projectTypeRepo.save(projectType);
             return ResponseEntity.ok(Map.of("message", "Project successfully created"));
 
@@ -132,7 +132,7 @@ public class ProjectController {
             if ("admin".equals(user.getRole().getName())) {
                 for (ProjectType projectType : projectTypes) {
                     if(projectType.getName().equals(requestProjectType.getName())){
-                        deleteProjectTypeFolder(projectType.getStoragePath());
+                        deleteProjectTypeFolder(projectType.getSlug());
                         projectTypeRepo.deleteById(projectType.getId());
                     }
                 }
