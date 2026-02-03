@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,6 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import net.zalduaxa.backend.model.project.ProjectRepository;
 import net.zalduaxa.backend.model.projectType.ProjectType;
 import net.zalduaxa.backend.model.projectType.ProjectTypeRepository;
 import net.zalduaxa.backend.model.requestProjectType.RequestProjectType;
@@ -42,6 +44,9 @@ public class ProjectController {
 
     @Autowired
     ProjectTypeRepository projectTypeRepo;
+
+    @Autowired
+    ProjectRepository projectRepo;
 
     @Autowired
     private AuthService authService;
@@ -164,6 +169,13 @@ public class ProjectController {
         }
         return null;
     }
+
+    @GetMapping("/{slug}/projects")
+    public Map<String, Object> getProjectsByType(@PathVariable String slug) {
+        var projects = projectRepo.findByProjectTypeSlug(slug);
+        return Map.of("projects", projects);
+    }
+
 
     public static String slugify(String input) {
         String text = input.toLowerCase();

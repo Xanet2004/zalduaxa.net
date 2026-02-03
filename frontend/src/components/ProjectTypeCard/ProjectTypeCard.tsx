@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 export default function ProjectTypeCard(props: ProjectType) {
     return (
-        <Link to={`/${props.storagePath}`}>
+        <Link to={`/projects/${props.name}`}>
             <h2>{props.name}</h2>
             {props.description && <p>Description: {props.description}</p>}
             <img src={`${import.meta.env.VITE_API_URL}/storage/projectTypes/${props.storagePath}/icon.png`} alt={props.name} style={{width: '64px', height:'64px'}}/>
