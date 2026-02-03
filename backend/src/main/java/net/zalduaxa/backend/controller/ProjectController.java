@@ -173,14 +173,10 @@ public class ProjectController {
 
     @GetMapping("/{slug}/projects")
     public Map<String, Object> getProjectsByType(@PathVariable String slug) {
-        // TODO: implement slug on project types, fix/upgrade/clean project storage path system
-
-        // var projects = projectRepo.findByTypeId(projectTypeRepo.findByTypeId(null));
-        // return Map.of("projects", projects);
-        return null;
+        String cleanSlug = slugify(slug);
+        var projects = projectRepo.findByProjectTypeSlug(cleanSlug);
+        return Map.of("projects", projects);
     }
-
-
 
     public static String slugify(String input) {
         String text = input.toLowerCase();

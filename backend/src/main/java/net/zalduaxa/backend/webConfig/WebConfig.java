@@ -9,6 +9,6 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/storage/**")
-                .addResourceLocations("file:C:/Users/xanet/Work/web/zalduaxa.net/storage/");
+                .addResourceLocations("file:C:/Users/xanet/SynologyDrive/Work/Personal/html/y/zalduaxa.net/storage/");
     }
 }
