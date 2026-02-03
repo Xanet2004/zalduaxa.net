@@ -5,4 +5,4 @@ SELECT *
 FROM zalduaxanet.sessions;
 
 SELECT *
-FROM zalduaxanet.project;
+FROM zalduaxanet.projects;
