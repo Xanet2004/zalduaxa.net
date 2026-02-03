@@ -68,7 +68,7 @@ public class ProjectController {
 
         List<ProjectType> projectTypes = projectTypeRepo.findAll();
         try {
-            User user = authService.getUserFromToken(extractToken(request), jwtService);
+            User user = authService.getUserFromToken(extractToken(request));
             if (user == null)
                 return new ResponseEntity<>(Map.of("message", "Invalid user"), HttpStatus.UNAUTHORIZED);
 
@@ -115,7 +115,7 @@ public class ProjectController {
             HttpServletResponse response, HttpServletRequest request) {
         List<ProjectType> projectTypes = projectTypeRepo.findAll();
         try {
-            User user = authService.getUserFromToken(extractToken(request), jwtService);
+            User user = authService.getUserFromToken(extractToken(request));
             if (user == null)
                 return new ResponseEntity<>(Map.of("message", "Invalid user"), HttpStatus.UNAUTHORIZED);
 
