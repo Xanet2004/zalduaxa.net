@@ -38,6 +38,7 @@ import net.zalduaxa.backend.service.JwtService;
 @RequestMapping("/project")
 public class ProjectController {
 
+    // TODO: BASE PATH FROM STORAGE ON DDBB
     private static final String STORAGE_PATH = "C:\\Users\\xanet\\Work\\web\\zalduaxa.net\\storage";
     private static final String PROJECT_TYPES_PATH = STORAGE_PATH + "\\projectTypes";
     private static final String PROJECTS_PATH = STORAGE_PATH + "\\projects";
@@ -173,6 +174,9 @@ public class ProjectController {
     @GetMapping("/{slug}/projects")
     public Map<String, Object> getProjectsByType(@PathVariable String slug) {
         // TODO: implement slug on project types, fix/upgrade/clean project storage path system
+        // ? slug = identificador estable para URL (web)
+        // ? storage_path = ruta real (/storage/projects/web) o subcarpeta (projects/web)
+
         // var projects = projectRepo.findByTypeId(projectTypeRepo.findByTypeId(null));
         // return Map.of("projects", projects);
         return null;

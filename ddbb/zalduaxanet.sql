@@ -77,23 +77,23 @@ CREATE TABLE storage (
   updated_at TIMESTAMP
 );
 
-CREATE TABLE project_types (
+CREATE TABLE project_type (
   id SERIAL PRIMARY KEY,
   name VARCHAR(255),
   description VARCHAR(255),
-  storage_path VARCHAR(255)
+  slug VARCHAR(255),
+  UNIQUE (slug)
 );
 
-CREATE TABLE projects (
+CREATE TABLE project (
   id SERIAL PRIMARY KEY,
   storage_id INT REFERENCES storage(id),
   owner_id INT REFERENCES users(id),
   name VARCHAR(255),
   slug VARCHAR(255),
-  type_id INT REFERENCES project_types(id),
+  type_id INT REFERENCES project_type(id),
   description TEXT,
   icon_path VARCHAR(255),
-  path VARCHAR(255),
   visibility_id INT REFERENCES visibilities(id),
   status_id INT REFERENCES statuses(id),
   version VARCHAR(255),
@@ -105,7 +105,7 @@ CREATE TABLE projects (
 );
 
 CREATE TABLE project_collaborators (
-  project_id INT REFERENCES projects(id) ON DELETE CASCADE,
+  project_id INT REFERENCES project(id) ON DELETE CASCADE,
   user_id INT REFERENCES users(id) ON DELETE CASCADE,
   role_id INT REFERENCES collaborator_roles(id),
   invited_by INT REFERENCES users(id),
