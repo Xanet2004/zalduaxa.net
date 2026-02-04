@@ -5,7 +5,7 @@ This is the current implementation checklist for the portfolio platform (backend
 
 ## Status legend
 - [x] Done (verified in current code)
-- [x*] Done (per your notes, not verified in the files I saw)
+- [x*] Done (not verified)
 - [ ] Pending
 - [ ] Pending (nice-to-have)
 
@@ -51,7 +51,7 @@ This is the current implementation checklist for the portfolio platform (backend
 - [ ] Consider a clean DTO layer (Request/Response objects) for projects (avoid leaking DB entity shapes)
 
 ### Storage / Files
-- [x*] Backend serves `/storage/**` using `storage.path` from `application.properties`
+- [x] Backend serves `/storage/**` using `storage.path` from `application.properties`
 - [ ] Remove hardcoded filesystem paths in controllers (use `storage.path` or DB `storage.base_path`)
 - [ ] Use the `storage` table properly:
   - load base path from DB (or keep it in properties if you want ultra-simple)
