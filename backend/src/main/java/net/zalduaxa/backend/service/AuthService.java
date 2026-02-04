@@ -2,10 +2,16 @@ package net.zalduaxa.backend.service;
 
 import java.util.Optional;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
+import net.zalduaxa.backend.exception.BadRequestException;
+import net.zalduaxa.backend.exception.NotFoundException;
+import net.zalduaxa.backend.exception.UnauthorizedException;
 import net.zalduaxa.backend.model.requestUser.RequestUser;
+import net.zalduaxa.backend.model.role.RoleRepository;
+import net.zalduaxa.backend.model.session.Session;
+import net.zalduaxa.backend.model.session.SessionRepository;
 import net.zalduaxa.backend.model.user.User;
 import net.zalduaxa.backend.model.user.UserRepository;
 import net.zalduaxa.backend.utils.PasswordAuthentication;
@@ -13,64 +19,150 @@ import net.zalduaxa.backend.utils.PasswordAuthentication;
 @Service
 public class AuthService {
 
-    @Autowired
-    private UserRepository userRepo;
-    private PasswordAuthentication passAuth;
+    private final UserRepository userRepo;
+    private final RoleRepository roleRepo;
+    private final SessionRepository sessionRepo;
+    private final JwtService jwtService;
+    private final PasswordAuthentication passAuth;
 
-    public AuthService() {
+    public AuthService(
+        UserRepository userRepo,
+        RoleRepository roleRepo,
+        SessionRepository sessionRepo,
+        JwtService jwtService
+    ) {
+        this.userRepo = userRepo;
+        this.roleRepo = roleRepo;
+        this.sessionRepo = sessionRepo;
+        this.jwtService = jwtService;
         this.passAuth = new PasswordAuthentication();
     }
 
+    // ------------------------
+    // Signup
+    // ------------------------
+    public User register(RequestUser req) {
+        if (req.getUsername() == null || req.getUsername().isBlank()) {
+            throw new BadRequestException("Username is required");
+        }
+        if (req.getEmail() == null || req.getEmail().isBlank()) {
+            throw new BadRequestException("Email is required");
+        }
+        if (req.getPassword() == null || req.getPassword().isBlank()) {
+            throw new BadRequestException("Password is required");
+        }
 
-    public User register(RequestUser req) throws Exception {
-
-        // Check repeated username/email
         if (userRepo.existsByUsername(req.getUsername())) {
-            throw new Exception("Username already exists");
+            throw new BadRequestException("Username already exists");
         }
-
         if (userRepo.existsByEmail(req.getEmail())) {
-            throw new Exception("Email already exists");
+            throw new BadRequestException("Email already exists");
         }
-
-        // Check repeated password
         if (!req.getPassword().equals(req.getRepeated_password())) {
-            throw new Exception("Passwords do not match");
+            throw new BadRequestException("Passwords do not match");
         }
 
         User user = new User();
-
         user.setUsername(req.getUsername());
         user.setFullName(req.getFullName());
         user.setEmail(req.getEmail());
         user.setPasswordHash(passAuth.hash(req.getPassword().toCharArray()));
 
+        // You likely want guest role to exist in DB
+        roleRepo.findByName("guest");
+
         return userRepo.save(user);
     }
 
-    public User login(RequestUser req) throws Exception {
-        Optional<User> optionalUser = userRepo.findByUsername(req.getUsername());
-        if (optionalUser.isEmpty()) {
-            throw new Exception("Username does not exist");
+    // ------------------------
+    // Login + session creation
+    // ------------------------
+    public User loginAndCreateSession(RequestUser req) {
+        User user = authenticateCredentials(req);
+
+        // Enforce “only one session per user”
+        if (sessionRepo.findByUserId(user.getId().longValue()).isPresent()) {
+            throw new BadRequestException("User already is in session");
         }
 
-        User user = optionalUser.get();
+        // Create session after issuing JWT (token stored in DB)
+        String token = jwtService.generateToken(user.getUsername());
 
-        if (!passAuth.authenticate(req.getPassword().toCharArray(), user.getPasswordHash())) {
-            throw new Exception("Incorrect password");
+        try {
+            sessionRepo.save(new Session(user.getId(), token));
+        } catch (DataIntegrityViolationException e) {
+            // In case you add a UNIQUE(user_id) constraint and there’s a race condition
+            throw new BadRequestException("User already is in session");
         }
 
         return user;
     }
 
-    public User getUserFromToken(String token, JwtService jwtService) throws Exception {
-        if (token == null || token.isEmpty()) {
-            throw new Exception("Token missing");
+    // Controller expects to call this separately
+    public String issueJwt(User user) {
+        return jwtService.generateToken(user.getUsername());
+    }
+
+    private User authenticateCredentials(RequestUser req) {
+        if (req.getUsername() == null || req.getUsername().isBlank()) {
+            throw new BadRequestException("Username is required");
+        }
+        if (req.getPassword() == null || req.getPassword().isBlank()) {
+            throw new BadRequestException("Password is required");
         }
 
-        String username = jwtService.getUsername(token);
+        User user = userRepo.findByUsername(req.getUsername())
+            .orElseThrow(() -> new UnauthorizedException("Invalid username or password"));
+
+        boolean ok = passAuth.authenticate(req.getPassword().toCharArray(), user.getPasswordHash());
+        if (!ok) {
+            throw new UnauthorizedException("Invalid username or password");
+        }
+
+        return user;
+    }
+
+    // ------------------------
+    // Session validation
+    // ------------------------
+    public User getUserFromToken(String token) {
+        if (token == null || token.isBlank()) {
+            throw new UnauthorizedException("Missing auth token");
+        }
+
+        String username;
+        try {
+            username = jwtService.getUsername(token);
+        } catch (Exception e) {
+            throw new UnauthorizedException("Invalid token");
+        }
 
         return userRepo.findByUsername(username)
-            .orElseThrow(() -> new Exception("User not found"));
+            .orElseThrow(() -> new UnauthorizedException("User not found"));
+    }
+
+    public void assertHasActiveSession(Number userId) {
+        if (userId == null) throw new UnauthorizedException("User id missing");
+
+        if (sessionRepo.findByUserId(userId.longValue()).isEmpty()) {
+            throw new UnauthorizedException("User is not in session");
+        }
+    }
+
+    // ------------------------
+    // Logout
+    // ------------------------
+    public void logoutByToken(String token) {
+        if (token == null || token.isBlank()) {
+            throw new UnauthorizedException("Missing auth token");
+        }
+
+        // Best: implement SessionRepository.findByToken(token)
+        Optional<Session> session = sessionRepo.findByToken(token);
+        if (session.isEmpty()) {
+            throw new BadRequestException("User is not in session");
+        }
+
+        sessionRepo.delete(session.get());
     }
 }

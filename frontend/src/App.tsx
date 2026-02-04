@@ -9,12 +9,13 @@ import Header from '@/components/Header/Header'
 import Home from '@/pages/Home'
 import UserProfile from '@/pages/UserProfile'
 import NotFound from '@/pages/error/NotFound'
-import Projects from '@/pages/projects/Projects'
+import ProjectTypes from '@/pages/projectTypes/ProjectTypes'
 import LogIn from '@/pages/session/LogIn'
 import SignUp from '@/pages/session/SignUp'
 import '@/styles/global.css'
 import '@/styles/tokens.css'
 import LogOut from './pages/session/LogOut'
+import ProjectType from './pages/projectType/ProjectType'
 
 export default function App() {
     const router = createBrowserRouter([
@@ -57,7 +58,7 @@ export default function App() {
                 <>
                     <Header />
                     <main className="page-container">
-                        <Projects />
+                        <ProjectTypes />
                     </main>
                     <Footer />
                 </>
@@ -94,6 +95,18 @@ export default function App() {
                     <Header />
                     <main className="page-container">
                         <LogOut />
+                    </main>
+                    <Footer />
+                </>
+            )
+        },
+        {
+            path: "/projects/:typeSlug",
+            element: (
+                <>
+                    <Header />
+                    <main className="page-container">
+                        <ProjectType />
                     </main>
                     <Footer />
                 </>

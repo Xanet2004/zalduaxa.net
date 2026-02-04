@@ -1,43 +1,43 @@
 -- Drop old schema and create new one
-DROP SCHEMA IF EXISTS zalduaxanetDB CASCADE;
-CREATE SCHEMA zalduaxanetDB;
+DROP SCHEMA IF EXISTS zalduaxanet CASCADE;
+CREATE SCHEMA zalduaxanet;
 
-SET search_path TO zalduaxanetDB;
+SET search_path TO zalduaxanet;
 
 -- Lookup tables
-CREATE TABLE visibilities (
+CREATE TABLE visibility (
   id SERIAL PRIMARY KEY,
   code VARCHAR(50) NOT NULL UNIQUE,
   name VARCHAR(100)
 );
 
-CREATE TABLE statuses (
+CREATE TABLE status (
   id SERIAL PRIMARY KEY,
   code VARCHAR(50) NOT NULL UNIQUE,
   name VARCHAR(100)
 );
 
-CREATE TABLE collaborator_roles (
+CREATE TABLE collaborator_role (
   id SERIAL PRIMARY KEY,
   code VARCHAR(50) NOT NULL UNIQUE,
   name VARCHAR(100)
 );
 
-CREATE TABLE resource_types (
+CREATE TABLE resource_type (
   id SERIAL PRIMARY KEY,
   code VARCHAR(50) NOT NULL UNIQUE,
   name VARCHAR(100)
 );
 
 -- Core tables
-CREATE TABLE roles (
+CREATE TABLE role (
   id SERIAL PRIMARY KEY,
   name VARCHAR(255),
   description VARCHAR(255),
   created_at TIMESTAMP
 );
 
-CREATE TABLE users (
+CREATE TABLE "user" (
   id SERIAL PRIMARY KEY,
   username VARCHAR(255) UNIQUE,
   full_name VARCHAR(255),
@@ -48,16 +48,16 @@ CREATE TABLE users (
   linkedin VARCHAR(255),
   github VARCHAR(255),
   website VARCHAR(255),
-  role_id INT REFERENCES roles(id),
+  role_id INT REFERENCES role(id),
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMP,
   updated_at TIMESTAMP,
   deleted_at TIMESTAMP
 );
 
-CREATE TABLE sessions (
+CREATE TABLE session (
   id SERIAL PRIMARY KEY,
-  user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  user_id INT NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
   token VARCHAR(255) NOT NULL UNIQUE,
   ip_address VARCHAR(100),
   user_agent VARCHAR(500),
@@ -77,25 +77,25 @@ CREATE TABLE storage (
   updated_at TIMESTAMP
 );
 
-CREATE TABLE project_types (
+CREATE TABLE project_type (
   id SERIAL PRIMARY KEY,
   name VARCHAR(255),
   description VARCHAR(255),
-  image_path VARCHAR(255)
+  slug VARCHAR(255),
+  UNIQUE (slug)
 );
 
-CREATE TABLE projects (
+CREATE TABLE project (
   id SERIAL PRIMARY KEY,
   storage_id INT REFERENCES storage(id),
-  owner_id INT REFERENCES users(id),
+  owner_id INT REFERENCES "user"(id),
   name VARCHAR(255),
   slug VARCHAR(255),
-  type_id INT REFERENCES project_types(id),
+  type_id INT REFERENCES project_type(id),
   description TEXT,
-  icon_path VARCHAR(255),
-  path VARCHAR(255),
-  visibility_id INT REFERENCES visibilities(id),
-  status_id INT REFERENCES statuses(id),
+  -- icon_path VARCHAR(255),
+  visibility_id INT REFERENCES visibility(id),
+  status_id INT REFERENCES status(id),
   version VARCHAR(255),
   metadata JSON,
   created_at TIMESTAMP,
@@ -104,80 +104,138 @@ CREATE TABLE projects (
   UNIQUE (storage_id, slug)
 );
 
-CREATE TABLE project_collaborators (
-  project_id INT REFERENCES projects(id) ON DELETE CASCADE,
-  user_id INT REFERENCES users(id) ON DELETE CASCADE,
-  role_id INT REFERENCES collaborator_roles(id),
-  invited_by INT REFERENCES users(id),
+CREATE TABLE project_collaborator (
+  project_id INT REFERENCES project(id) ON DELETE CASCADE,
+  user_id INT REFERENCES "user"(id) ON DELETE CASCADE,
+  role_id INT REFERENCES collaborator_role(id),
+  invited_by INT REFERENCES "user"(id),
   accepted_at TIMESTAMP,
   PRIMARY KEY (project_id, user_id)
 );
 
-CREATE TABLE recipes (
+CREATE TABLE recipe (
   id SERIAL PRIMARY KEY,
   storage_id INT REFERENCES storage(id),
-  created_by INT REFERENCES users(id),
+  created_by INT REFERENCES "user"(id),
   title VARCHAR(255),
   description TEXT,
   path VARCHAR(255),
-  visibility_id INT REFERENCES visibilities(id),
+  visibility_id INT REFERENCES visibility(id),
   version VARCHAR(255),
   created_at TIMESTAMP,
   updated_at TIMESTAMP,
   deleted_at TIMESTAMP
 );
 
-CREATE TABLE drawings (
+CREATE TABLE drawing (
   id SERIAL PRIMARY KEY,
   storage_id INT REFERENCES storage(id),
-  created_by INT REFERENCES users(id),
+  created_by INT REFERENCES "user"(id),
   title VARCHAR(255),
   description TEXT,
   path VARCHAR(255),
-  visibility_id INT REFERENCES visibilities(id),
+  visibility_id INT REFERENCES visibility(id),
   version VARCHAR(255),
   created_at TIMESTAMP,
   updated_at TIMESTAMP,
   deleted_at TIMESTAMP
 );
 
-CREATE TABLE content_items (
+CREATE TABLE content_item (
   id SERIAL PRIMARY KEY,
-  resource_type_id INT REFERENCES resource_types(id),
+  resource_type_id INT REFERENCES resource_type(id),
   resource_id INT,
-  created_by INT REFERENCES users(id),
+  created_by INT REFERENCES "user"(id),
   created_at TIMESTAMP
 );
 
-CREATE TABLE comments (
+CREATE TABLE comment (
   id SERIAL PRIMARY KEY,
-  content_item_id INT REFERENCES content_items(id) ON DELETE CASCADE,
-  user_id INT REFERENCES users(id),
+  content_item_id INT REFERENCES content_item(id) ON DELETE CASCADE,
+  user_id INT REFERENCES "user"(id),
   text TEXT,
   created_at TIMESTAMP,
   deleted_at TIMESTAMP
 );
 
-CREATE TABLE likes (
+CREATE TABLE "like" (
   id SERIAL PRIMARY KEY,
-  content_item_id INT REFERENCES content_items(id) ON DELETE CASCADE,
-  user_id INT REFERENCES users(id),
+  content_item_id INT REFERENCES content_item(id) ON DELETE CASCADE,
+  user_id INT REFERENCES "user"(id),
   created_at TIMESTAMP,
   UNIQUE (content_item_id, user_id)
 );
 
-CREATE TABLE audit_logs (
+CREATE TABLE audit_log (
   id SERIAL PRIMARY KEY,
   entity_type VARCHAR(255),
   entity_id INT,
   action VARCHAR(255),
-  performed_by INT REFERENCES users(id),
+  performed_by INT REFERENCES "user"(id),
   changes JSON,
   created_at TIMESTAMP
 );
 
 -- Optional: seed common lookup values
-INSERT INTO visibilities (code, name) VALUES ('public','Public'), ('private','Private');
-INSERT INTO statuses (code, name) VALUES ('draft','Draft'), ('published','Published');
-INSERT INTO collaborator_roles (code, name) VALUES ('editor','Editor'), ('viewer','Viewer');
-INSERT INTO resource_types (code, name) VALUES ('project','Project'), ('recipe','Recipe'), ('drawing','Drawing');
+INSERT INTO visibility (code, name) VALUES ('public','Public'), ('private','Private');
+INSERT INTO status (code, name) VALUES ('draft','Draft'), ('published','Published');
+INSERT INTO collaborator_role (code, name) VALUES ('editor','Editor'), ('viewer','Viewer');
+INSERT INTO resource_type (code, name) VALUES ('project','Project'), ('recipe','Recipe'), ('drawing','Drawing');
+INSERT INTO role (name, description, created_at) VALUES
+  ('admin', 'Full system access', CURRENT_TIMESTAMP),
+  ('member', 'Registered user with access to private content', CURRENT_TIMESTAMP),
+  ('guest', 'Public-only access', CURRENT_TIMESTAMP);
+
+  
+
+  -- Crear usuario administrador por defecto
+INSERT INTO "user" (
+    username,
+    full_name,
+    email,
+    password_hash,
+    role_id,
+    created_at,
+    updated_at
+) VALUES (
+    'admin',
+    'Administrator',
+    'admin@example.com',
+    '$31$16$O6cdtH7WQf3CpYOb6EKbij5Wb4jnUrhuHi6x6udQgQQ',
+    (SELECT id FROM role WHERE name = 'admin'),
+    CURRENT_TIMESTAMP,
+    CURRENT_TIMESTAMP
+);
+
+  -- Crear usuario administrador por defecto
+INSERT INTO "user" (
+    username,
+    full_name,
+    email,
+    password_hash,
+    role_id,
+    created_at,
+    updated_at
+) VALUES (
+    'guest',
+    'Guest',
+    'guest@example.com',
+    '$31$16$HnsSqZSXmB3vuh1YoB8z1nDtAGRNasNNe7C7wRL7q7s',
+    (SELECT id FROM role WHERE name = 'guest'),
+    CURRENT_TIMESTAMP,
+    CURRENT_TIMESTAMP
+);
+
+  -- Crear almacenamiento local por defecto
+INSERT INTO storage (name, bucket, base_path, config, description, created_at, updated_at)
+SELECT
+  'local-storage',
+  'local-bucket',
+  '/storage',
+  '{"provider":"local"}'::json,
+  'Default local storage',
+  CURRENT_TIMESTAMP,
+  CURRENT_TIMESTAMP
+WHERE NOT EXISTS (
+  SELECT 1 FROM storage WHERE name = 'local-storage'
+);

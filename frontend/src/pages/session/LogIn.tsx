@@ -23,11 +23,11 @@ export default function LogIn() {
             setLoading(true);
             const loginError = await login(form);
             if (loginError) {
-                setError(loginError as string);
+                setError(loginError instanceof Error ? loginError.message : String(loginError));
             }
             await refreshUser();
             setLoading(false);
-            navigate('/');
+            if (!loginError) navigate('/');
         } catch (err) {
             console.error(err);
         }
@@ -44,7 +44,7 @@ export default function LogIn() {
                 <input type="password" name="password" value={form.password} onChange={handleChange} />
 
                 <button type="submit" disabled={loading}>
-                    {loading ? "Creating..." : "Create account"}
+                    {loading ? "Logging in..." : "Log in"}
                 </button>
             </form>
 

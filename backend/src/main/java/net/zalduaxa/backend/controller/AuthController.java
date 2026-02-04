@@ -1,142 +1,97 @@
 package net.zalduaxa.backend.controller;
 
-import java.util.Map;
-import java.util.Optional;
+import java.time.Duration;
+import java.util.Arrays;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import net.zalduaxa.backend.model.requestUser.RequestUser;
 import net.zalduaxa.backend.model.responseUser.ResponseUser;
-import net.zalduaxa.backend.model.session.Session;
-import net.zalduaxa.backend.model.session.SessionRepository;
 import net.zalduaxa.backend.model.user.User;
 import net.zalduaxa.backend.service.AuthService;
-import net.zalduaxa.backend.service.JwtService;
+import net.zalduaxa.backend.exception.ApiExceptionHandler;
+import net.zalduaxa.backend.exception.UnauthorizedException;
 
+@RestController
+@RequestMapping("/auth")
 @CrossOrigin(
     origins = "http://localhost:5173",
     allowCredentials = "true",
     maxAge = 3600
 )
-@RestController
-@RequestMapping("/auth")
 public class AuthController {
-    @Autowired
-    private AuthService authService;
 
-    @Autowired
-    private JwtService jwtService;
+    private final AuthService authService;
 
-    @Autowired
-    private SessionRepository sessionRepository;
+    @Value("${app.auth.cookie.secure:false}")
+    private boolean cookieSecure;
+
+    @Value("${app.auth.cookie.sameSite:Lax}")
+    private String cookieSameSite;
+
+    public AuthController(AuthService authService) {
+        this.authService = authService;
+    }
 
     @PostMapping(value = "/signup", consumes = "application/json")
     public ResponseEntity<?> signup(@RequestBody RequestUser req) {
-        try {
-            User user = authService.register(req);
-            return ResponseEntity.ok(Map.of("message", "User registered successfully"));
-
-        } catch (Exception e) {
-            return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(Map.of("message", e.getMessage()));
-        }
+        authService.register(req);
+        return ResponseEntity.ok(new MessageResponse("User registered successfully"));
     }
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody RequestUser req, HttpServletResponse response) {
-        try {
-            User user = authService.login(req);
+        User user = authService.loginAndCreateSession(req); // move session logic into service
 
-            // ? Check user has a session
-            if (sessionRepository.findByUserId(user.getId().longValue()).isPresent()) {
-                return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("message", "User already is in session"));
-            }
+        String token = authService.issueJwt(user); // or return token from service
 
-            String token = jwtService.generateToken(user.getUsername());
-
-            ResponseCookie cookie = ResponseCookie.from("token", token)
-                    .httpOnly(true)
-                    .secure(false)
-                    .path("/")
-                    .maxAge(24 * 60 * 60)
-                    .sameSite("Strict")
-                    .build();
-
-            response.addHeader("Set-Cookie", cookie.toString());
-
-            // ? Add user and token to session
-            Session session = new Session(user.getId(), token);
-            sessionRepository.save(session);
-
-            return ResponseEntity.ok(Map.of("user", new ResponseUser(user)));
-
-        } catch (Exception e) {
-            return ResponseEntity.status(401).body(Map.of("message", e.getMessage()));
-        }
+        response.addHeader(HttpHeaders.SET_COOKIE, buildAuthCookie(token).toString());
+        return ResponseEntity.ok(new UserResponse(new ResponseUser(user)));
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(HttpServletResponse response, HttpServletRequest request) {
-        try {
-            User user = authService.getUserFromToken(extractToken(request), jwtService);
-            Optional<Session> sessionOpt = sessionRepository.findByUserId(user.getId().longValue());
-            // ? Check user has a session
-            if(!sessionRepository.existsById(sessionOpt.get().getId())) return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(Map.of("message", "User is not in session"));
+    public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
+        String token = extractToken(request);
+        authService.logoutByToken(token);
 
-            //? Remove token
-            ResponseCookie deleteCookie = ResponseCookie.from("token", "")
-                .httpOnly(true)
-                .secure(false)
-                .path("/")
-                .maxAge(0)
-                .build();
-
-            response.addHeader("Set-Cookie", deleteCookie.toString());
-
-            //? Remove user and token from session
-            if (sessionOpt.isPresent()) {
-                sessionRepository.delete(sessionOpt.get());
-            }
-
-            return ResponseEntity.ok(Map.of("message", "User is not longer in session"));
-
-        } catch (Exception e) {
-            return ResponseEntity.status(401).body(Map.of("message", e.getMessage()));
-        }
+        response.addHeader(HttpHeaders.SET_COOKIE, deleteAuthCookie().toString());
+        return ResponseEntity.ok(new MessageResponse("Logged out"));
     }
 
     @GetMapping("/session")
-    public ResponseEntity<?> getSession(HttpServletResponse response, HttpServletRequest request) {
-        try {
-            User user = authService.getUserFromToken(extractToken(request), jwtService);
-            Optional<Session> sessionOpt = sessionRepository.findByUserId(user.getId().longValue());
-            // ? Check user has a session
-            if(!sessionRepository.existsById(sessionOpt.get().getId())) return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(Map.of("message", "User is not in session"));
+    public ResponseEntity<?> getSession(HttpServletRequest request) {
+        String token = extractToken(request);
+        User user = authService.getUserFromToken(token);
+        authService.assertHasActiveSession(user.getId());
 
-            return ResponseEntity.ok(Map.of("user", new ResponseUser(user)));
+        return ResponseEntity.ok(new UserResponse(new ResponseUser(user)));
+    }
 
-        } catch (Exception e) {
-            return ResponseEntity.status(401).body(Map.of("message", e.getMessage()));
-        }
+    private ResponseCookie buildAuthCookie(String token) {
+        return ResponseCookie.from("token", token)
+            .httpOnly(true)
+            .secure(cookieSecure)
+            .path("/")
+            .maxAge(Duration.ofDays(1))
+            .sameSite(cookieSameSite)
+            .build();
+    }
+
+    private ResponseCookie deleteAuthCookie() {
+        return ResponseCookie.from("token", "")
+            .httpOnly(true)
+            .secure(cookieSecure)
+            .path("/")
+            .maxAge(Duration.ZERO)
+            .sameSite(cookieSameSite)
+            .build();
     }
 
     private String extractToken(HttpServletRequest request) {
@@ -145,14 +100,20 @@ public class AuthController {
             return authHeader.substring(7);
         }
 
-        if (request.getCookies() != null) {
-            for (Cookie cookie : request.getCookies()) {
-                if (cookie.getName().equals("token")) {
-                    return cookie.getValue();
-                }
-            }
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            return Arrays.stream(cookies)
+                .filter(c -> "token".equals(c.getName()))
+                .map(Cookie::getValue)
+                .findFirst()
+                .orElseThrow(() -> new UnauthorizedException("Missing auth token"));
         }
 
-        return null;
+        throw new UnauthorizedException("Missing auth token");
     }
+
+
+    // simple response DTOs
+    public record MessageResponse(String message) {}
+    public record UserResponse(ResponseUser user) {}
 }
