@@ -1,117 +1,229 @@
-# Database Schema: `zalduaxanetDB`
+# Database Schema: `zalduaxanet` (PostgreSQL)
 [Back to menu](/README.md)
+
+This document describes the current PostgreSQL schema used by the project.  
+All objects live inside the `zalduaxanet` schema (`SET search_path TO zalduaxanet;`).
+
 ## Lookup Tables
 
 | Table | Fields | Description |
-|-------|--------|-------------|
-| **visibilities** | `id` (PK), `code`, `name` | Resource visibility (public/private) |
-| **statuses** | `id` (PK), `code`, `name` | Project status (draft/published) |
-| **collaborator_roles** | `id` (PK), `code`, `name` | Collaborator roles (editor/viewer) |
-| **resource_types** | `id` (PK), `code`, `name` | Resource types (project, recipe, drawing) |
+|------|--------|-------------|
+| **visibility** | `id` (PK), `code` (UNIQUE), `name` | Resource visibility (public/private) |
+| **status** | `id` (PK), `code` (UNIQUE), `name` | Publishing status (draft/published) |
+| **collaborator_role** | `id` (PK), `code` (UNIQUE), `name` | Collaborator roles (editor/viewer) |
+| **resource_type** | `id` (PK), `code` (UNIQUE), `name` | Content types (project/recipe/drawing) |
 
 ---
 
 ## Core Tables
 
-### `roles`
+### `role`
 | Field | Type | Description |
-|-------|------|-------------|
-| id (PK) | INT | Unique identifier |
-| name | VARCHAR | Role name |
-| description | VARCHAR | Description |
-| created_at | DATETIME | Creation date |
+|------|------|-------------|
+| `id` (PK) | SERIAL | Unique identifier |
+| `name` | VARCHAR(255) | Role name (admin/member/guest) |
+| `description` | VARCHAR(255) | Description |
+| `created_at` | TIMESTAMP | Creation date |
 
-### `users`
-| Field | Type | Relation |
-|-------|------|----------|
-| id (PK) | INT | |
-| role_id | INT | FK → `roles.id` |
-| username, full_name, email, phone, profile_picture, linkedin, github, website | VARCHAR | User information |
-| is_active | TINYINT | Active or not |
-| created_at, updated_at, deleted_at | DATETIME | Management timestamps |
+### `user`
+Note: the table name is quoted because `user` is reserved in PostgreSQL.
+
+| Field | Type | Relation / Notes |
+|------|------|------------------|
+| `id` (PK) | SERIAL | |
+| `username` | VARCHAR(255) | UNIQUE |
+| `full_name` | VARCHAR(255) | |
+| `email` | VARCHAR(255) | UNIQUE |
+| `password_hash` | VARCHAR(255) | NOT NULL |
+| `phone` | VARCHAR(255) | |
+| `profile_picture` | VARCHAR(255) | |
+| `linkedin` | VARCHAR(255) | |
+| `github` | VARCHAR(255) | |
+| `website` | VARCHAR(255) | |
+| `role_id` | INT | FK → `role.id` |
+| `is_active` | BOOLEAN | DEFAULT TRUE |
+| `created_at` | TIMESTAMP | |
+| `updated_at` | TIMESTAMP | |
+| `deleted_at` | TIMESTAMP | Soft delete |
+
+### `session`
+Tracks login sessions/tokens.
+
+| Field | Type | Relation / Notes |
+|------|------|------------------|
+| `id` (PK) | SERIAL | |
+| `user_id` | INT | FK → `"user".id` (ON DELETE CASCADE) |
+| `token` | VARCHAR(255) | UNIQUE, NOT NULL |
+| `ip_address` | VARCHAR(100) | |
+| `user_agent` | VARCHAR(500) | |
+| `created_at` | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP |
+| `expires_at` | TIMESTAMP | |
+| `last_activity` | TIMESTAMP | |
 
 ### `storage`
+Represents storage backends (local bucket/path, future providers, etc.).
+
 | Field | Type | Description |
-|-------|------|-------------|
-| id (PK) | INT | |
-| name, bucket, base_path, description | VARCHAR | Storage information |
-| config | JSON | Specific configuration |
-| created_at, updated_at | DATETIME | Management timestamps |
+|------|------|-------------|
+| `id` (PK) | SERIAL | |
+| `name` | VARCHAR(255) | Storage name |
+| `bucket` | VARCHAR(255) | Bucket/container name (logical) |
+| `base_path` | VARCHAR(255) | Base path/prefix |
+| `config` | JSON | Provider configuration |
+| `description` | VARCHAR(255) | |
+| `created_at` | TIMESTAMP | |
+| `updated_at` | TIMESTAMP | |
 
-### `project_types`
-| Field | Type | Description |
-|-------|------|-------------|
-| id (PK) | INT | |
-| name, description, image_path | VARCHAR | Project type information |
+### `project_type`
+Project categorization.
 
-### `projects`
-| Field | Type | Relation |
-|-------|------|----------|
-| id (PK) | INT | |
-| storage_id | INT | FK → `storage.id` |
-| owner_id | INT | FK → `users.id` |
-| type_id | INT | FK → `project_types.id` |
-| visibility_id | INT | FK → `visibilities.id` |
-| status_id | INT | FK → `statuses.id` |
-| name, slug, description, icon_path, path, version | VARCHAR/TEXT | Project information |
-| metadata | JSON | Additional data |
-| created_at, updated_at, deleted_at | DATETIME | Management timestamps |
-| UNIQUE(storage_id, slug) | | Uniqueness constraint |
+| Field | Type | Notes |
+|------|------|------|
+| `id` (PK) | SERIAL | |
+| `name` | VARCHAR(255) | |
+| `description` | VARCHAR(255) | |
+| `slug` | VARCHAR(255) | UNIQUE |
 
-### `project_collaborators`
-| Field | Type | Relation |
-|-------|------|----------|
-| project_id | INT | FK → `projects.id` |
-| user_id | INT | FK → `users.id` |
-| role_id | INT | FK → `collaborator_roles.id` |
-| invited_by | INT | FK → `users.id` |
-| accepted_at | DATETIME | Acceptance date |
-| PK (project_id, user_id) | | |
+### `project`
+Main portfolio entity.
 
-### `recipes` / `drawings` (similar structure)
-| Field | Type | Relation |
-|-------|------|----------|
-| id (PK) | INT | |
-| storage_id | INT | FK → `storage.id` |
-| created_by | INT | FK → `users.id` |
-| title, description, path, version | VARCHAR/TEXT | Resource information |
-| visibility_id | INT | FK → `visibilities.id` |
-| created_at, updated_at, deleted_at | DATETIME | Management timestamps |
+| Field | Type | Relation / Notes |
+|------|------|------------------|
+| `id` (PK) | SERIAL | |
+| `storage_id` | INT | FK → `storage.id` |
+| `owner_id` | INT | FK → `"user".id` |
+| `name` | VARCHAR(255) | |
+| `slug` | VARCHAR(255) | Used for routing/URLs |
+| `type_id` | INT | FK → `project_type.id` |
+| `description` | TEXT | |
+| `visibility_id` | INT | FK → `visibility.id` |
+| `status_id` | INT | FK → `status.id` |
+| `version` | VARCHAR(255) | |
+| `metadata` | JSON | Additional data (tags, flags, etc.) |
+| `created_at` | TIMESTAMP | |
+| `updated_at` | TIMESTAMP | |
+| `deleted_at` | TIMESTAMP | Soft delete |
+| `UNIQUE(storage_id, slug)` | | Prevents slug collisions within the same storage |
 
-### `content_items`
-| Field | Type | Relation |
-|-------|------|----------|
-| id (PK) | INT | |
-| resource_type_id | INT | FK → `resource_types.id` |
-| resource_id | INT | Specific resource ID |
-| created_by | INT | FK → `users.id` |
-| created_at | DATETIME | Creation timestamp |
+### `project_collaborator`
+Many-to-many between projects and users with a collaborator role.
 
-### `comments`
-| Field | Type | Relation |
-|-------|------|----------|
-| id (PK) | INT | |
-| content_item_id | INT | FK → `content_items.id` |
-| user_id | INT | FK → `users.id` |
-| text | TEXT | Comment text |
-| created_at, deleted_at | DATETIME | Management timestamps |
+| Field | Type | Relation / Notes |
+|------|------|------------------|
+| `project_id` | INT | FK → `project.id` (ON DELETE CASCADE) |
+| `user_id` | INT | FK → `"user".id` (ON DELETE CASCADE) |
+| `role_id` | INT | FK → `collaborator_role.id` |
+| `invited_by` | INT | FK → `"user".id` |
+| `accepted_at` | TIMESTAMP | |
+| `PRIMARY KEY (project_id, user_id)` | | |
 
-### `likes`
-| Field | Type | Relation |
-|-------|------|----------|
-| id (PK) | INT | |
-| content_item_id | INT | FK → `content_items.id` |
-| user_id | INT | FK → `users.id` |
-| created_at | DATETIME | Timestamp of the "like" |
-| UNIQUE(content_item_id, user_id) | | |
+### `recipe`
+Example additional resource type.
 
-### `audit_logs`
-| Field | Type | Relation |
-|-------|------|----------|
-| id (PK) | INT | |
-| entity_type | VARCHAR | Type of audited entity |
-| entity_id | INT | Entity ID |
-| action | VARCHAR | Performed action |
-| performed_by | INT | FK → `users.id` |
-| changes | JSON | Changes performed |
-| created_at | DATETIME | Audit timestamp |
+| Field | Type | Relation / Notes |
+|------|------|------------------|
+| `id` (PK) | SERIAL | |
+| `storage_id` | INT | FK → `storage.id` |
+| `created_by` | INT | FK → `"user".id` |
+| `title` | VARCHAR(255) | |
+| `description` | TEXT | |
+| `path` | VARCHAR(255) | Storage path |
+| `visibility_id` | INT | FK → `visibility.id` |
+| `version` | VARCHAR(255) | |
+| `created_at` | TIMESTAMP | |
+| `updated_at` | TIMESTAMP | |
+| `deleted_at` | TIMESTAMP | Soft delete |
+
+### `drawing`
+Example additional resource type.
+
+| Field | Type | Relation / Notes |
+|------|------|------------------|
+| `id` (PK) | SERIAL | |
+| `storage_id` | INT | FK → `storage.id` |
+| `created_by` | INT | FK → `"user".id` |
+| `title` | VARCHAR(255) | |
+| `description` | TEXT | |
+| `path` | VARCHAR(255) | Storage path |
+| `visibility_id` | INT | FK → `visibility.id` |
+| `version` | VARCHAR(255) | |
+| `created_at` | TIMESTAMP | |
+| `updated_at` | TIMESTAMP | |
+| `deleted_at` | TIMESTAMP | Soft delete |
+
+### `content_item`
+Generic wrapper for different resource types, allowing cross-resource comments/likes.
+
+| Field | Type | Relation / Notes |
+|------|------|------------------|
+| `id` (PK) | SERIAL | |
+| `resource_type_id` | INT | FK → `resource_type.id` |
+| `resource_id` | INT | ID of the target row in its table |
+| `created_by` | INT | FK → `"user".id` |
+| `created_at` | TIMESTAMP | |
+
+### `comment`
+Comments attached to `content_item`.
+
+| Field | Type | Relation / Notes |
+|------|------|------------------|
+| `id` (PK) | SERIAL | |
+| `content_item_id` | INT | FK → `content_item.id` (ON DELETE CASCADE) |
+| `user_id` | INT | FK → `"user".id` |
+| `text` | TEXT | |
+| `created_at` | TIMESTAMP | |
+| `deleted_at` | TIMESTAMP | Soft delete |
+
+### `like`
+Likes attached to `content_item`.
+Note: the table name is quoted because `like` is reserved in SQL.
+
+| Field | Type | Relation / Notes |
+|------|------|------------------|
+| `id` (PK) | SERIAL | |
+| `content_item_id` | INT | FK → `content_item.id` (ON DELETE CASCADE) |
+| `user_id` | INT | FK → `"user".id` |
+| `created_at` | TIMESTAMP | |
+| `UNIQUE(content_item_id, user_id)` | | One like per user per content item |
+
+### `audit_log`
+Tracks changes across entities.
+
+| Field | Type | Relation / Notes |
+|------|------|------------------|
+| `id` (PK) | SERIAL | |
+| `entity_type` | VARCHAR(255) | Entity/table name |
+| `entity_id` | INT | Row id |
+| `action` | VARCHAR(255) | Action performed |
+| `performed_by` | INT | FK → `"user".id` |
+| `changes` | JSON | JSON payload with changes |
+| `created_at` | TIMESTAMP | |
+
+---
+
+## Seeds (default values)
+
+The schema includes optional seed inserts for:
+
+- `visibility`: public, private
+- `status`: draft, published
+- `collaborator_role`: editor, viewer
+- `resource_type`: project, recipe, drawing
+- `role`: admin, member, guest
+- default users: `admin`, `guest`
+- default storage: `local-storage`
+
+---
+
+## Insert examples
+
+### Insert a `project_type` if it does not exist
+```sql
+INSERT INTO zalduaxanet.project_type (name, description, slug)
+SELECT
+  'Minecraft Mods',
+  'Minecraft mods created by myself!',
+  'minecraft-mods'
+WHERE NOT EXISTS (
+  SELECT 1 FROM zalduaxanet.project_type WHERE slug = 'minecraft-mods'
+);
