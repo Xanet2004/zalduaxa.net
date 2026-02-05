@@ -103,7 +103,7 @@ export default function Projects() {
                     <form onSubmit={handleAddProjectType}>
                         <p>name</p>
                         <input name="name" value={addProjectTypeForm.name} onChange={handleChange}/>
-                        <p>storaged name</p>
+                        <p>slug</p>
                         <input name="slug" value={addProjectTypeForm.slug} onChange={handleChange}/>
                         <p>description</p>
                         <input name="description" value={addProjectTypeForm.description} onChange={handleChange}/>

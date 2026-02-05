@@ -201,7 +201,7 @@ INSERT INTO "user" (
     'admin',
     'Administrator',
     'admin@example.com',
-    '$31$16$O6cdtH7WQf3CpYOb6EKbij5Wb4jnUrhuHi6x6udQgQQ',
+    '$31$16$5_QxEZ3-SS92Q9ZG2zfRQoP21LC011OA8DYcVZVqiWc',
     (SELECT id FROM role WHERE name = 'admin'),
     CURRENT_TIMESTAMP,
     CURRENT_TIMESTAMP
@@ -220,7 +220,7 @@ INSERT INTO "user" (
     'guest',
     'Guest',
     'guest@example.com',
-    '$31$16$HnsSqZSXmB3vuh1YoB8z1nDtAGRNasNNe7C7wRL7q7s',
+    '$31$16$5_QxEZ3-SS92Q9ZG2zfRQoP21LC011OA8DYcVZVqiWc',
     (SELECT id FROM role WHERE name = 'guest'),
     CURRENT_TIMESTAMP,
     CURRENT_TIMESTAMP
