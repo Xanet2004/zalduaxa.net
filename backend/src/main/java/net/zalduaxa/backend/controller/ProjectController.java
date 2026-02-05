@@ -2,11 +2,14 @@ package net.zalduaxa.backend.controller;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -33,15 +36,19 @@ import net.zalduaxa.backend.model.user.User;
 import net.zalduaxa.backend.service.AuthService;
 import net.zalduaxa.backend.service.JwtService;
 
-@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true", maxAge = 3600)
 @RestController
 @RequestMapping("/project")
+@CrossOrigin(
+    origins = "http://localhost:5173",
+    allowCredentials = "true",
+    maxAge = 3600
+)
 public class ProjectController {
 
     // TODO: BASE PATH FROM STORAGE ON DDBB
-    private static final String STORAGE_PATH = "C:\\Users\\xanet\\Work\\web\\zalduaxa.net\\storage";
-    private static final String PROJECT_TYPES_PATH = STORAGE_PATH + "\\projectTypes";
-    private static final String PROJECTS_PATH = STORAGE_PATH + "\\projects";
+    private String STORAGE_PATH;
+    private String PROJECT_TYPES_PATH;
+    private String PROJECTS_PATH;
 
     @Autowired
     ProjectTypeRepository projectTypeRepo;
@@ -58,17 +65,29 @@ public class ProjectController {
     @Autowired
     private SessionRepository sessionRepository;
 
+    public ProjectController(@Value("${storage.path}") String storagePathStr) {
+        Path base = Paths.get(java.net.URI.create(storagePathStr));
+        this.STORAGE_PATH = base.toAbsolutePath().toString();
+        this.PROJECT_TYPES_PATH = STORAGE_PATH + "\\projectTypes";
+        this.PROJECTS_PATH = STORAGE_PATH + "\\projects";
+    }
+
+
     @GetMapping(value = "/projectTypes", produces = { "application/json", "application/xml" })
     public ResponseEntity<List<ProjectType>> getProjectTypes() {
         List<ProjectType> projectTypes = projectTypeRepo.findAll();
         return new ResponseEntity<>(projectTypes, HttpStatus.OK);
     }
 
-    @PostMapping(value = "/addProjectType", produces = { "application/json", "application/xml" })
+    @PostMapping(
+        value = "/addProjectType",
+        consumes = "multipart/form-data",
+        produces = { "application/json", "application/xml" }
+    )
     public ResponseEntity<?> addProjectType(
             @RequestParam("name") String name,
-            @RequestParam("description") String description,
             @RequestParam("slug") String slug,
+            @RequestParam("description") String description,
             @RequestPart("image") MultipartFile image,
             HttpServletRequest request) {
 
