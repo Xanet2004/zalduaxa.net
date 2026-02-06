@@ -1,0 +1,14 @@
+CREATE SCHEMA IF NOT EXISTS `zalduaxanetDB` DEFAULT CHARACTER SET utf8;
+USE `zalduaxanetDB`;
+
+CREATE TABLE IF NOT EXISTS `project` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(255) NOT NULL,
+  `slug` VARCHAR(255) NOT NULL,
+  `type` VARCHAR(100) NULL,
+  `icon_path` VARCHAR(255) NULL,
+  `path` VARCHAR(255) NULL,
+  `created_date` DATETIME NULL,
+  `updated_date` DATETIME NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB;
