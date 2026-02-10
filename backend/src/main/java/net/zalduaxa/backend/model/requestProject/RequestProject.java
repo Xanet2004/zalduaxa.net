@@ -2,13 +2,6 @@ package net.zalduaxa.backend.model.requestProject;
 
 import java.time.LocalDateTime;
 
-import jakarta.persistence.*;
-
-@Entity
-@Table(
-    name = "project",
-    uniqueConstraints = @UniqueConstraint(columnNames = {"storage_id", "slug"})
-)
 public class RequestProject {
 
     private Integer id;
