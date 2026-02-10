@@ -191,7 +191,7 @@ public class ProjectController {
         return null;
     }
 
-    @GetMapping("/{slug}/projects")
+    @GetMapping("/projects/{slug}")
     public Map<String, Object> getProjectsByType(@PathVariable String slug) {
         String cleanSlug = slugify(slug);
         var projects = projectRepo.findByProjectTypeSlug(cleanSlug);
@@ -209,7 +209,7 @@ public class ProjectController {
         return text;
     }
 
-    @GetMapping("/project/{slug}")
+    @GetMapping("/get-project/{slug}")
     public ResponseEntity<?> getProjectBySlug(@PathVariable String slug) {
         String cleanSlug = slugify(slug);
         Optional<Project> project = projectRepo.findBySlug(cleanSlug);
