@@ -207,4 +207,11 @@ public class ProjectController {
         text = text.replaceAll("^-|-$", "");
         return text;
     }
+
+    @GetMapping("/project/{slug}")
+    public Map<String, Object> getProjectBySlug(@PathVariable String slug) {
+        String cleanSlug = slugify(slug);
+        var projects = projectRepo.findBySlug(cleanSlug);
+        return Map.of("projects", projects);
+    }
 }

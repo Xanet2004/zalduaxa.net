@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { getProjectsByType } from "@/scripts/getProjectsByType";
+import ProjectCard from "@/components/ProjectCard/ProjectCard";
 import type { Project } from "@/types/project";
 
 export default function ProjectType() {
@@ -39,7 +40,7 @@ export default function ProjectType() {
         <ul>
           {projects.map((p) => (
             <li key={p.id}>
-              <strong>{p.name}</strong> — {p.description}
+              <ProjectCard projectTypeSlug={typeSlug} project={p} />
             </li>
           ))}
         </ul>
