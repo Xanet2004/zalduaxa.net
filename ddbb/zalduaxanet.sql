@@ -186,46 +186,6 @@ INSERT INTO role (name, description, created_at) VALUES
   ('member', 'Registered user with access to private content', CURRENT_TIMESTAMP),
   ('guest', 'Public-only access', CURRENT_TIMESTAMP);
 
-  
-
-  -- Crear usuario administrador por defecto
-INSERT INTO "user" (
-    username,
-    full_name,
-    email,
-    password_hash,
-    role_id,
-    created_at,
-    updated_at
-) VALUES (
-    'admin',
-    'Administrator',
-    'admin@example.com',
-    '$31$16$5_QxEZ3-SS92Q9ZG2zfRQoP21LC011OA8DYcVZVqiWc',
-    (SELECT id FROM role WHERE name = 'admin'),
-    CURRENT_TIMESTAMP,
-    CURRENT_TIMESTAMP
-);
-
-  -- Crear usuario administrador por defecto
-INSERT INTO "user" (
-    username,
-    full_name,
-    email,
-    password_hash,
-    role_id,
-    created_at,
-    updated_at
-) VALUES (
-    'guest',
-    'Guest',
-    'guest@example.com',
-    '$31$16$5_QxEZ3-SS92Q9ZG2zfRQoP21LC011OA8DYcVZVqiWc',
-    (SELECT id FROM role WHERE name = 'guest'),
-    CURRENT_TIMESTAMP,
-    CURRENT_TIMESTAMP
-);
-
   -- Crear almacenamiento local por defecto
 INSERT INTO storage (name, bucket, base_path, config, description, created_at, updated_at)
 SELECT
