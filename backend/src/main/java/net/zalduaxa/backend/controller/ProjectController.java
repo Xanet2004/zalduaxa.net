@@ -35,7 +35,6 @@ import net.zalduaxa.backend.model.session.Session;
 import net.zalduaxa.backend.model.session.SessionRepository;
 import net.zalduaxa.backend.model.user.User;
 import net.zalduaxa.backend.service.AuthService;
-import net.zalduaxa.backend.service.JwtService;
 
 @RestController
 @RequestMapping("/project")
@@ -59,9 +58,6 @@ public class ProjectController {
 
     @Autowired
     private AuthService authService;
-
-    @Autowired
-    private JwtService jwtService;
 
     @Autowired
     private SessionRepository sessionRepository;
@@ -209,7 +205,7 @@ public class ProjectController {
         return text;
     }
 
-    @GetMapping("/get-project/{slug}")
+    @GetMapping("/getProject/{slug}")
     public ResponseEntity<?> getProjectBySlug(@PathVariable String slug) {
         String cleanSlug = slugify(slug);
         Optional<Project> project = projectRepo.findBySlug(cleanSlug);
@@ -219,4 +215,6 @@ public class ProjectController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Project not found"));
         }
     }
+
+
 }

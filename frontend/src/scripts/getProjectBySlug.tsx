@@ -1,6 +1,6 @@
 export async function getProjectBySlug(projectSlug: string) {
   try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/project/get-project/${encodeURIComponent(projectSlug)}`, {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/project/getProject/${encodeURIComponent(projectSlug)}`, {
             method: "GET",
             credentials: "include",
         });
