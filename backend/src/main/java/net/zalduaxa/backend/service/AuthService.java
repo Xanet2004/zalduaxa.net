@@ -36,6 +36,8 @@ public class AuthService {
         this.sessionRepo = sessionRepo;
         this.jwtService = jwtService;
         this.passAuth = new PasswordAuthentication();
+
+        defaultUsers();
     }
 
     // ------------------------
@@ -164,5 +166,23 @@ public class AuthService {
         }
 
         sessionRepo.delete(session.get());
+    }
+
+    private void defaultUsers() {
+        if (userRepo.count() == 0) {
+            User admin = new User();
+            admin.setUsername("admin");
+            admin.setFullName("Admin User");
+            admin.setEmail("admin@example.com");
+            admin.setPasswordHash(passAuth.hash("Admin123!".toCharArray()));
+            userRepo.save(admin);
+
+            User guest = new User();
+            guest.setUsername("guest");
+            guest.setFullName("Guest User");
+            guest.setEmail("guest@example.com");
+            guest.setPasswordHash(passAuth.hash("Guest123!".toCharArray()));
+            userRepo.save(guest);
+        }
     }
 }
