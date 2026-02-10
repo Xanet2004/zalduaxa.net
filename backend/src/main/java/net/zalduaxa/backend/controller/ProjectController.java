@@ -216,5 +216,134 @@ public class ProjectController {
         }
     }
 
+    @PostMapping(
+        value = "/addProject",
+        consumes = "multipart/form-data",
+        produces = { "application/json", "application/xml" }
+    )
+    public ResponseEntity<?> addProject(
+            @RequestParam("typeSlug") String typeSlug,
+            @RequestParam("name") String name,
+            @RequestParam(value = "slug", required = false) String slug,
+            @RequestParam(value = "description", required = false) String description,
+            @RequestPart(value = "image", required = false) MultipartFile image,
+            HttpServletRequest request) {
+
+        try {
+            User user = authService.getUserFromToken(extractToken(request));
+            if (user == null)
+                return new ResponseEntity<>(Map.of("message", "Invalid user"), HttpStatus.UNAUTHORIZED);
+
+            Optional<Session> sessionOpt = sessionRepository.findByUserId(user.getId().longValue());
+            if (sessionOpt.isEmpty() || !sessionRepository.existsById(sessionOpt.get().getId()))
+                return new ResponseEntity<>(Map.of("message", "Invalid session"), HttpStatus.BAD_REQUEST);
+
+            if (!"admin".equals(user.getRole().getName()))
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "You need to be admin to add a new project"));
+
+            String cleanTypeSlug = slugify(typeSlug);
+            Optional<ProjectType> pt = projectTypeRepo.findBySlug(cleanTypeSlug);
+            if (pt == null)
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Project type not found"));
+
+            if (name == null || name.isBlank())
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "Name is required"));
+
+            String cleanProjectSlug = (slug != null && !slug.isBlank()) ? slugify(slug) : slugify(name);
+
+            if (projectRepo.existsBySlug(cleanProjectSlug))
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "Project slug already exists"));
+
+            Project p = new Project();
+            p.setName(name);
+            p.setSlug(cleanProjectSlug);
+            p.setDescription(description);
+            p.setTypeId(projectTypeRepo.findBySlug(cleanTypeSlug).get().getId());
+            p.setOwnerId(user.getId());
+            p.setStorageId(1);
+
+            projectRepo.save(p);
+
+            if (image != null && !image.isEmpty()) {
+                saveProjectImage(cleanTypeSlug, cleanProjectSlug, image);
+            }
+
+            return ResponseEntity.ok(Map.of("message", "Project successfully created"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("message", "Unexpected server error"));
+        }
+    }
+
+    private Boolean saveProjectImage(String typeSlug, String projectSlug, MultipartFile image) {
+        try {
+            File folder = new File(PROJECTS_PATH + "\\" + typeSlug, projectSlug);
+            if (!folder.exists() && !folder.mkdirs()) {
+                throw new RuntimeException("Cannot create folder " + folder.getAbsolutePath());
+            }
+            File destination = new File(folder, "icon.png");
+            image.transferTo(destination);
+            return true;
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to save file", e);
+        }
+    }
+
+    @PostMapping(value = "/deleteProject", produces = { "application/json", "application/xml" })
+    public ResponseEntity<?> deleteProject(
+            @RequestBody net.zalduaxa.backend.model.requestProject.RequestProject body,
+            HttpServletRequest request) {
+
+        try {
+            User user = authService.getUserFromToken(extractToken(request));
+            if (user == null)
+                return new ResponseEntity<>(Map.of("message", "Invalid user"), HttpStatus.UNAUTHORIZED);
+
+            Optional<Session> sessionOpt = sessionRepository.findByUserId(user.getId().longValue());
+            if (sessionOpt.isEmpty() || !sessionRepository.existsById(sessionOpt.get().getId()))
+                return new ResponseEntity<>(Map.of("message", "Invalid session"), HttpStatus.BAD_REQUEST);
+
+            if (!"admin".equals(user.getRole().getName()))
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "You need to be admin to delete a project"));
+
+            if (body.getTypeSlug() == null || body.getTypeSlug().isBlank())
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "typeSlug is required"));
+
+            if (body.getSlug() == null || body.getSlug().isBlank())
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "slug is required"));
+
+            String cleanTypeSlug = slugify(body.getTypeSlug());
+            String cleanProjectSlug = slugify(body.getSlug());
+
+            Optional<ProjectType> pt = projectTypeRepo.findBySlug(cleanTypeSlug);
+            if (pt == null)
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Project type not found"));
+
+            Optional<Project> pOpt = projectRepo.findBySlug(cleanProjectSlug);
+            if (pOpt.isEmpty())
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Project not found"));
+
+            Project p = pOpt.get();
+            if (p.getTypeId() == null || !p.getTypeId().equals(pt.get().getId()))
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Project not found"));
+
+            deleteProjectFolder(cleanTypeSlug, cleanProjectSlug);
+            projectRepo.deleteById(p.getId());
+
+            return ResponseEntity.ok(Map.of("message", "Project successfully deleted"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("message", "Unexpected server error"));
+        }
+    }
+
+    private void deleteProjectFolder(String typeSlug, String projectSlug) {
+        java.nio.file.Path dir = java.nio.file.Paths.get(PROJECTS_PATH + '\\' + typeSlug + '\\' + projectSlug);
+        if (!java.nio.file.Files.exists(dir)) return;
+        try (java.util.stream.Stream<java.nio.file.Path> paths = java.nio.file.Files.walk(dir)) {
+            paths.sorted(java.util.Comparator.reverseOrder()).forEach(p -> {
+                try { java.nio.file.Files.delete(p); } catch (java.io.IOException e) { throw new RuntimeException(e); }
+            });
+        } catch (java.io.IOException e) { throw new RuntimeException(e); }
+    }
+
 
 }
