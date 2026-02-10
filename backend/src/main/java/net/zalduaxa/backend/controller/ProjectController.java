@@ -26,6 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import net.zalduaxa.backend.model.project.Project;
 import net.zalduaxa.backend.model.project.ProjectRepository;
 import net.zalduaxa.backend.model.projectType.ProjectType;
 import net.zalduaxa.backend.model.projectType.ProjectTypeRepository;
@@ -209,9 +210,13 @@ public class ProjectController {
     }
 
     @GetMapping("/project/{slug}")
-    public Map<String, Object> getProjectBySlug(@PathVariable String slug) {
+    public ResponseEntity<?> getProjectBySlug(@PathVariable String slug) {
         String cleanSlug = slugify(slug);
-        var projects = projectRepo.findBySlug(cleanSlug);
-        return Map.of("projects", projects);
+        Optional<Project> project = projectRepo.findBySlug(cleanSlug);
+        if (project.isPresent()) {
+            return ResponseEntity.ok(project.get());
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Project not found"));
+        }
     }
 }

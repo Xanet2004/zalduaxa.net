@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { getProjectByName } from "@/scripts/getProjectByName";
+import { getProjectBySlug } from "@/scripts/getProjectBySlug";
 import ProjectCard from "@/components/ProjectCard/ProjectCard";
 import type { Project } from "@/types/project";
 
 export default function Project() {
   const { typeSlug } = useParams<{ typeSlug: string }>();
   const { projectSlug } = useParams<{ projectSlug: string }>();
-  const [project, setProject] = useState<Project[] | null>(null);
+  const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -19,8 +19,8 @@ export default function Project() {
       try {
         setLoading(true);
         setError(null);
-        const project = await getProjectByName(projectSlug);
-        setProject([project]);
+        const project = await getProjectBySlug(projectSlug);
+        setProject(project);
       } catch (e: any) {
         setError(e?.message ?? "Error");
         setProject(null);
@@ -38,16 +38,14 @@ export default function Project() {
     <div>
       <h1>Projects of type: {typeSlug}</h1>
 
-      {projects?.length ? (
-        <ul>
-          {projects.map((p) => (
-            <li key={p.id}>
-              <ProjectCard projectTypeSlug={typeSlug} project={p} />
-            </li>
-          ))}
-        </ul>
+      {project ? (
+        <div>
+            <p>{project.name}</p>
+            <p>{project.description}</p>
+            <p>{project.slug}</p>
+        </div>
       ) : (
-        <p>No projects found</p>
+        <p>No project found</p>
       )}
     </div>
   );

@@ -1,4 +1,4 @@
-export async function getProjectByName(projectSlug: string) {
+export async function getProjectBySlug(projectSlug: string) {
   try {
         const res = await fetch(`${import.meta.env.VITE_API_URL}/project/${encodeURIComponent(projectSlug)}`, {
             method: "GET",
@@ -11,7 +11,7 @@ export async function getProjectByName(projectSlug: string) {
             throw new Error(data?.message ?? "Failed to load projects");
         }
 
-        return data.projects;
+        return data.project;
     } catch (err) {
         return err;
     }
