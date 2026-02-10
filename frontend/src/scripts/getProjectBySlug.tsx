@@ -11,7 +11,9 @@ export async function getProjectBySlug(projectSlug: string) {
             throw new Error(data?.message ?? "Failed to load projects");
         }
 
-        return data.project;
+        console.log("API response for project:", data);
+
+        return data;
     } catch (err) {
         return err;
     }
