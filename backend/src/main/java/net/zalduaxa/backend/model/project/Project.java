@@ -2,7 +2,18 @@ package net.zalduaxa.backend.model.project;
 
 import java.time.LocalDateTime;
 
-import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
+import com.fasterxml.jackson.databind.JsonNode;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 
 @Entity
 @Table(
@@ -43,7 +54,8 @@ public class Project {
     private String version;
 
     @Column(name = "metadata", columnDefinition = "json")
-    private String metadata;
+    @JdbcTypeCode(SqlTypes.JSON)
+    private JsonNode metadata;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -97,8 +109,8 @@ public class Project {
     public String getVersion() { return version; }
     public void setVersion(String version) { this.version = version; }
 
-    public String getMetadata() { return metadata; }
-    public void setMetadata(String metadata) { this.metadata = metadata; }
+    public JsonNode getMetadata() { return metadata; }
+    public void setMetadata(JsonNode metadata) { this.metadata = metadata; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

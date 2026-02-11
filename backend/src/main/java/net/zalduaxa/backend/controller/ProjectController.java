@@ -23,6 +23,8 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -261,6 +263,7 @@ public class ProjectController {
             p.setTypeId(projectTypeRepo.findBySlug(cleanTypeSlug).get().getId());
             p.setOwnerId(user.getId());
             p.setStorageId(1);
+            p.setMetadata(null);
 
             projectRepo.save(p);
 
