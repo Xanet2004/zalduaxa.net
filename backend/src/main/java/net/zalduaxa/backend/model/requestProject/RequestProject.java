@@ -2,6 +2,8 @@ package net.zalduaxa.backend.model.requestProject;
 
 import java.time.LocalDateTime;
 
+import org.springframework.web.multipart.MultipartFile;
+
 public class RequestProject {
 
     private Integer id;
@@ -18,15 +20,15 @@ public class RequestProject {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime deletedAt;
+    private MultipartFile image;
 
     public RequestProject() {}
 
-    public RequestProject(Integer storageId, Integer ownerId, String typeSlug, String name, String slug) {
-        this.storageId = storageId;
-        this.ownerId = ownerId;
-        this.typeSlug = typeSlug;
+    public RequestProject(String name, String typeSlug, String description, MultipartFile image) {
         this.name = name;
-        this.slug = slug;
+        this.typeSlug = typeSlug;
+        this.description = description;
+        this.image = image;
     }
 
     public Integer getId() { return id; }
@@ -70,4 +72,7 @@ public class RequestProject {
 
     public LocalDateTime getDeletedAt() { return deletedAt; }
     public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
+
+    public MultipartFile getImage() { return image; }
+    public void setImage(MultipartFile image) { this.image = image; }
 }
