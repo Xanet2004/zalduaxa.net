@@ -308,22 +308,22 @@ public class ProjectController {
             if (!"admin".equals(user.getRole().getName()))
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "You need to be admin to delete a project"));
 
+            if (body.getName() == null || body.getName().isBlank())
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "name is required"));
+
+            Optional<Project> pOpt = projectRepo.findByName(body.getName());
+            if (pOpt.isEmpty())
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Project not found"));
+
             if (body.getTypeSlug() == null || body.getTypeSlug().isBlank())
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "typeSlug is required"));
 
-            if (body.getSlug() == null || body.getSlug().isBlank())
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "slug is required"));
-
             String cleanTypeSlug = slugify(body.getTypeSlug());
-            String cleanProjectSlug = slugify(body.getSlug());
+            String cleanProjectSlug = slugify(pOpt.get().getSlug());
 
             Optional<ProjectType> pt = projectTypeRepo.findBySlug(cleanTypeSlug);
             if (pt == null)
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Project type not found"));
-
-            Optional<Project> pOpt = projectRepo.findBySlug(cleanProjectSlug);
-            if (pOpt.isEmpty())
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Project not found"));
 
             Project p = pOpt.get();
             if (p.getTypeId() == null || !p.getTypeId().equals(pt.get().getId()))

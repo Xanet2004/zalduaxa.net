@@ -28,7 +28,7 @@ export default function Projects() {
                 setAddProjectTypeForm(prev => ({ ...prev, [name]: value }));
             }
         } else if (isDeletingProjectType) {
-            setDeleteProjectTypeForm(prev => ({ ...prev, [name]: value }));
+            setDeleteProjectTypeForm(prev => ({ ...prev, [name]: value, projectTypeSlug: name === "name" ? value : prev.projectTypeSlug }));
         }
     }
 
@@ -40,7 +40,8 @@ export default function Projects() {
     });
 
     const [deleteProjectTypeForm, setDeleteProjectTypeForm] = useState({
-        name: ""
+        name: "",
+        projectTypeSlug: ""
     });
 
     useEffect(() => {

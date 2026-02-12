@@ -28,9 +28,8 @@ export default function ProjectType() {
     image: null,
   });
 
-  const [deleteProjectForm, setDeleteProjectForm] = useState<Pick<RequestProject, "typeSlug" | "slug">>({
-    typeSlug: typeSlug ?? "",
-    slug: "",
+  const [deleteProjectForm, setDeleteProjectForm] = useState({
+    name: ""
   });
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -97,7 +96,7 @@ export default function ProjectType() {
     try {
       setLoading(true);
       setError(null);
-      await deleteProject({ ...deleteProjectForm, typeSlug });
+      await deleteProject({ name: deleteProjectForm.name, typeSlug });
       await refreshProjects();
     } catch (e: any) {
       setError(e?.message ?? "Error");
@@ -171,8 +170,8 @@ export default function ProjectType() {
 
       {isDeletingProject && (
         <form onSubmit={handleDeleteProject}>
-          <p>slug</p>
-          <input name="slug" value={deleteProjectForm.slug} onChange={handleChange} />
+          <p>project name</p>
+          <input name="name" value={deleteProjectForm.name ?? ""} onChange={handleChange} />
 
           <button type="submit" disabled={loading}>
             {loading ? "Deleting..." : "Delete project"}

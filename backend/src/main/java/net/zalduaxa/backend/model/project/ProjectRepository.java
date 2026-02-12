@@ -20,5 +20,6 @@ public interface ProjectRepository extends JpaRepository<Project, Integer> {
     )
     List<Project> findByProjectTypeSlug(@Param("slug") String slug);
     Optional<Project> findBySlug(String slug);
+    Optional<Project> findByName(String name);
     boolean existsBySlug(String slug);
 }
