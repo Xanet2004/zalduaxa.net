@@ -2,3 +2,4 @@ target/
 *.db
 *.class
 .env
+storage/
