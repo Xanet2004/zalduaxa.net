@@ -1,6 +1,6 @@
-export async function getProjectsByType(typeSlug: string) {
+export async function getProjectBySlug(projectSlug: string) {
   try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/project/projects/${encodeURIComponent(typeSlug)}`, {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/project/getProject/${encodeURIComponent(projectSlug)}`, {
             method: "GET",
             credentials: "include",
         });
@@ -11,7 +11,7 @@ export async function getProjectsByType(typeSlug: string) {
             throw new Error(data?.message ?? "Failed to load projects");
         }
 
-        return data.projects;
+        return data;
     } catch (err) {
         return err;
     }

@@ -2,9 +2,11 @@ package net.zalduaxa.backend.service;
 
 import java.util.Optional;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
+import jakarta.annotation.PostConstruct;
 import net.zalduaxa.backend.exception.BadRequestException;
 import net.zalduaxa.backend.exception.NotFoundException;
 import net.zalduaxa.backend.exception.UnauthorizedException;
@@ -36,6 +38,11 @@ public class AuthService {
         this.sessionRepo = sessionRepo;
         this.jwtService = jwtService;
         this.passAuth = new PasswordAuthentication();
+    }
+
+    @PostConstruct
+    private void init() {
+        defaultUsers(); // ✅ aquí ya están los @Value cargados
     }
 
     // ------------------------
@@ -164,5 +171,48 @@ public class AuthService {
         }
 
         sessionRepo.delete(session.get());
+    }
+
+    @Value("${app.seed.enabled:true}")
+    private boolean seedEnabled;
+
+    @Value("${app.seed.admin.username:admin}")
+    private String adminUsername;
+
+    @Value("${app.seed.admin.password:Admin123!}")
+    private String adminPassword;
+
+    @Value("${app.seed.admin.email:admin@example.com}")
+    private String adminEmail;
+
+    @Value("${app.seed.guest.username:guest}")
+    private String guestUsername;
+
+    @Value("${app.seed.guest.password:Guest123!}")
+    private String guestPassword;
+
+    @Value("${app.seed.guest.email:guest@example.com}")
+    private String guestEmail;
+
+    private void defaultUsers() {
+        if (!seedEnabled) return;
+
+        if (userRepo.count() == 0) {
+            User admin = new User();
+            admin.setUsername(adminUsername);
+            admin.setFullName("Admin User");
+            admin.setEmail(adminEmail);
+            admin.setRole(roleRepo.findByName("admin"));
+            admin.setPasswordHash(passAuth.hash(adminPassword.toCharArray()));
+            userRepo.save(admin);
+
+            User guest = new User();
+            guest.setUsername(guestUsername);
+            guest.setFullName("Guest User");
+            guest.setEmail(guestEmail);
+            guest.setRole(roleRepo.findByName("guest"));
+            guest.setPasswordHash(passAuth.hash(guestPassword.toCharArray()));
+            userRepo.save(guest);
+        }
     }
 }

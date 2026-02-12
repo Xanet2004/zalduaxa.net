@@ -16,6 +16,7 @@ import '@/styles/global.css'
 import '@/styles/tokens.css'
 import LogOut from './pages/session/LogOut'
 import ProjectType from './pages/projectType/ProjectType'
+import Project from './pages/project/Project'
 
 export default function App() {
     const router = createBrowserRouter([
@@ -47,18 +48,6 @@ export default function App() {
                     <Header />
                     <main className="page-container">
                         <UserProfile />
-                    </main>
-                    <Footer />
-                </>
-            )
-        },
-        {
-            path: '/projects',
-            element: (
-                <>
-                    <Header />
-                    <main className="page-container">
-                        <ProjectTypes />
                     </main>
                     <Footer />
                 </>
@@ -101,12 +90,36 @@ export default function App() {
             )
         },
         {
+            path: '/projects',
+            element: (
+                <>
+                    <Header />
+                    <main className="page-container">
+                        <ProjectTypes />
+                    </main>
+                    <Footer />
+                </>
+            )
+        },
+        {
             path: "/projects/:typeSlug",
             element: (
                 <>
                     <Header />
                     <main className="page-container">
                         <ProjectType />
+                    </main>
+                    <Footer />
+                </>
+            )
+        },
+        {
+            path: "/projects/:typeSlug/:projectSlug",
+            element: (
+                <>
+                    <Header />
+                    <main className="page-container">
+                        <Project />
                     </main>
                     <Footer />
                 </>

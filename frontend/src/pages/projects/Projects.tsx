@@ -28,7 +28,7 @@ export default function Projects() {
                 setAddProjectTypeForm(prev => ({ ...prev, [name]: value }));
             }
         } else if (isDeletingProjectType) {
-            setDeleteProjectTypeForm(prev => ({ ...prev, [name]: value, projectTypeSlug: name === "name" ? value : prev.projectTypeSlug }));
+            setDeleteProjectTypeForm(prev => ({ ...prev, [name]: value }));
         }
     }
 
@@ -40,8 +40,7 @@ export default function Projects() {
     });
 
     const [deleteProjectTypeForm, setDeleteProjectTypeForm] = useState({
-        name: "",
-        projectTypeSlug: ""
+        name: ""
     });
 
     useEffect(() => {
@@ -104,7 +103,7 @@ export default function Projects() {
                     <form onSubmit={handleAddProjectType}>
                         <p>name</p>
                         <input name="name" value={addProjectTypeForm.name} onChange={handleChange}/>
-                        <p>slug</p>
+                        <p>storaged name</p>
                         <input name="slug" value={addProjectTypeForm.slug} onChange={handleChange}/>
                         <p>description</p>
                         <input name="description" value={addProjectTypeForm.description} onChange={handleChange}/>

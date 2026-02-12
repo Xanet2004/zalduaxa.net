@@ -1,83 +1,35 @@
-package net.zalduaxa.backend.model.project;
+package net.zalduaxa.backend.model.requestProject;
 
 import java.time.LocalDateTime;
 
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
+import org.springframework.web.multipart.MultipartFile;
 
-import com.fasterxml.jackson.databind.JsonNode;
+public class RequestProject {
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
-
-@Entity
-@Table(
-    name = "project",
-    uniqueConstraints = @UniqueConstraint(columnNames = {"storage_id", "slug"})
-)
-public class Project {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
-
-    @Column(name = "storage_id")
     private Integer storageId;
-
-    @Column(name = "owner_id")
     private Integer ownerId;
-
-    @Column(name = "type_id")
-    private Integer typeId;
-
-    @Column(name = "visibility_id")
+    private String typeSlug;
     private Integer visibilityId;
-
-    @Column(name = "status_id")
     private Integer statusId;
-
-    @Column(name = "name", length = 255)
     private String name;
-
-    @Column(name = "slug", length = 255)
     private String slug;
-
-    @Column(name = "description", columnDefinition = "TEXT")
     private String description;
-
-    @Column(name = "version", length = 255)
     private String version;
-
-    @Column(name = "metadata", columnDefinition = "json")
-    @JdbcTypeCode(SqlTypes.JSON)
-    private JsonNode metadata;
-
-    @Column(name = "created_at")
+    private String metadata;
     private LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-
-    @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
+    private MultipartFile image;
 
-    public Project() {}
+    public RequestProject() {}
 
-    // Constructor mínimo útil
-    public Project(Integer storageId, Integer ownerId, Integer typeId, String name, String slug) {
-        this.storageId = storageId;
-        this.ownerId = ownerId;
-        this.typeId = typeId;
+    public RequestProject(String name, String typeSlug, String description, MultipartFile image) {
         this.name = name;
-        this.slug = slug;
+        this.typeSlug = typeSlug;
+        this.description = description;
+        this.image = image;
     }
-
-    // Getters & Setters
 
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
@@ -88,8 +40,8 @@ public class Project {
     public Integer getOwnerId() { return ownerId; }
     public void setOwnerId(Integer ownerId) { this.ownerId = ownerId; }
 
-    public Integer getTypeId() { return typeId; }
-    public void setTypeId(Integer typeId) { this.typeId = typeId; }
+    public String getTypeSlug() { return typeSlug; }
+    public void setTypeSlug(String typeSlug) { this.typeSlug = typeSlug; }
 
     public Integer getVisibilityId() { return visibilityId; }
     public void setVisibilityId(Integer visibilityId) { this.visibilityId = visibilityId; }
@@ -109,8 +61,8 @@ public class Project {
     public String getVersion() { return version; }
     public void setVersion(String version) { this.version = version; }
 
-    public JsonNode getMetadata() { return metadata; }
-    public void setMetadata(JsonNode metadata) { this.metadata = metadata; }
+    public String getMetadata() { return metadata; }
+    public void setMetadata(String metadata) { this.metadata = metadata; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
@@ -120,4 +72,7 @@ public class Project {
 
     public LocalDateTime getDeletedAt() { return deletedAt; }
     public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
+
+    public MultipartFile getImage() { return image; }
+    public void setImage(MultipartFile image) { this.image = image; }
 }
