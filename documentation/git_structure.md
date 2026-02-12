@@ -7,6 +7,21 @@
 
 ---
 
+## Merging without fast-forward
+
+When there are no changes in the main branch and you merge develop into it, Git may automatically perform a fast-forward merge. However, this reduces the readability of the Git Graph.
+
+To prevent this and force a merge commit, use the following commands:
+
+```
+git checkout main
+git pull origin main
+
+git merge --no-ff develop
+
+git push origin main
+```
+
 ## Release and Versioning (main)
 
 The goal is to keep `main` clean and always deployable. Every stable version in `main` should be marked with a **version tag** following Semantic Versioning.
