@@ -151,7 +151,7 @@ export default function ProjectType() {
       {isAddingProject && (
         <form onSubmit={handleAddProject}>
           <p>name</p>
-          <input name="name" value={addProjectForm.name ?? ""} onChange={handleChange} />
+          <input name="name" value={addProjectForm.name ?? ""} onChange={handleChange} required/>
 
           <p>slug</p>
           <input name="slug" value={addProjectForm.slug ?? ""} onChange={handleChange} />
