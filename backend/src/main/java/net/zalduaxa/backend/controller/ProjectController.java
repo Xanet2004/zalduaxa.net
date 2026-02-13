@@ -53,10 +53,10 @@ public class ProjectController {
     private String PROJECTS_PATH;
 
     @Autowired
-    ProjectTypeRepository projectTypeRepo;
+    ProjectTypeRepository projectTypeRepository;
 
     @Autowired
-    ProjectRepository projectRepo;
+    ProjectRepository projectRepository;
 
     @Autowired
     private AuthService authService;
@@ -74,7 +74,7 @@ public class ProjectController {
 
     @GetMapping(value = "/projectTypes", produces = { "application/json", "application/xml" })
     public ResponseEntity<List<ProjectType>> getProjectTypes() {
-        List<ProjectType> projectTypes = projectTypeRepo.findAll();
+        List<ProjectType> projectTypes = projectTypeRepository.findAll();
         return new ResponseEntity<>(projectTypes, HttpStatus.OK);
     }
 
@@ -90,7 +90,7 @@ public class ProjectController {
             @RequestPart("image") MultipartFile image,
             HttpServletRequest request) {
 
-        List<ProjectType> projectTypes = projectTypeRepo.findAll();
+        List<ProjectType> projectTypes = projectTypeRepository.findAll();
         try {
             User user = authService.getUserFromToken(extractToken(request));
             if (user == null)
@@ -103,7 +103,7 @@ public class ProjectController {
             if (!"admin".equals(user.getRole().getName())) 
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "You need to be admin to add a new project type"));
 
-            if (projectTypeRepo.findByName(name) != null)
+            if (projectTypeRepository.findByName(name) != null)
                 return new ResponseEntity<>(Map.of("message", "Project Type already exists"), HttpStatus.BAD_REQUEST);
 
             ProjectType projectType = new ProjectType();
@@ -112,7 +112,7 @@ public class ProjectController {
             slug = !slug.isEmpty() ? slugify(slug) : slugify(name);
             saveRequestImage(slug, image);
             projectType.setSlug(slug);
-            projectTypeRepo.save(projectType);
+            projectTypeRepository.save(projectType);
             return ResponseEntity.ok(Map.of("message", "Project successfully created"));
 
         } catch (Exception e) {
@@ -137,7 +137,7 @@ public class ProjectController {
     @PostMapping(value = "/deleteProjectType", produces = { "application/json", "application/xml" })
     public ResponseEntity<?> deleteProjectType(@RequestBody RequestProjectType requestProjectType,
             HttpServletResponse response, HttpServletRequest request) {
-        List<ProjectType> projectTypes = projectTypeRepo.findAll();
+        List<ProjectType> projectTypes = projectTypeRepository.findAll();
         try {
             User user = authService.getUserFromToken(extractToken(request));
             if (user == null)
@@ -151,7 +151,7 @@ public class ProjectController {
                 for (ProjectType projectType : projectTypes) {
                     if(projectType.getName().equals(requestProjectType.getName())){
                         deleteProjectTypeFolder(projectType.getSlug());
-                        projectTypeRepo.deleteById(projectType.getId());
+                        projectTypeRepository.deleteById(projectType.getId());
                     }
                 }
                 return ResponseEntity.ok(Map.of("message", "Project type successfully deleted"));
@@ -192,7 +192,7 @@ public class ProjectController {
     @GetMapping("/projects/{slug}")
     public Map<String, Object> getProjectsByType(@PathVariable String slug) {
         String cleanSlug = slugify(slug);
-        var projects = projectRepo.findByProjectTypeSlug(cleanSlug);
+        var projects = projectRepository.findByProjectTypeSlug(cleanSlug);
         return Map.of("projects", projects);
     }
 
@@ -210,7 +210,7 @@ public class ProjectController {
     @GetMapping("/getProject/{slug}")
     public ResponseEntity<?> getProjectBySlug(@PathVariable String slug) {
         String cleanSlug = slugify(slug);
-        Optional<Project> project = projectRepo.findBySlug(cleanSlug);
+        Optional<Project> project = projectRepository.findBySlug(cleanSlug);
         if (project.isPresent()) {
             return ResponseEntity.ok(project.get());
         } else {
@@ -244,7 +244,7 @@ public class ProjectController {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "You need to be admin to add a new project"));
 
             String cleanTypeSlug = slugify(typeSlug);
-            Optional<ProjectType> pt = projectTypeRepo.findBySlug(cleanTypeSlug);
+            Optional<ProjectType> pt = projectTypeRepository.findBySlug(cleanTypeSlug);
             if (pt == null)
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Project type not found"));
 
@@ -253,19 +253,19 @@ public class ProjectController {
 
             String cleanProjectSlug = (slug != null && !slug.isBlank()) ? slugify(slug) : slugify(name);
 
-            if (projectRepo.existsBySlug(cleanProjectSlug))
+            if (projectRepository.existsBySlug(cleanProjectSlug))
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "Project slug already exists"));
 
             Project p = new Project();
             p.setName(name);
             p.setSlug(cleanProjectSlug);
             p.setDescription(description);
-            p.setTypeId(projectTypeRepo.findBySlug(cleanTypeSlug).get().getId());
+            p.setTypeId(projectTypeRepository.findBySlug(cleanTypeSlug).get().getId());
             p.setOwnerId(user.getId());
             p.setStorageId(1);
             p.setMetadata(null);
 
-            projectRepo.save(p);
+            projectRepository.save(p);
 
             if (image != null && !image.isEmpty()) {
                 saveProjectImage(cleanTypeSlug, cleanProjectSlug, image);
@@ -311,7 +311,7 @@ public class ProjectController {
             if (body.getName() == null || body.getName().isBlank())
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "name is required"));
 
-            Optional<Project> pOpt = projectRepo.findByName(body.getName());
+            Optional<Project> pOpt = projectRepository.findByName(body.getName());
             if (pOpt.isEmpty())
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Project not found"));
 
@@ -321,7 +321,7 @@ public class ProjectController {
             String cleanTypeSlug = slugify(body.getTypeSlug());
             String cleanProjectSlug = slugify(pOpt.get().getSlug());
 
-            Optional<ProjectType> pt = projectTypeRepo.findBySlug(cleanTypeSlug);
+            Optional<ProjectType> pt = projectTypeRepository.findBySlug(cleanTypeSlug);
             if (pt == null)
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Project type not found"));
 
@@ -330,7 +330,7 @@ public class ProjectController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Project not found"));
 
             deleteProjectFolder(cleanTypeSlug, cleanProjectSlug);
-            projectRepo.deleteById(p.getId());
+            projectRepository.deleteById(p.getId());
 
             return ResponseEntity.ok(Map.of("message", "Project successfully deleted"));
         } catch (Exception e) {
