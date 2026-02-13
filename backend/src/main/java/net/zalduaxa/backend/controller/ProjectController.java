@@ -2,14 +2,18 @@ package net.zalduaxa.backend.controller;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -62,8 +66,8 @@ public class ProjectController {
     private SessionRepository sessionRepository;
 
     public ProjectController(@Value("${storage.path}") String storagePathStr) {
-        Path base = Paths.get(java.net.URI.create(storagePathStr));
-        this.STORAGE_PATH = base.toAbsolutePath().toString();
+        Path base_storage = Paths.get(java.net.URI.create(storagePathStr));
+        this.STORAGE_PATH = base_storage.toAbsolutePath().toString();
         this.PROJECT_TYPES_PATH = STORAGE_PATH + "\\projectTypes";
         this.PROJECTS_PATH = STORAGE_PATH + "\\projects";
     }
@@ -82,9 +86,9 @@ public class ProjectController {
     )
     public ResponseEntity<?> addProjectType(
             @RequestParam("name") String name,
-            @RequestParam("slug") String slug,
-            @RequestParam("description") String description,
-            @RequestPart("image") MultipartFile image,
+            @RequestParam(value = "slug", required = false) String slug,
+            @RequestParam(value = "description", required = false) String description,
+            @RequestPart(value = "image", required = false) MultipartFile image,
             HttpServletRequest request) {
 
         List<ProjectType> projectTypes = projectTypeRepository.findAll();
@@ -108,25 +112,35 @@ public class ProjectController {
             
             saveRequestImage(slug, image);
             projectTypeRepository.save(projectType);
-            
+
             return ResponseEntity.ok(Map.of("message", "Project successfully created"));
 
         } catch (Exception e) {
-            return new ResponseEntity<>(projectTypes, HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(Map.of("message", "Error creating project type: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    private Boolean saveRequestImage(String folderName, MultipartFile image) {
+    private void saveRequestImage(String projectTypeSlug, MultipartFile image) {
+        File folder = new File(PROJECT_TYPES_PATH + '\\' + projectTypeSlug);
         try {
-            File folder = new File(PROJECT_TYPES_PATH, folderName);
             if (!folder.exists() && !folder.mkdirs()) {
                 throw new RuntimeException("Cannot create folder " + folder.getAbsolutePath());
             }
+
             File destination = new File(folder, "icon.png");
-            image.transferTo(destination);
-            return true;
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to save file", e);
+
+            if (image != null && !image.isEmpty()) {
+                image.transferTo(destination);
+                return;
+            }
+
+            ClassPathResource defaultIcon = new ClassPathResource("/images/project_type.png");
+            try (InputStream in = defaultIcon.getInputStream()) {
+                Files.copy(in, destination.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to save icon", e);
         }
     }
 
@@ -249,9 +263,7 @@ public class ProjectController {
 
             projectRepository.save(p);
 
-            if (image != null && !image.isEmpty()) {
-                saveProjectImage(cleanTypeSlug, cleanProjectSlug, image);
-            }
+            saveProjectImage(cleanTypeSlug, cleanProjectSlug, image);
 
             return ResponseEntity.ok(Map.of("message", "Project successfully created"));
         } catch (Exception e) {
@@ -259,17 +271,27 @@ public class ProjectController {
         }
     }
 
-    private Boolean saveProjectImage(String typeSlug, String projectSlug, MultipartFile image) {
+    private void saveProjectImage(String typeSlug, String projectSlug, MultipartFile image) {
+        File folder = new File(PROJECTS_PATH + '\\' + typeSlug + '\\' + projectSlug);
         try {
-            File folder = new File(PROJECTS_PATH + "\\" + typeSlug, projectSlug);
             if (!folder.exists() && !folder.mkdirs()) {
                 throw new RuntimeException("Cannot create folder " + folder.getAbsolutePath());
             }
+
             File destination = new File(folder, "icon.png");
-            image.transferTo(destination);
-            return true;
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to save file", e);
+
+            if (image != null && !image.isEmpty()) {
+                image.transferTo(destination);
+                return;
+            }
+
+            ClassPathResource defaultIcon = new ClassPathResource("/images/project.png");
+            try (InputStream in = defaultIcon.getInputStream()) {
+                Files.copy(in, destination.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to save icon", e);
         }
     }
 
