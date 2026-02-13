@@ -23,9 +23,6 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import net.zalduaxa.backend.model.project.Project;
@@ -92,7 +89,7 @@ public class ProjectController {
 
         List<ProjectType> projectTypes = projectTypeRepository.findAll();
         try {
-            User user = authService.getUserFromToken(extractToken(request));
+            User user = authService.getUserFromRequest(request);
             if (user == null)
                 return new ResponseEntity<>(Map.of("message", "Invalid user"), HttpStatus.UNAUTHORIZED);
 
@@ -139,7 +136,7 @@ public class ProjectController {
             HttpServletResponse response, HttpServletRequest request) {
         List<ProjectType> projectTypes = projectTypeRepository.findAll();
         try {
-            User user = authService.getUserFromToken(extractToken(request));
+            User user = authService.getUserFromRequest(request);
             if (user == null)
                 return new ResponseEntity<>(Map.of("message", "Invalid user"), HttpStatus.UNAUTHORIZED);
 
@@ -173,20 +170,6 @@ public class ProjectController {
                 try { java.nio.file.Files.delete(p); } catch (java.io.IOException e) { throw new RuntimeException(e); }
             });
         } catch (java.io.IOException e) { throw new RuntimeException(e); }
-    }
-
-    private String extractToken(HttpServletRequest request) {
-        String authHeader = request.getHeader("Authorization");
-        if (authHeader != null && authHeader.startsWith("Bearer "))
-            return authHeader.substring(7);
-
-        if (request.getCookies() != null) {
-            for (Cookie cookie : request.getCookies()) {
-                if ("token".equals(cookie.getName()))
-                    return cookie.getValue();
-            }
-        }
-        return null;
     }
 
     @GetMapping("/projects/{slug}")
@@ -232,7 +215,7 @@ public class ProjectController {
             HttpServletRequest request) {
 
         try {
-            User user = authService.getUserFromToken(extractToken(request));
+            User user = authService.getUserFromRequest(request);
             if (user == null)
                 return new ResponseEntity<>(Map.of("message", "Invalid user"), HttpStatus.UNAUTHORIZED);
 
@@ -297,7 +280,7 @@ public class ProjectController {
             HttpServletRequest request) {
 
         try {
-            User user = authService.getUserFromToken(extractToken(request));
+            User user = authService.getUserFromRequest(request);
             if (user == null)
                 return new ResponseEntity<>(Map.of("message", "Invalid user"), HttpStatus.UNAUTHORIZED);
 

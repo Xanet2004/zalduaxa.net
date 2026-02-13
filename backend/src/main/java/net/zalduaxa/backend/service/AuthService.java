@@ -7,6 +7,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.Cookie;
 import net.zalduaxa.backend.exception.BadRequestException;
 import net.zalduaxa.backend.exception.NotFoundException;
 import net.zalduaxa.backend.exception.UnauthorizedException;
@@ -132,7 +134,12 @@ public class AuthService {
     // ------------------------
     // Session validation
     // ------------------------
-    public User getUserFromToken(String token) {
+    public User getUserFromRequest(HttpServletRequest request) {
+        String token = extractToken(request);
+        return getUserFromToken(token);
+    }
+
+    private User getUserFromToken(String token) {
         if (token == null || token.isBlank()) {
             throw new UnauthorizedException("Missing auth token");
         }
@@ -159,7 +166,12 @@ public class AuthService {
     // ------------------------
     // Logout
     // ------------------------
-    public void logoutByToken(String token) {
+    public void logoutByRequest(HttpServletRequest request) {
+        String token = extractToken(request);
+        logoutByToken(token);
+    }
+
+    private void logoutByToken(String token) {
         if (token == null || token.isBlank()) {
             throw new UnauthorizedException("Missing auth token");
         }
@@ -172,6 +184,30 @@ public class AuthService {
 
         sessionRepo.delete(session.get());
     }
+
+
+    // ------------------------
+    // Extract token from header or cookie (for logout endpoint)
+    // ------------------------
+
+    private String extractToken(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer "))
+            return authHeader.substring(7);
+
+        if (request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                if ("token".equals(cookie.getName()))
+                    return cookie.getValue();
+            }
+        }
+        return null;
+    }
+
+
+    // ------------------------
+    // Create default users (seed)
+    // ------------------------
 
     @Value("${app.seed.enabled:true}")
     private boolean seedEnabled;

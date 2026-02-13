@@ -48,9 +48,9 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody RequestUser req, HttpServletResponse response) {
-        User user = authService.loginAndCreateSession(req); // move session logic into service
+        User user = authService.loginAndCreateSession(req);
 
-        String token = authService.issueJwt(user); // or return token from service
+        String token = authService.issueJwt(user);
 
         response.addHeader(HttpHeaders.SET_COOKIE, buildAuthCookie(token).toString());
         return ResponseEntity.ok(new UserResponse(new ResponseUser(user)));
@@ -58,8 +58,7 @@ public class AuthController {
 
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
-        String token = extractToken(request);
-        authService.logoutByToken(token);
+        authService.logoutByRequest(request);
 
         response.addHeader(HttpHeaders.SET_COOKIE, deleteAuthCookie().toString());
         return ResponseEntity.ok(new MessageResponse("Logged out"));
@@ -67,8 +66,7 @@ public class AuthController {
 
     @GetMapping("/session")
     public ResponseEntity<?> getSession(HttpServletRequest request) {
-        String token = extractToken(request);
-        User user = authService.getUserFromToken(token);
+        User user = authService.getUserFromRequest(request);
         authService.assertHasActiveSession(user.getId());
 
         return ResponseEntity.ok(new UserResponse(new ResponseUser(user)));
@@ -93,25 +91,6 @@ public class AuthController {
             .sameSite(cookieSameSite)
             .build();
     }
-
-    private String extractToken(HttpServletRequest request) {
-        String authHeader = request.getHeader("Authorization");
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            return authHeader.substring(7);
-        }
-
-        Cookie[] cookies = request.getCookies();
-        if (cookies != null) {
-            return Arrays.stream(cookies)
-                .filter(c -> "token".equals(c.getName()))
-                .map(Cookie::getValue)
-                .findFirst()
-                .orElseThrow(() -> new UnauthorizedException("Missing auth token"));
-        }
-
-        throw new UnauthorizedException("Missing auth token");
-    }
-
 
     // simple response DTOs
     public record MessageResponse(String message) {}
