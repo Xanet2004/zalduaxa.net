@@ -103,13 +103,12 @@ public class ProjectController {
             if (projectTypeRepository.findByName(name) != null)
                 return new ResponseEntity<>(Map.of("message", "Project Type already exists"), HttpStatus.BAD_REQUEST);
 
-            ProjectType projectType = new ProjectType();
-            projectType.setName(name);
-            projectType.setDescription(description);
             slug = !slug.isEmpty() ? slugify(slug) : slugify(name);
+            ProjectType projectType = new ProjectType(name, description, slug);
+            
             saveRequestImage(slug, image);
-            projectType.setSlug(slug);
             projectTypeRepository.save(projectType);
+            
             return ResponseEntity.ok(Map.of("message", "Project successfully created"));
 
         } catch (Exception e) {
