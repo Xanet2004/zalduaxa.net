@@ -44,7 +44,7 @@ public class AuthService {
 
     @PostConstruct
     private void init() {
-        defaultUsers(); // ✅ aquí ya están los @Value cargados
+        defaultUsers();
     }
 
     // ------------------------
@@ -189,7 +189,6 @@ public class AuthService {
     // ------------------------
     // Extract token from header or cookie (for logout endpoint)
     // ------------------------
-
     private String extractToken(HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer "))
@@ -208,26 +207,25 @@ public class AuthService {
     // ------------------------
     // Create default users (seed)
     // ------------------------
-
     @Value("${app.seed.enabled:true}")
     private boolean seedEnabled;
 
-    @Value("${app.seed.admin.username:admin}")
+    @Value("${app.seed.admin.username}")
     private String adminUsername;
 
-    @Value("${app.seed.admin.password:Admin123!}")
+    @Value("${app.seed.admin.password}")
     private String adminPassword;
 
-    @Value("${app.seed.admin.email:admin@example.com}")
+    @Value("${app.seed.admin.email}")
     private String adminEmail;
 
-    @Value("${app.seed.guest.username:guest}")
+    @Value("${app.seed.guest.username}")
     private String guestUsername;
 
-    @Value("${app.seed.guest.password:Guest123!}")
+    @Value("${app.seed.guest.password}")
     private String guestPassword;
 
-    @Value("${app.seed.guest.email:guest@example.com}")
+    @Value("${app.seed.guest.email}")
     private String guestEmail;
 
     private void defaultUsers() {
