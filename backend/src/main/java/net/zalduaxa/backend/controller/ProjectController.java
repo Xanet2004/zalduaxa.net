@@ -1,7 +1,6 @@
 package net.zalduaxa.backend.controller;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -29,6 +28,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import net.zalduaxa.backend.exception.BadRequestException;
 import net.zalduaxa.backend.exception.ForbiddenException;
 import net.zalduaxa.backend.exception.UnauthorizedException;
 import net.zalduaxa.backend.model.project.Project;
@@ -54,7 +54,7 @@ public class ProjectController {
     private String STORAGE_PATH;
     private String PROJECT_TYPES_PATH;
     private String PROJECTS_PATH;
-    private String icon;
+    private String icon = "icon.png";
     private String IMAGES_PATH = "/images/";
     private String PROJECT_TYPE_IMAGE_PATH = IMAGES_PATH + "project_type.png";
     private String PROJECT_IMAGE_PATH = IMAGES_PATH + "project.png";
@@ -90,35 +90,28 @@ public class ProjectController {
         consumes = "multipart/form-data",
         produces = { "application/json", "application/xml" }
     )
-    // TODO: Shorter method header, requestProjectType with multipart file?
     public ResponseEntity<?> addProjectType(
-            @RequestParam("name") String name,
-            @RequestParam(value = "slug", required = false) String slug,
-            @RequestParam(value = "description", required = false) String description,
-            @RequestPart(value = "image", required = false) MultipartFile image,
+            RequestProjectType projectTypeRequest,
             HttpServletRequest request) {
 
-        // TODO: Remove if arguments for readability
-
         try {
-            User user = authService.getUserFromRequest(request);
-            if (user == null)
-                return new ResponseEntity<>(Map.of("message", "Invalid user"), HttpStatus.UNAUTHORIZED);
-
-            Optional<Session> sessionOpt = sessionRepository.findByUserId(user.getId().longValue());
-            if (sessionOpt.isEmpty() || !sessionRepository.existsById(sessionOpt.get().getId()))
-                return new ResponseEntity<>(Map.of("message", "Invalid session"), HttpStatus.BAD_REQUEST);
-
-            if (!"admin".equals(user.getRole().getName())) 
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "You need to be admin to add a new project type"));
-
-            if (projectTypeRepository.findByName(name) != null)
-                return new ResponseEntity<>(Map.of("message", "Project Type already exists"), HttpStatus.BAD_REQUEST);
-
-            slug = !slug.isEmpty() ? slugify(slug) : slugify(name);
-            ProjectType projectType = new ProjectType(name, description, slug);
+            // * Check requisites
+            User user = requireUser(request);
+            requireValidSession(user);
+            requireAdmin(user);
+            require(projectTypeRequest.getName() != null && !projectTypeRequest.getName().isBlank(), new BadRequestException("Name is required"));
+            require(projectTypeRepository.findByName(projectTypeRequest.getName()) == null, new BadRequestException("Project Type already exists"));
             
-            saveRequestImage(slug, image);
+            // * Confirm slug
+            String cleanSlug = (projectTypeRequest.getSlug() != null && !projectTypeRequest.getSlug().isBlank())
+                                ? slugify(projectTypeRequest.getSlug())
+                                : slugify(projectTypeRequest.getName());
+            
+            // * Save image
+            saveRequestImage(cleanSlug, projectTypeRequest.getImage());
+
+            // * Create and save projectType
+            ProjectType projectType = new ProjectType(projectTypeRequest.getName(), projectTypeRequest.getDescription(), cleanSlug);
             projectTypeRepository.save(projectType);
 
             return ResponseEntity.ok(Map.of("message", "Project successfully created"));
@@ -168,6 +161,8 @@ public class ProjectController {
             Optional<Session> sessionOpt = sessionRepository.findByUserId(user.getId().longValue());
             if (sessionOpt.isEmpty() || !sessionRepository.existsById(sessionOpt.get().getId()))
                 return new ResponseEntity<>(Map.of("message", "Invalid session"), HttpStatus.BAD_REQUEST);
+
+            // TODO: Remove all projects
 
             if ("admin".equals(user.getRole().getName())) {
                 for (ProjectType projectType : projectTypes) {
