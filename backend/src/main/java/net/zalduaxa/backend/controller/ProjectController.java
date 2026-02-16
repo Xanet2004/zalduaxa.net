@@ -84,12 +84,15 @@ public class ProjectController {
         consumes = "multipart/form-data",
         produces = { "application/json", "application/xml" }
     )
+    // TODO: Shorter method header, requestProjectType with multipart file?
     public ResponseEntity<?> addProjectType(
             @RequestParam("name") String name,
             @RequestParam(value = "slug", required = false) String slug,
             @RequestParam(value = "description", required = false) String description,
             @RequestPart(value = "image", required = false) MultipartFile image,
             HttpServletRequest request) {
+
+        // TODO: Remove if arguments for readability
 
         try {
             User user = authService.getUserFromRequest(request);
@@ -126,6 +129,7 @@ public class ProjectController {
                 throw new RuntimeException("Cannot create folder " + folder.getAbsolutePath());
             }
 
+            // TODO: Save default values for scalability, like icon.png, metadata.json, etc
             File destination = new File(folder, "icon.png");
 
             if (image != null && !image.isEmpty()) {
@@ -146,6 +150,9 @@ public class ProjectController {
     @PostMapping(value = "/deleteProjectType", produces = { "application/json", "application/xml" })
     public ResponseEntity<?> deleteProjectType(@RequestBody RequestProjectType requestProjectType,
             HttpServletResponse response, HttpServletRequest request) {
+
+        // TODO: Remove if arguments for readability
+
         List<ProjectType> projectTypes = projectTypeRepository.findAll();
         try {
             User user = authService.getUserFromRequest(request);
@@ -218,6 +225,7 @@ public class ProjectController {
         consumes = "multipart/form-data",
         produces = { "application/json", "application/xml" }
     )
+    // TODO: Shorter method header, requestProject with multipart file?
     public ResponseEntity<?> addProject(
             @RequestParam("typeSlug") String typeSlug,
             @RequestParam("name") String name,
@@ -225,6 +233,8 @@ public class ProjectController {
             @RequestParam(value = "description", required = false) String description,
             @RequestPart(value = "image", required = false) MultipartFile image,
             HttpServletRequest request) {
+
+        // TODO: Remove if arguments for readability
 
         try {
             User user = authService.getUserFromRequest(request);
@@ -269,6 +279,8 @@ public class ProjectController {
                 throw new RuntimeException("Cannot create folder " + folder.getAbsolutePath());
             }
 
+            // TODO: Save default values for scalability, like icon.png, metadata.json, etc
+
             File destination = new File(folder, "icon.png");
 
             if (image != null && !image.isEmpty()) {
@@ -290,6 +302,9 @@ public class ProjectController {
     public ResponseEntity<?> deleteProject(
             @RequestBody net.zalduaxa.backend.model.requestProject.RequestProject body,
             HttpServletRequest request) {
+
+        // TODO: Remove if arguments for readability
+        // TODO: Delete project just with slug
 
         try {
             User user = authService.getUserFromRequest(request);
