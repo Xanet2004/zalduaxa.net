@@ -251,17 +251,9 @@ public class ProjectController {
             if (projectRepository.existsBySlug(cleanProjectSlug))
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "Project slug already exists"));
 
-            Project p = new Project();
-            p.setName(name);
-            p.setSlug(cleanProjectSlug);
-            p.setDescription(description);
-            p.setTypeId(projectTypeRepository.findBySlug(cleanTypeSlug).get().getId());
-            p.setOwnerId(user.getId());
-            p.setStorageId(1);
-            p.setMetadata(null);
-
+            Project p = new Project(1, user.getId(), projectTypeRepository.findBySlug(cleanTypeSlug).get().getId(), name, cleanProjectSlug, description, null);
+            
             projectRepository.save(p);
-
             saveProjectImage(cleanTypeSlug, cleanProjectSlug, image);
 
             return ResponseEntity.ok(Map.of("message", "Project successfully created"));

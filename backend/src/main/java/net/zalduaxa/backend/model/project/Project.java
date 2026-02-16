@@ -69,7 +69,7 @@ public class Project {
     public Project() {}
 
     // Constructor mínimo útil
-    public Project(Integer storageId, Integer ownerId, Integer typeId, String name, String slug) {
+    public Project(Integer storageId, Integer ownerId, Integer typeId, String name, String slug, String description, String metadata) {
         this.storageId = storageId;
         this.ownerId = ownerId;
         this.typeId = typeId;
