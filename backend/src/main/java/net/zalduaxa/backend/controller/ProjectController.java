@@ -52,6 +52,10 @@ public class ProjectController {
     private String STORAGE_PATH;
     private String PROJECT_TYPES_PATH;
     private String PROJECTS_PATH;
+    private String icon;
+    private String IMAGES_PATH = "/images/";
+    private String PROJECT_TYPE_IMAGE_PATH = IMAGES_PATH + "project_type.png";
+    private String PROJECT_IMAGE_PATH = IMAGES_PATH + "project.png";
 
     @Autowired
     ProjectTypeRepository projectTypeRepository;
@@ -130,14 +134,14 @@ public class ProjectController {
             }
 
             // TODO: Save default values for scalability, like icon.png, metadata.json, etc
-            File destination = new File(folder, "icon.png");
+            File destination = new File(folder, icon);
 
             if (image != null && !image.isEmpty()) {
                 image.transferTo(destination);
                 return;
             }
 
-            ClassPathResource defaultIcon = new ClassPathResource("/images/project_type.png");
+            ClassPathResource defaultIcon = new ClassPathResource(PROJECT_TYPE_IMAGE_PATH);
             try (InputStream in = defaultIcon.getInputStream()) {
                 Files.copy(in, destination.toPath(), StandardCopyOption.REPLACE_EXISTING);
             }
@@ -281,14 +285,14 @@ public class ProjectController {
 
             // TODO: Save default values for scalability, like icon.png, metadata.json, etc
 
-            File destination = new File(folder, "icon.png");
+            File destination = new File(folder, icon);
 
             if (image != null && !image.isEmpty()) {
                 image.transferTo(destination);
                 return;
             }
 
-            ClassPathResource defaultIcon = new ClassPathResource("/images/project.png");
+            ClassPathResource defaultIcon = new ClassPathResource(PROJECT_IMAGE_PATH);
             try (InputStream in = defaultIcon.getInputStream()) {
                 Files.copy(in, destination.toPath(), StandardCopyOption.REPLACE_EXISTING);
             }
