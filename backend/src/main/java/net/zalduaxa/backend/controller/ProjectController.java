@@ -29,6 +29,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import net.zalduaxa.backend.exception.ForbiddenException;
+import net.zalduaxa.backend.exception.UnauthorizedException;
 import net.zalduaxa.backend.model.project.Project;
 import net.zalduaxa.backend.model.project.ProjectRepository;
 import net.zalduaxa.backend.model.projectType.ProjectType;
@@ -360,6 +362,28 @@ public class ProjectController {
                 try { java.nio.file.Files.delete(p); } catch (java.io.IOException e) { throw new RuntimeException(e); }
             });
         } catch (java.io.IOException e) { throw new RuntimeException(e); }
+    }
+
+    private User requireUser(HttpServletRequest request) {
+        User user = authService.getUserFromRequest(request);
+        if (user == null) throw new UnauthorizedException("Invalid user");
+        return user;
+    }
+
+    private Session requireValidSession(User user) {
+        return sessionRepository.findByUserId(user.getId().longValue())
+            .filter(s -> sessionRepository.existsById(s.getId()))
+            .orElseThrow(() -> new UnauthorizedException("Invalid session"));
+    }
+
+    private void requireAdmin(User user) {
+        if (!"admin".equals(user.getRole().getName())) {
+            throw new ForbiddenException("You need to be admin");
+        }
+    }
+
+    private static void require(boolean condition, RuntimeException ex) {
+        if (!condition) throw ex;
     }
 
 
