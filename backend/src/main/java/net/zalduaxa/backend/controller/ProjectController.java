@@ -91,7 +91,6 @@ public class ProjectController {
             @RequestPart(value = "image", required = false) MultipartFile image,
             HttpServletRequest request) {
 
-        List<ProjectType> projectTypes = projectTypeRepository.findAll();
         try {
             User user = authService.getUserFromRequest(request);
             if (user == null)
