@@ -200,6 +200,7 @@ public class ProjectController {
     }
 
     public static String slugify(String input) {
+        // TODO: More scalable slugify
         String text = input.toLowerCase();
         text = java.text.Normalizer.normalize(text, java.text.Normalizer.Form.NFD);
         text = text.replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
