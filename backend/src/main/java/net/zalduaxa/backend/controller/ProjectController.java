@@ -1,6 +1,7 @@
 package net.zalduaxa.backend.controller;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -122,23 +123,26 @@ public class ProjectController {
     }
 
     private void saveRequestImage(String projectTypeSlug, MultipartFile image) {
-        File folder = new File(PROJECT_TYPES_PATH + '\\' + projectTypeSlug);
+        Path folder = Paths.get(PROJECT_TYPES_PATH).resolve(projectTypeSlug).normalize();
         try {
-            // TODO: Save default values for scalability, like icon.png, metadata.json, etc
-            File destination = new File(folder, icon);
+            Files.createDirectories(folder);
+            Path destination = folder.resolve("icon.png");
 
             if (image != null && !image.isEmpty()) {
-                image.transferTo(destination);
+                image.transferTo(destination.toFile());
                 return;
             }
 
-            ClassPathResource defaultIcon = new ClassPathResource(PROJECT_TYPE_IMAGE_PATH);
+            ClassPathResource defaultIcon = new ClassPathResource("images/project_type.png");
             try (InputStream in = defaultIcon.getInputStream()) {
-                Files.copy(in, destination.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                Files.copy(in, destination, StandardCopyOption.REPLACE_EXISTING);
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to save icon", e);
             }
-
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to save icon", e);
+            
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
         }
     }
 
