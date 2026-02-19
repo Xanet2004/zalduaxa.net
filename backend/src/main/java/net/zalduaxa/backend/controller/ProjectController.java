@@ -124,9 +124,7 @@ public class ProjectController {
     private void saveRequestImage(String projectTypeSlug, MultipartFile image) {
         File folder = new File(PROJECT_TYPES_PATH + '\\' + projectTypeSlug);
         try {
-            if (!folder.exists() && !folder.mkdirs()) {
-                throw new RuntimeException("Cannot create folder " + folder.getAbsolutePath());
-            }
+            require(!folder.exists() && !folder.mkdirs(), new RuntimeException("Cannot create folder " + folder.getAbsolutePath()));
 
             // TODO: Save default values for scalability, like icon.png, metadata.json, etc
             File destination = new File(folder, icon);
