@@ -124,8 +124,6 @@ public class ProjectController {
     private void saveRequestImage(String projectTypeSlug, MultipartFile image) {
         File folder = new File(PROJECT_TYPES_PATH + '\\' + projectTypeSlug);
         try {
-            require(!folder.exists() && !folder.mkdirs(), new RuntimeException("Cannot create folder " + folder.getAbsolutePath()));
-
             // TODO: Save default values for scalability, like icon.png, metadata.json, etc
             File destination = new File(folder, icon);
 
@@ -152,23 +150,16 @@ public class ProjectController {
 
         List<ProjectType> projectTypes = projectTypeRepository.findAll();
         try {
-            User user = authService.getUserFromRequest(request);
-            if (user == null)
-                return new ResponseEntity<>(Map.of("message", "Invalid user"), HttpStatus.UNAUTHORIZED);
-
-            Optional<Session> sessionOpt = sessionRepository.findByUserId(user.getId().longValue());
-            if (sessionOpt.isEmpty() || !sessionRepository.existsById(sessionOpt.get().getId()))
-                return new ResponseEntity<>(Map.of("message", "Invalid session"), HttpStatus.BAD_REQUEST);
+            User user = requireUser(request);
+            requireValidSession(user);
 
             // TODO: Remove all projects
 
             if ("admin".equals(user.getRole().getName())) {
-                for (ProjectType projectType : projectTypes) {
-                    if(projectType.getName().equals(requestProjectType.getName())){
-                        deleteProjectTypeFolder(projectType.getSlug());
-                        projectTypeRepository.deleteById(projectType.getId());
-                    }
-                }
+                for (ProjectType projectType : projectTypes) 
+                    if(projectType.getName().equals(requestProjectType.getName())) 
+                        deleteProjectType(projectType);
+                
                 return ResponseEntity.ok(Map.of("message", "Project type successfully deleted"));
             }
 
@@ -180,10 +171,27 @@ public class ProjectController {
         }
     }
 
+    private void deleteProjectType(ProjectType projectType){
+        // for (Project project : projectRepository.findByProjectTypeSlug(projectType.getSlug())) {
+        //     deleteProject(project, projectType);
+        // }
+        deleteProjectTypeFolder(projectType.getSlug());
+        projectTypeRepository.deleteById(projectType.getId());
+    }
+
     private void deleteProjectTypeFolder(String storagePath) {
-        java.nio.file.Path dir = java.nio.file.Paths.get(PROJECT_TYPES_PATH + '\\' + storagePath);
-        if (!java.nio.file.Files.exists(dir)) return;
-        try (java.util.stream.Stream<java.nio.file.Path> paths = java.nio.file.Files.walk(dir)) {
+        Path dirProjectType = Paths.get(PROJECT_TYPES_PATH).resolve(storagePath).normalize();
+        Path dirProjects    = Paths.get(PROJECTS_PATH).resolve(storagePath).normalize();
+
+        if (!Files.exists(dirProjectType)) return;
+        if (!Files.exists(dirProjects)) return;
+
+        try (java.util.stream.Stream<java.nio.file.Path> paths = java.nio.file.Files.walk(dirProjectType)) {
+            paths.sorted(java.util.Comparator.reverseOrder()).forEach(p -> {
+                try { java.nio.file.Files.delete(p); } catch (java.io.IOException e) { throw new RuntimeException(e); }
+            });
+        } catch (java.io.IOException e) { throw new RuntimeException(e); }
+        try (java.util.stream.Stream<java.nio.file.Path> paths = java.nio.file.Files.walk(dirProjects)) {
             paths.sorted(java.util.Comparator.reverseOrder()).forEach(p -> {
                 try { java.nio.file.Files.delete(p); } catch (java.io.IOException e) { throw new RuntimeException(e); }
             });
@@ -329,23 +337,24 @@ public class ProjectController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "typeSlug is required"));
 
             String cleanTypeSlug = slugify(body.getTypeSlug());
-            String cleanProjectSlug = slugify(pOpt.get().getSlug());
 
-            Optional<ProjectType> pt = projectTypeRepository.findBySlug(cleanTypeSlug);
+            ProjectType pt = projectTypeRepository.findBySlug(cleanTypeSlug).get();
             if (pt == null)
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Project type not found"));
 
             Project p = pOpt.get();
-            if (p.getTypeId() == null || !p.getTypeId().equals(pt.get().getId()))
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Project not found"));
-
-            deleteProjectFolder(cleanTypeSlug, cleanProjectSlug);
-            projectRepository.deleteById(p.getId());
+            deleteProject(p, pt);
 
             return ResponseEntity.ok(Map.of("message", "Project successfully deleted"));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("message", "Unexpected server error"));
         }
+    }
+
+    private void deleteProject(Project p, ProjectType pt){
+        require(p.getTypeId() != null || p.getTypeId().equals(pt.getId()), new RuntimeException("Cannot delete project"));
+        deleteProjectFolder(slugify(pt.getSlug()), slugify(p.getSlug()));
+        projectRepository.deleteById(p.getId());
     }
 
     private void deleteProjectFolder(String typeSlug, String projectSlug) {
