@@ -176,9 +176,9 @@ public class ProjectController {
     }
 
     private void deleteProjectType(ProjectType projectType){
-        // for (Project project : projectRepository.findByProjectTypeSlug(projectType.getSlug())) {
-        //     deleteProject(project, projectType);
-        // }
+        for (Project project : projectRepository.findByProjectTypeSlug(projectType.getSlug())) {
+            deleteProject(project, projectType);
+        }
         deleteProjectTypeFolder(projectType.getSlug());
         projectTypeRepository.deleteById(projectType.getId());
     }
