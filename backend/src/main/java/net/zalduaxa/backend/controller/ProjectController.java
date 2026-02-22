@@ -253,16 +253,18 @@ public class ProjectController {
             requireValidSession(user);
             requireAdmin(user);
 
+            // * Check project type
             String cleanTypeSlug = slugify(typeSlug);
             Optional<ProjectType> pt = projectTypeRepository.findBySlug(cleanTypeSlug);
             require(pt == null, new BadRequestException("Project type not found"));
             require(name == null || name.isBlank(), new BadRequestException("Name is required"));
 
+            // * Check project
             String cleanProjectSlug = (slug != null && !slug.isBlank()) ? slugify(slug) : slugify(name);
             require(projectRepository.existsBySlug(cleanProjectSlug), new BadRequestException("Project slug already exists"));
 
-            Project p = new Project(1, user.getId(), projectTypeRepository.findBySlug(cleanTypeSlug).get().getId(), name, cleanProjectSlug, description, null);
-            
+            // * Create and save project
+            Project p = new Project(1, user.getId(), projectTypeRepository.findBySlug(cleanTypeSlug).get().getId(), name, cleanProjectSlug, description, null);            
             projectRepository.save(p);
             saveProjectImage(cleanTypeSlug, cleanProjectSlug, image);
 
@@ -278,8 +280,6 @@ public class ProjectController {
             if (!folder.exists() && !folder.mkdirs()) {
                 throw new RuntimeException("Cannot create folder " + folder.getAbsolutePath());
             }
-
-            // TODO: Save default values for scalability, like icon.png, metadata.json, etc
 
             File destination = new File(folder, icon);
 
@@ -307,27 +307,24 @@ public class ProjectController {
         // TODO: Delete project just with slug
 
         try {
-            // * Check requisites
+            // * Check user requisites
             User user = requireUser(request);
             requireValidSession(user);
             requireAdmin(user);
-
-            if (body.getName() == null || body.getName().isBlank())
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "name is required"));
-
+            
+            // * Check project requisites
+            require(body.getName() == null || body.getName().isBlank(), new BadRequestException("Name is required"));
             Optional<Project> pOpt = projectRepository.findByName(body.getName());
-            if (pOpt.isEmpty())
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Project not found"));
-
-            if (body.getTypeSlug() == null || body.getTypeSlug().isBlank())
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "typeSlug is required"));
+            require(pOpt.isEmpty(), new BadRequestException("Project not found"));
+            require(body.getTypeSlug() == null || body.getTypeSlug().isBlank(), new BadRequestException("Type slug is required"));
 
             String cleanTypeSlug = slugify(body.getTypeSlug());
 
+            // * Check project type requisites
             ProjectType pt = projectTypeRepository.findBySlug(cleanTypeSlug).get();
-            if (pt == null)
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Project type not found"));
+            require(pt == null, new BadRequestException("Project type not found"));
 
+            // * Delete project
             Project p = pOpt.get();
             deleteProject(p, pt);
 
@@ -344,6 +341,7 @@ public class ProjectController {
     }
 
     private void deleteProjectFolder(String typeSlug, String projectSlug) {
+        // TODO: clean and optimise this method
         java.nio.file.Path dir = java.nio.file.Paths.get(PROJECTS_PATH + '\\' + typeSlug + '\\' + projectSlug);
         if (!java.nio.file.Files.exists(dir)) return;
         try (java.util.stream.Stream<java.nio.file.Path> paths = java.nio.file.Files.walk(dir)) {
