@@ -122,6 +122,8 @@ public class ProjectController {
         }
     }
 
+    // TODO: Optimise save request (project type) image and save project image
+    // ? -> Sum both methods to avoid redundant code
     private void saveRequestImage(String projectTypeSlug, MultipartFile image) {
         Path folder = Paths.get(PROJECT_TYPES_PATH).resolve(projectTypeSlug).normalize();
         try {
@@ -149,16 +151,13 @@ public class ProjectController {
     public ResponseEntity<?> deleteProjectType(@RequestBody RequestProjectType requestProjectType,
             HttpServletResponse response, HttpServletRequest request) {
 
-        // TODO: Remove if arguments for readability
-
         List<ProjectType> projectTypes = projectTypeRepository.findAll();
         try {
             // * Check requisites
             User user = requireUser(request);
             requireValidSession(user);
 
-            // TODO: Remove all projects
-
+            // TODO: Turn this into a method for more readability
             if ("admin".equals(user.getRole().getName())) {
                 for (ProjectType projectType : projectTypes) 
                     if(projectType.getName().equals(requestProjectType.getName())) 
@@ -203,8 +202,14 @@ public class ProjectController {
 
     @GetMapping("/projects/{slug}")
     public Map<String, Object> getProjectsByType(@PathVariable String slug) {
+        // TODO: Check if required authentication steps are needed
+        // * Get clean slug
         String cleanSlug = slugify(slug);
+
+        // * Get projects
         var projects = projectRepository.findByProjectTypeSlug(cleanSlug);
+
+        // * Return projects
         return Map.of("projects", projects);
     }
 
@@ -245,8 +250,6 @@ public class ProjectController {
             @RequestPart(value = "image", required = false) MultipartFile image,
             HttpServletRequest request) {
 
-        // TODO: Remove if arguments for readability
-
         try {
             // * Check requisites
             User user = requireUser(request);
@@ -274,6 +277,8 @@ public class ProjectController {
         }
     }
 
+    // TODO: Optimise save request (project type) image and save project image
+    // ? -> Sum both methods to avoid redundant code
     private void saveProjectImage(String typeSlug, String projectSlug, MultipartFile image) {
         File folder = new File(PROJECTS_PATH + '\\' + typeSlug + '\\' + projectSlug);
         try {
@@ -303,7 +308,6 @@ public class ProjectController {
             @RequestBody net.zalduaxa.backend.model.requestProject.RequestProject body,
             HttpServletRequest request) {
 
-        // TODO: Remove if arguments for readability
         // TODO: Delete project just with slug
 
         try {
