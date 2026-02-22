@@ -133,7 +133,7 @@ public class ProjectController {
                 return;
             }
 
-            ClassPathResource defaultIcon = new ClassPathResource("images/project_type.png");
+            ClassPathResource defaultIcon = new ClassPathResource(PROJECT_TYPE_IMAGE_PATH);
             try (InputStream in = defaultIcon.getInputStream()) {
                 Files.copy(in, destination, StandardCopyOption.REPLACE_EXISTING);
             } catch (Exception e) {

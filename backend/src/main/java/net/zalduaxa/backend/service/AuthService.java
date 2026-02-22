@@ -76,7 +76,6 @@ public class AuthService {
         user.setEmail(req.getEmail());
         user.setPasswordHash(passAuth.hash(req.getPassword().toCharArray()));
 
-        // You likely want guest role to exist in DB
         roleRepo.findByName("guest");
 
         return userRepo.save(user);
