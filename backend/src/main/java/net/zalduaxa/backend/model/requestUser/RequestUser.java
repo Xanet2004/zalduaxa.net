@@ -1,13 +1,5 @@
 package net.zalduaxa.backend.model.requestUser;
 
-import java.time.LocalDateTime;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-
 public class RequestUser {
     private String username;
     private String fullName;
