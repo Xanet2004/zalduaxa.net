@@ -141,7 +141,6 @@ public class ProjectController {
             }
             
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
@@ -154,6 +153,7 @@ public class ProjectController {
 
         List<ProjectType> projectTypes = projectTypeRepository.findAll();
         try {
+            // * Check requisites
             User user = requireUser(request);
             requireValidSession(user);
 
@@ -163,12 +163,10 @@ public class ProjectController {
                 for (ProjectType projectType : projectTypes) 
                     if(projectType.getName().equals(requestProjectType.getName())) 
                         deleteProjectType(projectType);
-                
                 return ResponseEntity.ok(Map.of("message", "Project type successfully deleted"));
             }
 
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", "You need to be admin to delete a new project type"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "You need to be admin to delete a new project type"));
 
         } catch (Exception e) {
             return new ResponseEntity<>(projectTypes, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -184,6 +182,7 @@ public class ProjectController {
     }
 
     private void deleteProjectTypeFolder(String storagePath) {
+        // TODO: clean and optimise this method
         Path dirProjectType = Paths.get(PROJECT_TYPES_PATH).resolve(storagePath).normalize();
         Path dirProjects    = Paths.get(PROJECTS_PATH).resolve(storagePath).normalize();
 
@@ -209,7 +208,7 @@ public class ProjectController {
         return Map.of("projects", projects);
     }
 
-    public static String slugify(String input) {
+    private static String slugify(String input) {
         // TODO: More scalable slugify
         String text = input.toLowerCase();
         text = java.text.Normalizer.normalize(text, java.text.Normalizer.Form.NFD);
@@ -249,29 +248,18 @@ public class ProjectController {
         // TODO: Remove if arguments for readability
 
         try {
-            User user = authService.getUserFromRequest(request);
-            if (user == null)
-                return new ResponseEntity<>(Map.of("message", "Invalid user"), HttpStatus.UNAUTHORIZED);
-
-            Optional<Session> sessionOpt = sessionRepository.findByUserId(user.getId().longValue());
-            if (sessionOpt.isEmpty() || !sessionRepository.existsById(sessionOpt.get().getId()))
-                return new ResponseEntity<>(Map.of("message", "Invalid session"), HttpStatus.BAD_REQUEST);
-
-            if (!"admin".equals(user.getRole().getName()))
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "You need to be admin to add a new project"));
+            // * Check requisites
+            User user = requireUser(request);
+            requireValidSession(user);
+            requireAdmin(user);
 
             String cleanTypeSlug = slugify(typeSlug);
             Optional<ProjectType> pt = projectTypeRepository.findBySlug(cleanTypeSlug);
-            if (pt == null)
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Project type not found"));
-
-            if (name == null || name.isBlank())
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "Name is required"));
+            require(pt == null, new BadRequestException("Project type not found"));
+            require(name == null || name.isBlank(), new BadRequestException("Name is required"));
 
             String cleanProjectSlug = (slug != null && !slug.isBlank()) ? slugify(slug) : slugify(name);
-
-            if (projectRepository.existsBySlug(cleanProjectSlug))
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "Project slug already exists"));
+            require(projectRepository.existsBySlug(cleanProjectSlug), new BadRequestException("Project slug already exists"));
 
             Project p = new Project(1, user.getId(), projectTypeRepository.findBySlug(cleanTypeSlug).get().getId(), name, cleanProjectSlug, description, null);
             
@@ -319,16 +307,10 @@ public class ProjectController {
         // TODO: Delete project just with slug
 
         try {
-            User user = authService.getUserFromRequest(request);
-            if (user == null)
-                return new ResponseEntity<>(Map.of("message", "Invalid user"), HttpStatus.UNAUTHORIZED);
-
-            Optional<Session> sessionOpt = sessionRepository.findByUserId(user.getId().longValue());
-            if (sessionOpt.isEmpty() || !sessionRepository.existsById(sessionOpt.get().getId()))
-                return new ResponseEntity<>(Map.of("message", "Invalid session"), HttpStatus.BAD_REQUEST);
-
-            if (!"admin".equals(user.getRole().getName()))
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "You need to be admin to delete a project"));
+            // * Check requisites
+            User user = requireUser(request);
+            requireValidSession(user);
+            requireAdmin(user);
 
             if (body.getName() == null || body.getName().isBlank())
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "name is required"));
