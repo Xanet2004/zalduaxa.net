@@ -7,10 +7,9 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import jakarta.annotation.PostConstruct;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import net.zalduaxa.backend.exception.BadRequestException;
-import net.zalduaxa.backend.exception.NotFoundException;
 import net.zalduaxa.backend.exception.UnauthorizedException;
 import net.zalduaxa.backend.model.requestUser.RequestUser;
 import net.zalduaxa.backend.model.role.RoleRepository;
