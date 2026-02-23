@@ -183,23 +183,33 @@ public class ProjectController {
     }
 
     private void deleteProjectTypeFolder(String storagePath) {
-        // TODO: clean and optimise this method
-        Path dirProjectType = Paths.get(PROJECT_TYPES_PATH).resolve(storagePath).normalize();
-        Path dirProjects    = Paths.get(PROJECTS_PATH).resolve(storagePath).normalize();
+        Path dirProjectType = safeResolve(Paths.get(PROJECT_TYPES_PATH), storagePath);
+        Path dirProjects    = safeResolve(Paths.get(PROJECTS_PATH),        storagePath);
 
-        if (!Files.exists(dirProjectType)) return;
-        if (!Files.exists(dirProjects)) return;
+        deleteTree(dirProjectType);
+        deleteTree(dirProjects);
+    }
 
-        try (java.util.stream.Stream<java.nio.file.Path> paths = java.nio.file.Files.walk(dirProjectType)) {
-            paths.sorted(java.util.Comparator.reverseOrder()).forEach(p -> {
-                try { java.nio.file.Files.delete(p); } catch (java.io.IOException e) { throw new RuntimeException(e); }
-            });
-        } catch (java.io.IOException e) { throw new RuntimeException(e); }
-        try (java.util.stream.Stream<java.nio.file.Path> paths = java.nio.file.Files.walk(dirProjects)) {
-            paths.sorted(java.util.Comparator.reverseOrder()).forEach(p -> {
-                try { java.nio.file.Files.delete(p); } catch (java.io.IOException e) { throw new RuntimeException(e); }
-            });
-        } catch (java.io.IOException e) { throw new RuntimeException(e); }
+    private void deleteTree(Path dir) {
+        if (Files.notExists(dir)) return;
+
+        try (Stream<Path> walk = Files.walk(dir)) {
+            for (Path p : walk.sorted(Comparator.reverseOrder()).toList()) {
+                Files.deleteIfExists(p);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to delete: " + dir, e);
+        }
+    }
+
+    private Path safeResolve(Path base, String relative) {
+        Path b = base.toAbsolutePath().normalize();
+        Path r = b.resolve(relative).normalize();
+
+        if (!r.startsWith(b)) {
+            throw new IllegalArgumentException("Invalid path (traversal): " + relative);
+        }
+        return r;
     }
 
     @GetMapping("/projects/{slug}")
@@ -347,19 +357,9 @@ public class ProjectController {
     }
 
     private void deleteProjectFolder(String typeSlug, String projectSlug) {
-        // TODO: clean and optimise this method
-        // * Get project direction
-        Path dir = Paths.get(PROJECTS_PATH, typeSlug, projectSlug);
-        
-        // * Check if exists
-        if (!Files.exists(dir)) return;
-
-        // * Delete folder
-        try (Stream<Path> paths = Files.walk(dir)) {
-            paths.sorted(Comparator.reverseOrder()).forEach(p -> {
-                try { Files.delete(p); } catch (IOException e) { throw new RuntimeException(e); }
-            });
-        } catch (IOException e) { throw new RuntimeException(e); }
+        Path base = Paths.get(PROJECTS_PATH);
+        Path dir = safeResolve(base, Paths.get(typeSlug, projectSlug).toString());
+        deleteTree(dir);
     }
 
     private User requireUser(HttpServletRequest request) {
