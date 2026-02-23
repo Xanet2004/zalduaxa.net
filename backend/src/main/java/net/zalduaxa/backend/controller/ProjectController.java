@@ -7,9 +7,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -346,13 +348,18 @@ public class ProjectController {
 
     private void deleteProjectFolder(String typeSlug, String projectSlug) {
         // TODO: clean and optimise this method
-        java.nio.file.Path dir = java.nio.file.Paths.get(PROJECTS_PATH + '\\' + typeSlug + '\\' + projectSlug);
-        if (!java.nio.file.Files.exists(dir)) return;
-        try (java.util.stream.Stream<java.nio.file.Path> paths = java.nio.file.Files.walk(dir)) {
-            paths.sorted(java.util.Comparator.reverseOrder()).forEach(p -> {
-                try { java.nio.file.Files.delete(p); } catch (java.io.IOException e) { throw new RuntimeException(e); }
+        // * Get project direction
+        Path dir = Paths.get(PROJECTS_PATH, typeSlug, projectSlug);
+        
+        // * Check if exists
+        if (!Files.exists(dir)) return;
+
+        // * Delete folder
+        try (Stream<Path> paths = Files.walk(dir)) {
+            paths.sorted(Comparator.reverseOrder()).forEach(p -> {
+                try { Files.delete(p); } catch (IOException e) { throw new RuntimeException(e); }
             });
-        } catch (java.io.IOException e) { throw new RuntimeException(e); }
+        } catch (IOException e) { throw new RuntimeException(e); }
     }
 
     private User requireUser(HttpServletRequest request) {
