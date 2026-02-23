@@ -7,8 +7,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.text.Normalizer;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -184,7 +186,7 @@ public class ProjectController {
 
     private void deleteProjectTypeFolder(String storagePath) {
         Path dirProjectType = safeResolve(Paths.get(PROJECT_TYPES_PATH), storagePath);
-        Path dirProjects    = safeResolve(Paths.get(PROJECTS_PATH),        storagePath);
+        Path dirProjects = safeResolve(Paths.get(PROJECTS_PATH),        storagePath);
 
         deleteTree(dirProjectType);
         deleteTree(dirProjects);
@@ -226,15 +228,16 @@ public class ProjectController {
     }
 
     private static String slugify(String input) {
-        // TODO: More scalable slugify
-        String text = input.toLowerCase();
-        text = java.text.Normalizer.normalize(text, java.text.Normalizer.Form.NFD);
-        text = text.replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
-        text = text.replaceAll("\\s+", "-");
-        text = text.replaceAll("[^a-z0-9-_]", "");
-        text = text.replaceAll("-{2,}", "-");
-        text = text.replaceAll("^-|-$", "");
-        return text;
+        if (input == null) return "untitled";
+
+        String text = input.trim().toLowerCase(Locale.ROOT);
+
+        text = Normalizer.normalize(text, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "");
+        text = text.replaceAll("[^a-z0-9_-]+", "-");
+        text = text.replaceAll("^-+|-+$", "");
+
+        return text.isEmpty() ? "untitled" : text;
     }
 
     @GetMapping("/getProject/{slug}")
