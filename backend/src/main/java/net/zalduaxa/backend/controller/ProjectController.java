@@ -294,28 +294,14 @@ public class ProjectController {
 
     // TODO: Optimise save request (project type) image and save project image
     // ? -> Sum both methods to avoid redundant code
-    private void saveProjectImage(String typeSlug, String projectSlug, MultipartFile image) {
-        File folder = new File(PROJECTS_PATH + '\\' + typeSlug + '\\' + projectSlug);
-        try {
-            if (!folder.exists() && !folder.mkdirs()) {
-                throw new RuntimeException("Cannot create folder " + folder.getAbsolutePath());
-            }
+    private void saveProjectImage(
+            String typeSlug,
+            String projectSlug,
+            MultipartFile image
+    ) {
+        Path folder = Paths.get(PROJECTS_PATH).resolve(typeSlug).resolve(projectSlug).normalize();
 
-            File destination = new File(folder, icon);
-
-            if (image != null && !image.isEmpty()) {
-                image.transferTo(destination);
-                return;
-            }
-
-            ClassPathResource defaultIcon = new ClassPathResource(PROJECT_IMAGE_PATH);
-            try (InputStream in = defaultIcon.getInputStream()) {
-                Files.copy(in, destination.toPath(), StandardCopyOption.REPLACE_EXISTING);
-            }
-
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to save icon", e);
-        }
+        saveImage(folder, icon, image, PROJECT_IMAGE_PATH);
     }
 
     private void saveImage(
