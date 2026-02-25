@@ -318,7 +318,7 @@ public class ProjectController {
                 image.transferTo(destination.toFile());
                 return;
             }
-
+            
             ClassPathResource defaultImage = new ClassPathResource(defaultClasspathImage);
             try (InputStream in = defaultImage.getInputStream()) {
                 Files.copy(in, destination, StandardCopyOption.REPLACE_EXISTING);
