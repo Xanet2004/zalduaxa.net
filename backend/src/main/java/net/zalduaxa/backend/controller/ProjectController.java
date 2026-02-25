@@ -318,6 +318,31 @@ public class ProjectController {
         }
     }
 
+    private void saveImage(
+            Path targetFolder,
+            String fileName,
+            MultipartFile image,
+            String defaultClasspathImage
+    ) {
+        try {
+            Files.createDirectories(targetFolder);
+            Path destination = targetFolder.resolve(fileName);
+
+            if (image != null && !image.isEmpty()) {
+                image.transferTo(destination.toFile());
+                return;
+            }
+
+            ClassPathResource defaultImage = new ClassPathResource(defaultClasspathImage);
+            try (InputStream in = defaultImage.getInputStream()) {
+                Files.copy(in, destination, StandardCopyOption.REPLACE_EXISTING);
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to save image", e);
+        }
+    }
+
     @PostMapping(value = "/deleteProject", produces = { "application/json", "application/xml" })
     public ResponseEntity<?> deleteProject(
             @RequestBody net.zalduaxa.backend.model.requestProject.RequestProject body,
