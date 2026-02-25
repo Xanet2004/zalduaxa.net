@@ -126,29 +126,13 @@ public class ProjectController {
         }
     }
 
-    // TODO: Optimise save request (project type) image and save project image
-    // ? -> Sum both methods to avoid redundant code
-    private void saveRequestImage(String projectTypeSlug, MultipartFile image) {
+    private void saveRequestImage(
+            String projectTypeSlug,
+            MultipartFile image
+    ) {
         Path folder = Paths.get(PROJECT_TYPES_PATH).resolve(projectTypeSlug).normalize();
-        try {
-            Files.createDirectories(folder);
-            Path destination = folder.resolve("icon.png");
 
-            if (image != null && !image.isEmpty()) {
-                image.transferTo(destination.toFile());
-                return;
-            }
-
-            ClassPathResource defaultIcon = new ClassPathResource(PROJECT_TYPE_IMAGE_PATH);
-            try (InputStream in = defaultIcon.getInputStream()) {
-                Files.copy(in, destination, StandardCopyOption.REPLACE_EXISTING);
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to save icon", e);
-            }
-            
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        saveImage(folder, icon, image, PROJECT_TYPE_IMAGE_PATH);
     }
 
     @PostMapping(value = "/deleteProjectType", produces = { "application/json", "application/xml" })
