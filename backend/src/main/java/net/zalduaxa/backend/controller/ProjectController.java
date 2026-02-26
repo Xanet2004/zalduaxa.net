@@ -258,12 +258,12 @@ public class ProjectController {
             // * Check project type
             String cleanTypeSlug = slugify(typeSlug);
             Optional<ProjectType> pt = projectTypeRepository.findBySlug(cleanTypeSlug);
-            require(pt == null, new BadRequestException("Project type not found"));
-            require(name == null || name.isBlank(), new BadRequestException("Name is required"));
+            require(pt.isPresent(), new BadRequestException("Project type not found"));
+            require(name != null && !name.isBlank(), new BadRequestException("Name is required"));
 
             // * Check project
             String cleanProjectSlug = (slug != null && !slug.isBlank()) ? slugify(slug) : slugify(name);
-            require(projectRepository.existsBySlug(cleanProjectSlug), new BadRequestException("Project slug already exists"));
+            require(!projectRepository.existsBySlug(cleanProjectSlug), new BadRequestException("Project slug already exists"));
 
             // * Create and save project
             Project p = new Project(1, user.getId(), projectTypeRepository.findBySlug(cleanTypeSlug).get().getId(), name, cleanProjectSlug, description, null);            
