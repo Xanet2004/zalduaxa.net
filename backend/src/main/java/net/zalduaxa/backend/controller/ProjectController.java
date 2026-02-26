@@ -276,8 +276,6 @@ public class ProjectController {
         }
     }
 
-    // TODO: Optimise save request (project type) image and save project image
-    // ? -> Sum both methods to avoid redundant code
     private void saveProjectImage(
             String typeSlug,
             String projectSlug,
