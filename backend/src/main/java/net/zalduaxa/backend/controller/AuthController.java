@@ -27,15 +27,34 @@ import net.zalduaxa.backend.service.AuthService;
     allowCredentials = "true",
     maxAge = 3600
 )
+// TODO: Use the correct frontend IP when building the services
+// @CrossOrigin(
+//     origins = "https://tu-frontend.com",
+//     allowCredentials = "true",
+//     maxAge = 3600
+// )
 public class AuthController {
 
     private final AuthService authService;
+
+    @Value("${app.auth.cookie.name:token}")
+    private String cookieName;
 
     @Value("${app.auth.cookie.secure:false}")
     private boolean cookieSecure;
 
     @Value("${app.auth.cookie.sameSite:Lax}")
     private String cookieSameSite;
+
+    @Value("${app.auth.cookie.domain:}")
+    private String cookieDomain;
+
+    @Value("${app.auth.cookie.path:/}")
+    private String cookiePath;
+
+    @Value("${app.auth.cookie.maxAgeDays:1}")
+    private long cookieMaxAgeDays;
+
 
     public AuthController(AuthService authService) {
         this.authService = authService;
@@ -74,26 +93,36 @@ public class AuthController {
     }
 
     private ResponseCookie buildAuthCookie(String token) {
-        return ResponseCookie.from("token", token)
-            .httpOnly(true)
+        ResponseCookie.ResponseCookieBuilder b = ResponseCookie.from(cookieName, token)
+            .httpOnly(true) // TODO: false when building the final project
             .secure(cookieSecure)
-            .path("/")
-            .maxAge(Duration.ofDays(1))
-            .sameSite(cookieSameSite)
-            .build();
+            .path(cookiePath)
+            .maxAge(Duration.ofDays(cookieMaxAgeDays))
+            .sameSite(cookieSameSite);
+
+        if (cookieDomain != null && !cookieDomain.isBlank()) {
+            b.domain(cookieDomain);
+        }
+
+        return b.build();
     }
 
     private ResponseCookie deleteAuthCookie() {
-        return ResponseCookie.from("token", "")
-            .httpOnly(true)
+        ResponseCookie.ResponseCookieBuilder b = ResponseCookie.from(cookieName, "")
+            .httpOnly(true) // TODO: false when building the final project
             .secure(cookieSecure)
-            .path("/")
+            .path(cookiePath)
             .maxAge(Duration.ZERO)
-            .sameSite(cookieSameSite)
-            .build();
+            .sameSite(cookieSameSite);
+
+        if (cookieDomain != null && !cookieDomain.isBlank()) {
+            b.domain(cookieDomain);
+        }
+
+        return b.build();
     }
 
-    // simple response DTOs
+    // ? simple response DTOs
     public record MessageResponse(String message) {}
     public record UserResponse(ResponseUser user) {}
 }
