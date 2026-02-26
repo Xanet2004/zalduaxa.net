@@ -137,6 +137,7 @@ To keep commits clean and understandable, use the following syntax:
 
 - **feat**: A new feature
 - **fix**: A bug fix
+- **clean**: Cleaning the code, no functionality changes but more interpretable code
 - **docs**: Documentation changes
 - **style**: Code style changes (formatting, missing semicolons, etc.)
 - **refactor**: Code changes that neither fix a bug nor add a feature

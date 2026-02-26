@@ -2,14 +2,22 @@ package net.zalduaxa.backend.controller;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.text.Normalizer;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -23,11 +31,11 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import net.zalduaxa.backend.exception.BadRequestException;
+import net.zalduaxa.backend.exception.ForbiddenException;
+import net.zalduaxa.backend.exception.UnauthorizedException;
 import net.zalduaxa.backend.model.project.Project;
 import net.zalduaxa.backend.model.project.ProjectRepository;
 import net.zalduaxa.backend.model.projectType.ProjectType;
@@ -51,12 +59,16 @@ public class ProjectController {
     private String STORAGE_PATH;
     private String PROJECT_TYPES_PATH;
     private String PROJECTS_PATH;
+    private String icon = "icon.png";
+    private String IMAGES_PATH = "/images/";
+    private String PROJECT_TYPE_IMAGE_PATH = IMAGES_PATH + "project_type.png";
+    private String PROJECT_IMAGE_PATH = IMAGES_PATH + "project.png";
 
     @Autowired
-    ProjectTypeRepository projectTypeRepo;
+    ProjectTypeRepository projectTypeRepository;
 
     @Autowired
-    ProjectRepository projectRepo;
+    ProjectRepository projectRepository;
 
     @Autowired
     private AuthService authService;
@@ -65,8 +77,8 @@ public class ProjectController {
     private SessionRepository sessionRepository;
 
     public ProjectController(@Value("${storage.path}") String storagePathStr) {
-        Path base = Paths.get(java.net.URI.create(storagePathStr));
-        this.STORAGE_PATH = base.toAbsolutePath().toString();
+        Path base_storage = Paths.get(java.net.URI.create(storagePathStr));
+        this.STORAGE_PATH = base_storage.toAbsolutePath().toString();
         this.PROJECT_TYPES_PATH = STORAGE_PATH + "\\projectTypes";
         this.PROJECTS_PATH = STORAGE_PATH + "\\projects";
     }
@@ -74,7 +86,7 @@ public class ProjectController {
 
     @GetMapping(value = "/projectTypes", produces = { "application/json", "application/xml" })
     public ResponseEntity<List<ProjectType>> getProjectTypes() {
-        List<ProjectType> projectTypes = projectTypeRepo.findAll();
+        List<ProjectType> projectTypes = projectTypeRepository.findAll();
         return new ResponseEntity<>(projectTypes, HttpStatus.OK);
     }
 
@@ -84,133 +96,138 @@ public class ProjectController {
         produces = { "application/json", "application/xml" }
     )
     public ResponseEntity<?> addProjectType(
-            @RequestParam("name") String name,
-            @RequestParam("slug") String slug,
-            @RequestParam("description") String description,
-            @RequestPart("image") MultipartFile image,
+            RequestProjectType projectTypeRequest,
             HttpServletRequest request) {
 
-        List<ProjectType> projectTypes = projectTypeRepo.findAll();
         try {
-            User user = authService.getUserFromToken(extractToken(request));
-            if (user == null)
-                return new ResponseEntity<>(Map.of("message", "Invalid user"), HttpStatus.UNAUTHORIZED);
+            // * Check requisites
+            User user = requireUser(request);
+            requireValidSession(user);
+            requireAdmin(user);
+            require(projectTypeRequest.getName() != null && !projectTypeRequest.getName().isBlank(), new BadRequestException("Name is required"));
+            require(projectTypeRepository.findByName(projectTypeRequest.getName()) == null, new BadRequestException("Project Type already exists"));
+            
+            // * Confirm slug
+            String cleanSlug = (projectTypeRequest.getSlug() != null && !projectTypeRequest.getSlug().isBlank())
+                                ? slugify(projectTypeRequest.getSlug())
+                                : slugify(projectTypeRequest.getName());
+            
+            // * Save image
+            saveRequestImage(cleanSlug, projectTypeRequest.getImage());
 
-            Optional<Session> sessionOpt = sessionRepository.findByUserId(user.getId().longValue());
-            if (sessionOpt.isEmpty() || !sessionRepository.existsById(sessionOpt.get().getId()))
-                return new ResponseEntity<>(Map.of("message", "Invalid session"), HttpStatus.BAD_REQUEST);
+            // * Create and save projectType
+            ProjectType projectType = new ProjectType(projectTypeRequest.getName(), projectTypeRequest.getDescription(), cleanSlug);
+            projectTypeRepository.save(projectType);
 
-            if (!"admin".equals(user.getRole().getName())) 
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "You need to be admin to add a new project type"));
-
-            if (projectTypeRepo.findByName(name) != null)
-                return new ResponseEntity<>(Map.of("message", "Project Type already exists"), HttpStatus.BAD_REQUEST);
-
-            ProjectType projectType = new ProjectType();
-            projectType.setName(name);
-            projectType.setDescription(description);
-            slug = !slug.isEmpty() ? slugify(slug) : slugify(name);
-            saveRequestImage(slug, image);
-            projectType.setSlug(slug);
-            projectTypeRepo.save(projectType);
             return ResponseEntity.ok(Map.of("message", "Project successfully created"));
 
         } catch (Exception e) {
-            return new ResponseEntity<>(projectTypes, HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(Map.of("message", "Error creating project type: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    private Boolean saveRequestImage(String folderName, MultipartFile image) {
-        try {
-            File folder = new File(PROJECT_TYPES_PATH, folderName);
-            if (!folder.exists() && !folder.mkdirs()) {
-                throw new RuntimeException("Cannot create folder " + folder.getAbsolutePath());
-            }
-            File destination = new File(folder, "icon.png");
-            image.transferTo(destination);
-            return true;
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to save file", e);
-        }
+    private void saveRequestImage(
+            String projectTypeSlug,
+            MultipartFile image
+    ) {
+        Path folder = Paths.get(PROJECT_TYPES_PATH).resolve(projectTypeSlug).normalize();
+
+        saveImage(folder, icon, image, PROJECT_TYPE_IMAGE_PATH);
     }
 
     @PostMapping(value = "/deleteProjectType", produces = { "application/json", "application/xml" })
     public ResponseEntity<?> deleteProjectType(@RequestBody RequestProjectType requestProjectType,
             HttpServletResponse response, HttpServletRequest request) {
-        List<ProjectType> projectTypes = projectTypeRepo.findAll();
+
+        List<ProjectType> projectTypes = projectTypeRepository.findAll();
         try {
-            User user = authService.getUserFromToken(extractToken(request));
-            if (user == null)
-                return new ResponseEntity<>(Map.of("message", "Invalid user"), HttpStatus.UNAUTHORIZED);
+            // * Check requisites
+            User user = requireUser(request);
+            requireValidSession(user);
 
-            Optional<Session> sessionOpt = sessionRepository.findByUserId(user.getId().longValue());
-            if (sessionOpt.isEmpty() || !sessionRepository.existsById(sessionOpt.get().getId()))
-                return new ResponseEntity<>(Map.of("message", "Invalid session"), HttpStatus.BAD_REQUEST);
-
+            // TODO: Turn this into a method for more readability
             if ("admin".equals(user.getRole().getName())) {
-                for (ProjectType projectType : projectTypes) {
-                    if(projectType.getName().equals(requestProjectType.getName())){
-                        deleteProjectTypeFolder(projectType.getSlug());
-                        projectTypeRepo.deleteById(projectType.getId());
-                    }
-                }
+                for (ProjectType projectType : projectTypes) 
+                    if(projectType.getName().equals(requestProjectType.getName())) 
+                        deleteProjectType(projectType);
                 return ResponseEntity.ok(Map.of("message", "Project type successfully deleted"));
             }
 
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", "You need to be admin to delete a new project type"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "You need to be admin to delete a new project type"));
 
         } catch (Exception e) {
             return new ResponseEntity<>(projectTypes, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    private void deleteProjectTypeFolder(String storagePath) {
-        java.nio.file.Path dir = java.nio.file.Paths.get(PROJECT_TYPES_PATH + '\\' + storagePath);
-        if (!java.nio.file.Files.exists(dir)) return;
-        try (java.util.stream.Stream<java.nio.file.Path> paths = java.nio.file.Files.walk(dir)) {
-            paths.sorted(java.util.Comparator.reverseOrder()).forEach(p -> {
-                try { java.nio.file.Files.delete(p); } catch (java.io.IOException e) { throw new RuntimeException(e); }
-            });
-        } catch (java.io.IOException e) { throw new RuntimeException(e); }
+    private void deleteProjectType(ProjectType projectType){
+        for (Project project : projectRepository.findByProjectTypeSlug(projectType.getSlug())) {
+            deleteProject(project, projectType);
+        }
+        deleteProjectTypeFolder(projectType.getSlug());
+        projectTypeRepository.deleteById(projectType.getId());
     }
 
-    private String extractToken(HttpServletRequest request) {
-        String authHeader = request.getHeader("Authorization");
-        if (authHeader != null && authHeader.startsWith("Bearer "))
-            return authHeader.substring(7);
+    private void deleteProjectTypeFolder(String storagePath) {
+        Path dirProjectType = safeResolve(Paths.get(PROJECT_TYPES_PATH), storagePath);
+        Path dirProjects = safeResolve(Paths.get(PROJECTS_PATH),        storagePath);
 
-        if (request.getCookies() != null) {
-            for (Cookie cookie : request.getCookies()) {
-                if ("token".equals(cookie.getName()))
-                    return cookie.getValue();
+        deleteTree(dirProjectType);
+        deleteTree(dirProjects);
+    }
+
+    private void deleteTree(Path dir) {
+        if (Files.notExists(dir)) return;
+
+        try (Stream<Path> walk = Files.walk(dir)) {
+            for (Path p : walk.sorted(Comparator.reverseOrder()).toList()) {
+                Files.deleteIfExists(p);
             }
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to delete: " + dir, e);
         }
-        return null;
+    }
+
+    private Path safeResolve(Path base, String relative) {
+        Path b = base.toAbsolutePath().normalize();
+        Path r = b.resolve(relative).normalize();
+
+        if (!r.startsWith(b)) {
+            throw new IllegalArgumentException("Invalid path (traversal): " + relative);
+        }
+        return r;
     }
 
     @GetMapping("/projects/{slug}")
     public Map<String, Object> getProjectsByType(@PathVariable String slug) {
+        // TODO: Check if required authentication steps are needed
+        // * Get clean slug
         String cleanSlug = slugify(slug);
-        var projects = projectRepo.findByProjectTypeSlug(cleanSlug);
+
+        // * Get projects
+        var projects = projectRepository.findByProjectTypeSlug(cleanSlug);
+
+        // * Return projects
         return Map.of("projects", projects);
     }
 
-    public static String slugify(String input) {
-        String text = input.toLowerCase();
-        text = java.text.Normalizer.normalize(text, java.text.Normalizer.Form.NFD);
-        text = text.replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
-        text = text.replaceAll("\\s+", "-");
-        text = text.replaceAll("[^a-z0-9-_]", "");
-        text = text.replaceAll("-{2,}", "-");
-        text = text.replaceAll("^-|-$", "");
-        return text;
+    private static String slugify(String input) {
+        if (input == null) return "untitled";
+
+        String text = input.trim().toLowerCase(Locale.ROOT);
+
+        text = Normalizer.normalize(text, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "");
+        text = text.replaceAll("[^a-z0-9_-]+", "-");
+        text = text.replaceAll("^-+|-+$", "");
+
+        return text.isEmpty() ? "untitled" : text;
     }
 
     @GetMapping("/getProject/{slug}")
     public ResponseEntity<?> getProjectBySlug(@PathVariable String slug) {
         String cleanSlug = slugify(slug);
-        Optional<Project> project = projectRepo.findBySlug(cleanSlug);
+        Optional<Project> project = projectRepository.findBySlug(cleanSlug);
         if (project.isPresent()) {
             return ResponseEntity.ok(project.get());
         } else {
@@ -223,6 +240,7 @@ public class ProjectController {
         consumes = "multipart/form-data",
         produces = { "application/json", "application/xml" }
     )
+    // TODO: Shorter method header, requestProject with multipart file?
     public ResponseEntity<?> addProject(
             @RequestParam("typeSlug") String typeSlug,
             @RequestParam("name") String name,
@@ -232,44 +250,25 @@ public class ProjectController {
             HttpServletRequest request) {
 
         try {
-            User user = authService.getUserFromToken(extractToken(request));
-            if (user == null)
-                return new ResponseEntity<>(Map.of("message", "Invalid user"), HttpStatus.UNAUTHORIZED);
+            // * Check requisites
+            User user = requireUser(request);
+            requireValidSession(user);
+            requireAdmin(user);
 
-            Optional<Session> sessionOpt = sessionRepository.findByUserId(user.getId().longValue());
-            if (sessionOpt.isEmpty() || !sessionRepository.existsById(sessionOpt.get().getId()))
-                return new ResponseEntity<>(Map.of("message", "Invalid session"), HttpStatus.BAD_REQUEST);
-
-            if (!"admin".equals(user.getRole().getName()))
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "You need to be admin to add a new project"));
-
+            // * Check project type
             String cleanTypeSlug = slugify(typeSlug);
-            Optional<ProjectType> pt = projectTypeRepo.findBySlug(cleanTypeSlug);
-            if (pt == null)
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Project type not found"));
+            Optional<ProjectType> pt = projectTypeRepository.findBySlug(cleanTypeSlug);
+            require(pt.isPresent(), new BadRequestException("Project type not found"));
+            require(name != null && !name.isBlank(), new BadRequestException("Name is required"));
 
-            if (name == null || name.isBlank())
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "Name is required"));
-
+            // * Check project
             String cleanProjectSlug = (slug != null && !slug.isBlank()) ? slugify(slug) : slugify(name);
+            require(!projectRepository.existsBySlug(cleanProjectSlug), new BadRequestException("Project slug already exists"));
 
-            if (projectRepo.existsBySlug(cleanProjectSlug))
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "Project slug already exists"));
-
-            Project p = new Project();
-            p.setName(name);
-            p.setSlug(cleanProjectSlug);
-            p.setDescription(description);
-            p.setTypeId(projectTypeRepo.findBySlug(cleanTypeSlug).get().getId());
-            p.setOwnerId(user.getId());
-            p.setStorageId(1);
-            p.setMetadata(null);
-
-            projectRepo.save(p);
-
-            if (image != null && !image.isEmpty()) {
-                saveProjectImage(cleanTypeSlug, cleanProjectSlug, image);
-            }
+            // * Create and save project
+            Project p = new Project(1, user.getId(), projectTypeRepository.findBySlug(cleanTypeSlug).get().getId(), name, cleanProjectSlug, description, null);            
+            projectRepository.save(p);
+            saveProjectImage(cleanTypeSlug, cleanProjectSlug, image);
 
             return ResponseEntity.ok(Map.of("message", "Project successfully created"));
         } catch (Exception e) {
@@ -277,17 +276,38 @@ public class ProjectController {
         }
     }
 
-    private Boolean saveProjectImage(String typeSlug, String projectSlug, MultipartFile image) {
+    private void saveProjectImage(
+            String typeSlug,
+            String projectSlug,
+            MultipartFile image
+    ) {
+        Path folder = Paths.get(PROJECTS_PATH).resolve(typeSlug).resolve(projectSlug).normalize();
+
+        saveImage(folder, icon, image, PROJECT_IMAGE_PATH);
+    }
+
+    private void saveImage(
+            Path targetFolder,
+            String fileName,
+            MultipartFile image,
+            String defaultClasspathImage
+    ) {
         try {
-            File folder = new File(PROJECTS_PATH + "\\" + typeSlug, projectSlug);
-            if (!folder.exists() && !folder.mkdirs()) {
-                throw new RuntimeException("Cannot create folder " + folder.getAbsolutePath());
+            Files.createDirectories(targetFolder);
+            Path destination = targetFolder.resolve(fileName);
+
+            if (image != null && !image.isEmpty()) {
+                image.transferTo(destination.toFile());
+                return;
             }
-            File destination = new File(folder, "icon.png");
-            image.transferTo(destination);
-            return true;
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to save file", e);
+            
+            ClassPathResource defaultImage = new ClassPathResource(defaultClasspathImage);
+            try (InputStream in = defaultImage.getInputStream()) {
+                Files.copy(in, destination, StandardCopyOption.REPLACE_EXISTING);
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to save image", e);
         }
     }
 
@@ -296,41 +316,29 @@ public class ProjectController {
             @RequestBody net.zalduaxa.backend.model.requestProject.RequestProject body,
             HttpServletRequest request) {
 
+        // TODO: Delete project just with slug
+
         try {
-            User user = authService.getUserFromToken(extractToken(request));
-            if (user == null)
-                return new ResponseEntity<>(Map.of("message", "Invalid user"), HttpStatus.UNAUTHORIZED);
-
-            Optional<Session> sessionOpt = sessionRepository.findByUserId(user.getId().longValue());
-            if (sessionOpt.isEmpty() || !sessionRepository.existsById(sessionOpt.get().getId()))
-                return new ResponseEntity<>(Map.of("message", "Invalid session"), HttpStatus.BAD_REQUEST);
-
-            if (!"admin".equals(user.getRole().getName()))
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "You need to be admin to delete a project"));
-
-            if (body.getName() == null || body.getName().isBlank())
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "name is required"));
-
-            Optional<Project> pOpt = projectRepo.findByName(body.getName());
-            if (pOpt.isEmpty())
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Project not found"));
-
-            if (body.getTypeSlug() == null || body.getTypeSlug().isBlank())
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "typeSlug is required"));
+            // * Check user requisites
+            User user = requireUser(request);
+            requireValidSession(user);
+            requireAdmin(user);
+            
+            // * Check project requisites
+            require(body.getName() == null || body.getName().isBlank(), new BadRequestException("Name is required"));
+            Optional<Project> pOpt = projectRepository.findByName(body.getName());
+            require(pOpt.isEmpty(), new BadRequestException("Project not found"));
+            require(body.getTypeSlug() == null || body.getTypeSlug().isBlank(), new BadRequestException("Type slug is required"));
 
             String cleanTypeSlug = slugify(body.getTypeSlug());
-            String cleanProjectSlug = slugify(pOpt.get().getSlug());
 
-            Optional<ProjectType> pt = projectTypeRepo.findBySlug(cleanTypeSlug);
-            if (pt == null)
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Project type not found"));
+            // * Check project type requisites
+            ProjectType pt = projectTypeRepository.findBySlug(cleanTypeSlug).get();
+            require(pt == null, new BadRequestException("Project type not found"));
 
+            // * Delete project
             Project p = pOpt.get();
-            if (p.getTypeId() == null || !p.getTypeId().equals(pt.get().getId()))
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Project not found"));
-
-            deleteProjectFolder(cleanTypeSlug, cleanProjectSlug);
-            projectRepo.deleteById(p.getId());
+            deleteProject(p, pt);
 
             return ResponseEntity.ok(Map.of("message", "Project successfully deleted"));
         } catch (Exception e) {
@@ -338,14 +346,38 @@ public class ProjectController {
         }
     }
 
+    private void deleteProject(Project p, ProjectType pt){
+        require(p.getTypeId() != null || p.getTypeId().equals(pt.getId()), new RuntimeException("Cannot delete project"));
+        deleteProjectFolder(slugify(pt.getSlug()), slugify(p.getSlug()));
+        projectRepository.deleteById(p.getId());
+    }
+
     private void deleteProjectFolder(String typeSlug, String projectSlug) {
-        java.nio.file.Path dir = java.nio.file.Paths.get(PROJECTS_PATH + '\\' + typeSlug + '\\' + projectSlug);
-        if (!java.nio.file.Files.exists(dir)) return;
-        try (java.util.stream.Stream<java.nio.file.Path> paths = java.nio.file.Files.walk(dir)) {
-            paths.sorted(java.util.Comparator.reverseOrder()).forEach(p -> {
-                try { java.nio.file.Files.delete(p); } catch (java.io.IOException e) { throw new RuntimeException(e); }
-            });
-        } catch (java.io.IOException e) { throw new RuntimeException(e); }
+        Path base = Paths.get(PROJECTS_PATH);
+        Path dir = safeResolve(base, Paths.get(typeSlug, projectSlug).toString());
+        deleteTree(dir);
+    }
+
+    private User requireUser(HttpServletRequest request) {
+        User user = authService.getUserFromRequest(request);
+        if (user == null) throw new UnauthorizedException("Invalid user");
+        return user;
+    }
+
+    private Session requireValidSession(User user) {
+        return sessionRepository.findByUserId(user.getId().longValue())
+            .filter(s -> sessionRepository.existsById(s.getId()))
+            .orElseThrow(() -> new UnauthorizedException("Invalid session"));
+    }
+
+    private void requireAdmin(User user) {
+        if (!"admin".equals(user.getRole().getName())) {
+            throw new ForbiddenException("You need to be admin");
+        }
+    }
+
+    private static void require(boolean condition, RuntimeException ex) {
+        if (!condition) throw ex;
     }
 
 
