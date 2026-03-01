@@ -44,6 +44,7 @@ import net.zalduaxa.backend.model.requestProjectType.RequestProjectType;
 import net.zalduaxa.backend.model.session.Session;
 import net.zalduaxa.backend.model.session.SessionRepository;
 import net.zalduaxa.backend.model.user.User;
+import net.zalduaxa.backend.model.visibility.Visibility;
 import net.zalduaxa.backend.service.AuthService;
 
 @RestController
@@ -369,8 +370,8 @@ public class ProjectController {
         Boolean permission = false;
         User user = authService.getUserFromRequest(request);
         // TODO: Create global enum for visibility
-        if (user == null) if (visibility.getCode() == "public"); // ! Temporal
-        else if (user.getRole().getId() != 2 && visibility.getCode() != "private") permission = true;
+        if (user == null) if (visibility.getName() == "public"); // ! Temporal
+        else if (user.getRole().getId() != 2 && visibility.getName() != "private") permission = true;
         return permission;
     }
 
