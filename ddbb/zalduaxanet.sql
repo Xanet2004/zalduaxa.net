@@ -7,8 +7,8 @@ SET search_path TO zalduaxanet;
 -- Lookup tables
 CREATE TABLE visibility (
   id SERIAL PRIMARY KEY,
-  code VARCHAR(50) NOT NULL UNIQUE,
-  name VARCHAR(100)
+  name VARCHAR(50) NOT NULL UNIQUE,
+  description VARCHAR(100)
 );
 
 CREATE TABLE status (
@@ -178,7 +178,7 @@ CREATE TABLE audit_log (
 );
 
 -- Optional: seed common lookup values
-INSERT INTO visibility (code, name) VALUES ('public','Public'), ('private','Private');
+INSERT INTO visibility (name, description) VALUES ('public','Public'), ('private','Private');
 INSERT INTO status (code, name) VALUES ('draft','Draft'), ('published','Published');
 INSERT INTO collaborator_role (code, name) VALUES ('editor','Editor'), ('viewer','Viewer');
 INSERT INTO resource_type (code, name) VALUES ('project','Project'), ('recipe','Recipe'), ('drawing','Drawing');

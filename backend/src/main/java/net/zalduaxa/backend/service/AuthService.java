@@ -23,14 +23,14 @@ import net.zalduaxa.backend.utils.PasswordAuthentication;
 public class AuthService {
 
     private final UserRepository userRepo;
-    private final RoleRepository roleRepo;
+    private final VisibilityRepository roleRepo;
     private final SessionRepository sessionRepo;
     private final JwtService jwtService;
     private final PasswordAuthentication passAuth;
 
     public AuthService(
         UserRepository userRepo,
-        RoleRepository roleRepo,
+        VisibilityRepository roleRepo,
         SessionRepository sessionRepo,
         JwtService jwtService
     ) {
