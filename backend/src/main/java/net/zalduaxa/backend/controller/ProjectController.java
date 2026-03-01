@@ -200,12 +200,13 @@ public class ProjectController {
 
     @GetMapping("/projects/{slug}")
     public Map<String, Object> getProjectsByType(@PathVariable String slug) {
-        // TODO: Check if required authentication steps are needed
         // * Get clean slug
         String cleanSlug = slugify(slug);
 
         // * Get projects
         var projects = projectRepository.findByProjectTypeSlug(cleanSlug);
+
+        // TODO: Check user role and if it can see the projects
 
         // * Return projects
         return Map.of("projects", projects);
@@ -362,6 +363,15 @@ public class ProjectController {
         User user = authService.getUserFromRequest(request);
         if (user == null) throw new UnauthorizedException("Invalid user");
         return user;
+    }
+
+    private Boolean requireVisibility(HttpServletRequest request, Visibility visibility) {
+        Boolean permission = false;
+        User user = authService.getUserFromRequest(request);
+        // TODO: Create global enum for visibility
+        if (user == null) if (visibility.getCode() == "public"); // ! Temporal
+        else if (user.getRole().getId() != 2 && visibility.getCode() != "private") permission = true;
+        return permission;
     }
 
     private Session requireValidSession(User user) {

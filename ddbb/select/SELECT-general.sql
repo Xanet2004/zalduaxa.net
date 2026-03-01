@@ -9,3 +9,6 @@ FROM zalduaxanet.project;
 
 SELECT *
 FROM zalduaxanet.project_type;
+
+SELECT *
+FROM zalduaxanet.role;

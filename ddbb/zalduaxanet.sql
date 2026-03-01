@@ -82,6 +82,7 @@ CREATE TABLE project_type (
   name VARCHAR(255),
   description VARCHAR(255),
   slug VARCHAR(255),
+  visibility_id INT REFERENCES visibility(id),
   UNIQUE (slug)
 );
 
