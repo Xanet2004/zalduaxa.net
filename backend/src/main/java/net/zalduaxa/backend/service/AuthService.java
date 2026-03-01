@@ -49,6 +49,7 @@ public class AuthService {
     // ------------------------
     // Signup
     // ------------------------
+    // TODO: Create require methods for more readibility
     public User register(RequestUser req) {
         if (req.getUsername() == null || req.getUsername().isBlank()) {
             throw new BadRequestException("Username is required");
@@ -84,6 +85,7 @@ public class AuthService {
     // ------------------------
     // Login + session creation
     // ------------------------
+    // TODO: Create require methods for more readibility
     public User loginAndCreateSession(RequestUser req) {
         User user = authenticateCredentials(req);
 
@@ -110,6 +112,7 @@ public class AuthService {
         return jwtService.generateToken(user.getUsername());
     }
 
+    // TODO: Create require methods for more readibility
     private User authenticateCredentials(RequestUser req) {
         if (req.getUsername() == null || req.getUsername().isBlank()) {
             throw new BadRequestException("Username is required");
@@ -169,6 +172,7 @@ public class AuthService {
         logoutByToken(token);
     }
 
+    // TODO: Create require methods for more readibility
     private void logoutByToken(String token) {
         if (token == null || token.isBlank()) {
             throw new UnauthorizedException("Missing auth token");

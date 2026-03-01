@@ -1,6 +1,5 @@
 package net.zalduaxa.backend.controller;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -40,6 +39,7 @@ import net.zalduaxa.backend.model.project.Project;
 import net.zalduaxa.backend.model.project.ProjectRepository;
 import net.zalduaxa.backend.model.projectType.ProjectType;
 import net.zalduaxa.backend.model.projectType.ProjectTypeRepository;
+import net.zalduaxa.backend.model.requestProject.RequestProject;
 import net.zalduaxa.backend.model.requestProjectType.RequestProjectType;
 import net.zalduaxa.backend.model.session.Session;
 import net.zalduaxa.backend.model.session.SessionRepository;
@@ -313,7 +313,7 @@ public class ProjectController {
 
     @PostMapping(value = "/deleteProject", produces = { "application/json", "application/xml" })
     public ResponseEntity<?> deleteProject(
-            @RequestBody net.zalduaxa.backend.model.requestProject.RequestProject body,
+            @RequestBody RequestProject body,
             HttpServletRequest request) {
 
         // TODO: Delete project just with slug
