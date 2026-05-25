@@ -14,9 +14,9 @@ export default function Projects() {
     const [isDeletingProjectType, setIsDeletingProjectType] = useState<boolean>();
     const [projectTypes, setProjectTypes] = useState<ProjectType[] | null>(null);
 
-    const [error, setError] = useState<string | null>(null);
+    // const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
-    const { refreshUser } = useSession();
+    // const { refreshUser } = useSession();
 
     function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
         const { name, files, value } = e.target;

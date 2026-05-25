@@ -1,6 +1,6 @@
 export async function getSession() {
   try {
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/session`, {
+    const res = await fetch(`/api/auth/session`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
       credentials: "include",

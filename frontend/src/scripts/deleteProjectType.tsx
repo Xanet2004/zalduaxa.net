@@ -1,6 +1,6 @@
 export async function deleteProjectType(form: any) {
     try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/project/deleteProjectType`, {
+        const res = await fetch(`/api/project/deleteProjectType`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             credentials: "include",

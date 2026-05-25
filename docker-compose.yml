@@ -8,8 +8,11 @@ services:
       POSTGRES_DB: zalduaxa_net
       POSTGRES_USER: app
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
     volumes:
       - zalduaxa_net_postgres:/var/lib/postgresql/data
+      - ./ddbb/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U app -d zalduaxa_net"]
       interval: 5s
@@ -25,12 +28,25 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/zalduaxa_net
       SPRING_DATASOURCE_USERNAME: app
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
-      SPRING_PROFILES_ACTIVE: prod
+
+      APP_SEED_ENABLED: ${APP_SEED_ENABLED}
+      APP_SEED_ADMIN_USERNAME: ${APP_SEED_ADMIN_USERNAME}
+      APP_SEED_ADMIN_PASSWORD: ${APP_SEED_ADMIN_PASSWORD}
+      APP_SEED_ADMIN_EMAIL: ${APP_SEED_ADMIN_EMAIL}
+      APP_SEED_GUEST_USERNAME: ${APP_SEED_GUEST_USERNAME}
+      APP_SEED_GUEST_PASSWORD: ${APP_SEED_GUEST_PASSWORD}
+      APP_SEED_GUEST_EMAIL: ${APP_SEED_GUEST_EMAIL}
+
+      STORAGE_PATH: file:/app/storage/
+    volumes:
+      - ./storage:/app/storage
     depends_on:
       postgres:
         condition: service_healthy
     expose:
       - "8080"
+    ports:
+      - "8080:8080"
 
   frontend:
     build:
@@ -40,7 +56,7 @@ services:
     depends_on:
       - backend
     ports:
-      - "80:80"
+      - "5173:5173"
 
 volumes:
   zalduaxa_net_postgres:

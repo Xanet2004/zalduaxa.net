@@ -9,7 +9,7 @@ export async function addProjectType(form: any) {
             formData.append("image", form.image);
         }
 
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/project/addProjectType`, {
+        const res = await fetch(`/api/project/addProjectType`, {
             method: "POST",
             credentials: "include",
             body: formData

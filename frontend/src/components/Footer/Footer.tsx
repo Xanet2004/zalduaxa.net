@@ -1,4 +1,4 @@
-export default function Footer(userSession?: any) {
+export default function Footer() {
     return (
         <div>
             FOOTER

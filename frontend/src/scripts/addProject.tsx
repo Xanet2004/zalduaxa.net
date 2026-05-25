@@ -8,7 +8,7 @@ export async function addProject(req: RequestProject) {
   form.append("description", req.description ?? "");
   if (req.image) form.append("image", req.image);
 
-  const res = await fetch(`${import.meta.env.VITE_API_URL}/project/addProject`, {
+  const res = await fetch(`/api/project/addProject`, {
     method: "POST",
     body: form,
     credentials: "include",

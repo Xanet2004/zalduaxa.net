@@ -1,6 +1,6 @@
 export async function getProjectTypes() {
     try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/project/projectTypes`, {
+        const res = await fetch(`/api/project/projectTypes`, {
             method: "GET",
             headers: { "Content-Type": "application/json" },
         });
