@@ -319,33 +319,37 @@ public class ProjectController {
             @RequestBody RequestProject body,
             HttpServletRequest request) {
 
-        // TODO: Delete project just with slug
-
         try {
             // * Check user requisites
             User user = requireUser(request);
             requireValidSession(user);
             requireAdmin(user);
-            
+
             // * Check project requisites
-            require(body.getName() == null || body.getName().isBlank(), new BadRequestException("Name is required"));
+            require(body != null, new BadRequestException("Request body is required"));
+            require(body.getName() != null && !body.getName().isBlank(), new BadRequestException("Name is required"));
+            require(body.getTypeSlug() != null && !body.getTypeSlug().isBlank(), new BadRequestException("Type slug is required"));
+
             Optional<Project> pOpt = projectRepository.findByName(body.getName());
-            require(pOpt.isEmpty(), new BadRequestException("Project not found"));
-            require(body.getTypeSlug() == null || body.getTypeSlug().isBlank(), new BadRequestException("Type slug is required"));
+            require(pOpt.isPresent(), new BadRequestException("Project not found"));
 
             String cleanTypeSlug = slugify(body.getTypeSlug());
 
-            // * Check project type requisites
-            ProjectType pt = projectTypeRepository.findBySlug(cleanTypeSlug).get();
-            require(pt == null, new BadRequestException("Project type not found"));
+            Optional<ProjectType> ptOpt = projectTypeRepository.findBySlug(cleanTypeSlug);
+            require(ptOpt.isPresent(), new BadRequestException("Project type not found"));
 
             // * Delete project
             Project p = pOpt.get();
+            ProjectType pt = ptOpt.get();
+
             deleteProject(p, pt);
 
             return ResponseEntity.ok(Map.of("message", "Project successfully deleted"));
+        } catch (BadRequestException | UnauthorizedException | ForbiddenException e) {
+            throw e;
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("message", "Unexpected server error"));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Unexpected server error"));
         }
     }
 
