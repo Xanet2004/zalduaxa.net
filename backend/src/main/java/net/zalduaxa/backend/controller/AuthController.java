@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -55,13 +56,13 @@ public class AuthController {
     }
 
     @PostMapping(value = "/signup", consumes = "application/json")
-    public ResponseEntity<?> signup(@RequestBody RequestUser req) {
+    public ResponseEntity<?> signup(@Validated(RequestUser.Signup.class) @RequestBody RequestUser req) {
         authService.register(req);
         return ResponseEntity.ok(new MessageResponse("User registered successfully"));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody RequestUser req, HttpServletResponse response) {
+    public ResponseEntity<?> login(@Validated(RequestUser.Login.class) @RequestBody RequestUser req, HttpServletResponse response) {
         User user = authService.loginAndCreateSession(req);
 
         String token = authService.issueJwt(user);
