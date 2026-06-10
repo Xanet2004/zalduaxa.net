@@ -27,6 +27,8 @@ public class AuthService {
     private final SessionRepository sessionRepo;
     private final JwtService jwtService;
     private final PasswordAuthentication passAuth;
+    @Value("${app.auth.cookie.name:token}")
+    private String cookieName;
 
     public AuthService(
         UserRepository userRepo,
@@ -198,7 +200,7 @@ public class AuthService {
 
         if (request.getCookies() != null) {
             for (Cookie cookie : request.getCookies()) {
-                if ("token".equals(cookie.getName()))
+                if (cookieName.equals(cookie.getName()))
                     return cookie.getValue();
             }
         }
