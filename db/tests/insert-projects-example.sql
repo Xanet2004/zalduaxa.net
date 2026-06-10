@@ -28,7 +28,7 @@ SELECT
   'example-project',
   (SELECT id FROM zalduaxanet.project_type WHERE slug = 'minecraft-mods' ORDER BY id DESC LIMIT 1),
   'Example project inserted with seed script.',
-  (SELECT id FROM zalduaxanet.visibility WHERE code = 'public' ORDER BY id DESC LIMIT 1),
+  (SELECT id FROM zalduaxanet.visibility WHERE name = 'public' ORDER BY id DESC LIMIT 1),
   (SELECT id FROM zalduaxanet.status WHERE code = 'draft' ORDER BY id DESC LIMIT 1),
   '0.1.0',
   '{"tags":["demo"],"visibility":"public"}'::json,
