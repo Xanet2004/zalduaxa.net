@@ -77,7 +77,7 @@ public class AuthService {
         user.setEmail(req.getEmail());
         user.setPasswordHash(passAuth.hash(req.getPassword().toCharArray()));
 
-        roleRepo.findByName("guest");
+        user.setRole(roleRepo.findByName("guest"));
 
         return userRepo.save(user);
     }
