@@ -2,6 +2,7 @@ package net.zalduaxa.backend.service;
 
 import java.util.Date;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import io.jsonwebtoken.Claims;
@@ -11,20 +12,24 @@ import io.jsonwebtoken.SignatureAlgorithm;
 @Service
 public class JwtService {
 
-    private final String SECRET = "w1o5J5g/4yVYg+zV8Jd1yP4l+Fg4Z8YpQZ3ZPi5/ooQ=";
+    @Value("${app.jwt.secret}")
+    private String secret;
+
+    @Value("${app.jwt.expiration-ms:86400000}")
+    private long expirationMs;
 
     public String generateToken(String username) {
         return Jwts.builder()
             .setSubject(username)
             .setIssuedAt(new Date())
-            .setExpiration(new Date(System.currentTimeMillis() + 86400000))
-            .signWith(SignatureAlgorithm.HS256, SECRET)
+            .setExpiration(new Date(System.currentTimeMillis() + expirationMs))
+            .signWith(SignatureAlgorithm.HS256, secret)
             .compact();
     }
 
     public boolean validateToken(String token) {
         try {
-            Jwts.parser().setSigningKey(SECRET).parseClaimsJws(token);
+            Jwts.parser().setSigningKey(secret).parseClaimsJws(token);
             return true;
         } catch (Exception e) {
             return false;
@@ -33,7 +38,7 @@ public class JwtService {
 
     public String getUsername(String token) {
         Claims claims = Jwts.parser()
-                .setSigningKey(SECRET)
+                .setSigningKey(secret)
                 .parseClaimsJws(token)
                 .getBody();
         return claims.getSubject();
