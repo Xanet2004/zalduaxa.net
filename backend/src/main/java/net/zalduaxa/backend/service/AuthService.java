@@ -31,11 +31,10 @@ public class AuthService {
     private String cookieName;
 
     public AuthService(
-        UserRepository userRepo,
-        RoleRepository roleRepo,
-        SessionRepository sessionRepo,
-        JwtService jwtService
-    ) {
+            UserRepository userRepo,
+            RoleRepository roleRepo,
+            SessionRepository sessionRepo,
+            JwtService jwtService) {
         this.userRepo = userRepo;
         this.roleRepo = roleRepo;
         this.sessionRepo = sessionRepo;
@@ -124,7 +123,7 @@ public class AuthService {
         }
 
         User user = userRepo.findByUsername(req.getUsername())
-            .orElseThrow(() -> new UnauthorizedException("Invalid username or password"));
+                .orElseThrow(() -> new UnauthorizedException("Invalid username or password"));
 
         boolean ok = passAuth.authenticate(req.getPassword().toCharArray(), user.getPasswordHash());
         if (!ok) {
@@ -155,11 +154,12 @@ public class AuthService {
         }
 
         return userRepo.findByUsername(username)
-            .orElseThrow(() -> new UnauthorizedException("User not found"));
+                .orElseThrow(() -> new UnauthorizedException("User not found"));
     }
 
     public void assertHasActiveSession(Number userId) {
-        if (userId == null) throw new UnauthorizedException("User id missing");
+        if (userId == null)
+            throw new UnauthorizedException("User id missing");
 
         if (sessionRepo.findByUserId(userId.longValue()).isEmpty()) {
             throw new UnauthorizedException("User is not in session");
@@ -189,7 +189,6 @@ public class AuthService {
         sessionRepo.delete(session.get());
     }
 
-
     // ------------------------
     // Extract token from header or cookie (for logout endpoint)
     // ------------------------
@@ -206,7 +205,6 @@ public class AuthService {
         }
         return null;
     }
-
 
     // ------------------------
     // Create default users (seed)
@@ -233,7 +231,16 @@ public class AuthService {
     private String guestEmail;
 
     private void defaultUsers() {
-        if (!seedEnabled) return;
+        if (!seedEnabled)
+            return;
+
+        if (adminPassword == null || adminPassword.isBlank()) {
+            throw new IllegalStateException("Admin seed password must be configured when seed is enabled");
+        }
+
+        if (guestPassword == null || guestPassword.isBlank()) {
+            throw new IllegalStateException("Guest seed password must be configured when seed is enabled");
+        }
 
         if (userRepo.count() == 0) {
             User admin = new User();
