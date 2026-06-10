@@ -78,10 +78,11 @@ public class ProjectController {
     private SessionRepository sessionRepository;
 
     public ProjectController(@Value("${storage.path}") String storagePathStr) {
-        Path base_storage = Paths.get(java.net.URI.create(storagePathStr));
-        this.STORAGE_PATH = base_storage.toAbsolutePath().toString();
-        this.PROJECT_TYPES_PATH = STORAGE_PATH + "\\projectTypes";
-        this.PROJECTS_PATH = STORAGE_PATH + "\\projects";
+        Path baseStorage = Paths.get(java.net.URI.create(storagePathStr)).toAbsolutePath().normalize();
+
+        this.STORAGE_PATH = baseStorage.toString();
+        this.PROJECT_TYPES_PATH = baseStorage.resolve("projectTypes").toString();
+        this.PROJECTS_PATH = baseStorage.resolve("projects").toString();
     }
 
 
