@@ -49,7 +49,11 @@ import net.zalduaxa.backend.service.AuthService;
 
 @RestController
 @RequestMapping("/project")
-@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true", maxAge = 3600)
+@CrossOrigin(
+    origins = "${app.cors.origin}",
+    allowCredentials = "true",
+    maxAge = 3600
+)
 public class ProjectController {
 
     // TODO: BASE PATH FROM STORAGE ON DDBB
