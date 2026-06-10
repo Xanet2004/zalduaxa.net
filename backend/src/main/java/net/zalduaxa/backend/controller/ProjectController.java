@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,6 +33,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import net.zalduaxa.backend.exception.BadRequestException;
 import net.zalduaxa.backend.exception.ForbiddenException;
 import net.zalduaxa.backend.exception.UnauthorizedException;
@@ -41,6 +44,8 @@ import net.zalduaxa.backend.model.projectType.ProjectType;
 import net.zalduaxa.backend.model.projectType.ProjectTypeRepository;
 import net.zalduaxa.backend.model.requestProject.RequestProject;
 import net.zalduaxa.backend.model.requestProjectType.RequestProjectType;
+import net.zalduaxa.backend.model.responseProject.ResponseProject;
+import net.zalduaxa.backend.model.responseProjectType.ResponseProjectType;
 import net.zalduaxa.backend.model.session.Session;
 import net.zalduaxa.backend.model.session.SessionRepository;
 import net.zalduaxa.backend.model.user.User;
@@ -49,13 +54,9 @@ import net.zalduaxa.backend.service.AuthService;
 
 @RestController
 @RequestMapping("/project")
-@CrossOrigin(
-    origins = "${app.cors.origin}",
-    allowCredentials = "true",
-    maxAge = 3600
-)
+@CrossOrigin(origins = "${app.cors.origin}", allowCredentials = "true", maxAge = 3600)
+@Validated
 public class ProjectController {
-
     // TODO: BASE PATH FROM STORAGE ON DDBB
     private String STORAGE_PATH;
     private String PROJECT_TYPES_PATH;
@@ -86,15 +87,19 @@ public class ProjectController {
     }
 
     @GetMapping(value = "/projectTypes", produces = { "application/json", "application/xml" })
-    public ResponseEntity<List<ProjectType>> getProjectTypes() {
-        List<ProjectType> projectTypes = projectTypeRepository.findAll();
+    public ResponseEntity<List<ResponseProjectType>> getProjectTypes() {
+        List<ResponseProjectType> projectTypes = projectTypeRepository.findAll()
+                .stream()
+                .map(ResponseProjectType::new)
+                .toList();
+
         return new ResponseEntity<>(projectTypes, HttpStatus.OK);
     }
 
     @PostMapping(value = "/addProjectType", consumes = "multipart/form-data", produces = { "application/json",
             "application/xml" })
     public ResponseEntity<?> addProjectType(
-            RequestProjectType projectTypeRequest,
+            @Valid RequestProjectType projectTypeRequest,
             HttpServletRequest request) {
 
         try {
@@ -122,9 +127,11 @@ public class ProjectController {
 
             return ResponseEntity.ok(Map.of("message", "Project successfully created"));
 
+        } catch (BadRequestException | UnauthorizedException | ForbiddenException e) {
+            throw e;
         } catch (Exception e) {
-            return new ResponseEntity<>(Map.of("message", "Error creating project type: " + e.getMessage()),
-                    HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Unexpected server error"));
         }
     }
 
@@ -137,7 +144,7 @@ public class ProjectController {
     }
 
     @PostMapping(value = "/deleteProjectType", produces = { "application/json", "application/xml" })
-    public ResponseEntity<?> deleteProjectType(@RequestBody RequestProjectType requestProjectType,
+    public ResponseEntity<?> deleteProjectType(@Valid @RequestBody RequestProjectType requestProjectType,
             HttpServletResponse response, HttpServletRequest request) {
 
         List<ProjectType> projectTypes = projectTypeRepository.findAll();
@@ -157,8 +164,11 @@ public class ProjectController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("message", "You need to be admin to delete a new project type"));
 
+        } catch (BadRequestException | UnauthorizedException | ForbiddenException e) {
+            throw e;
         } catch (Exception e) {
-            return new ResponseEntity<>(projectTypes, HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Unexpected server error"));
         }
     }
 
@@ -202,12 +212,15 @@ public class ProjectController {
     }
 
     @GetMapping("/projects/{slug}")
-    public Map<String, Object> getProjectsByType(@PathVariable String slug) {
+    public Map<String, Object> getProjectsByType(@PathVariable @NotBlank String slug) {
         // * Get clean slug
         String cleanSlug = slugify(slug);
 
         // * Get projects
-        var projects = projectRepository.findByProjectTypeSlug(cleanSlug);
+        List<ResponseProject> projects = projectRepository.findByProjectTypeSlug(cleanSlug)
+                .stream()
+                .map(ResponseProject::new)
+                .toList();
 
         // TODO: Check user role and if it can see the projects
 
@@ -230,22 +243,21 @@ public class ProjectController {
     }
 
     @GetMapping("/getProject/{slug}")
-    public ResponseEntity<?> getProjectBySlug(@PathVariable String slug) {
+    public ResponseEntity<ResponseProject> getProjectBySlug(@PathVariable @NotBlank String slug) {
         String cleanSlug = slugify(slug);
-        Optional<Project> project = projectRepository.findBySlug(cleanSlug);
-        if (project.isPresent()) {
-            return ResponseEntity.ok(project.get());
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Project not found"));
-        }
+
+        Project project = projectRepository.findBySlug(cleanSlug)
+                .orElseThrow(() -> new BadRequestException("Project not found"));
+
+        return ResponseEntity.ok(new ResponseProject(project));
     }
 
     @PostMapping(value = "/addProject", consumes = "multipart/form-data", produces = { "application/json",
             "application/xml" })
     // TODO: Shorter method header, requestProject with multipart file?
     public ResponseEntity<?> addProject(
-            @RequestParam("typeSlug") String typeSlug,
-            @RequestParam("name") String name,
+            @RequestParam("typeSlug") @NotBlank(message = "Type slug is required") String typeSlug,
+            @RequestParam("name") @NotBlank(message = "Name is required") String name,
             @RequestParam(value = "slug", required = false) String slug,
             @RequestParam(value = "description", required = false) String description,
             @RequestPart(value = "image", required = false) MultipartFile image,
@@ -275,6 +287,8 @@ public class ProjectController {
             saveProjectImage(cleanTypeSlug, cleanProjectSlug, image);
 
             return ResponseEntity.ok(Map.of("message", "Project successfully created"));
+        } catch (BadRequestException | UnauthorizedException | ForbiddenException e) {
+            throw e;
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", "Unexpected server error"));
@@ -316,7 +330,7 @@ public class ProjectController {
 
     @PostMapping(value = "/deleteProject", produces = { "application/json", "application/xml" })
     public ResponseEntity<?> deleteProject(
-            @RequestBody RequestProject body,
+            @Valid @RequestBody RequestProject body,
             HttpServletRequest request) {
 
         try {
