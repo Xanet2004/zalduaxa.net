@@ -23,6 +23,8 @@ import net.zalduaxa.backend.model.requestUser.SignupRequest;
 import net.zalduaxa.backend.model.responseUser.ResponseUser;
 import net.zalduaxa.backend.model.user.User;
 import net.zalduaxa.backend.service.AuthService;
+import net.zalduaxa.backend.service.LoginSession;
+import net.zalduaxa.backend.service.SessionService;
 
 @RestController
 @RequestMapping("/auth")
@@ -34,6 +36,7 @@ import net.zalduaxa.backend.service.AuthService;
 public class AuthController {
 
     private final AuthService authService;
+    private final SessionService sessionService;
 
     @Value("${app.auth.cookie.name:token}")
     private String cookieName;
@@ -54,8 +57,9 @@ public class AuthController {
     private long cookieMaxAgeDays;
 
 
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, SessionService sessionService) {
         this.authService = authService;
+        this.sessionService = sessionService;
     }
 
     @PostMapping(value = "/signup", consumes = "application/json")
@@ -66,17 +70,15 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest req, HttpServletResponse response) {
-        User user = authService.loginAndCreateSession(req);
+        LoginSession loginSession = authService.loginAndCreateSession(req);
 
-        String token = authService.issueJwt(user);
-
-        response.addHeader(HttpHeaders.SET_COOKIE, buildAuthCookie(token).toString());
-        return ResponseEntity.ok(new AuthUserResponse(new ResponseUser(user)));
+        response.addHeader(HttpHeaders.SET_COOKIE, buildAuthCookie(loginSession.token()).toString());
+        return ResponseEntity.ok(new AuthUserResponse(new ResponseUser(loginSession.user())));
     }
 
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
-        authService.logoutByRequest(request);
+        sessionService.logoutByRequest(request);
 
         response.addHeader(HttpHeaders.SET_COOKIE, deleteAuthCookie().toString());
         return ResponseEntity.ok(new MessageResponse("Logged out"));
@@ -85,7 +87,7 @@ public class AuthController {
     @GetMapping("/session")
     public ResponseEntity<?> getSession(HttpServletRequest request) {
         User user = authService.getUserFromRequest(request);
-        authService.assertHasActiveSession(user.getId());
+        sessionService.assertHasActiveSession(user.getId());
 
         return ResponseEntity.ok(new AuthUserResponse(new ResponseUser(user)));
     }

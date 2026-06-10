@@ -31,6 +31,8 @@ import net.zalduaxa.backend.model.requestUser.SignupRequest;
 import net.zalduaxa.backend.model.role.Role;
 import net.zalduaxa.backend.model.user.User;
 import net.zalduaxa.backend.service.AuthService;
+import net.zalduaxa.backend.service.LoginSession;
+import net.zalduaxa.backend.service.SessionService;
 
 @WebMvcTest(AuthController.class)
 @Import(ApiExceptionHandler.class)
@@ -49,6 +51,9 @@ class AuthControllerTest {
 
     @MockBean
     private AuthService authService;
+
+    @MockBean
+    private SessionService sessionService;
 
     @Test
     void signup_validRequest_returnsOk() throws Exception {
@@ -92,15 +97,15 @@ class AuthControllerTest {
     void login_validCredentials_returnsOkAndAuthCookie() throws Exception {
         User user = user("xanet", "guest");
 
-        when(authService.loginAndCreateSession(any(LoginRequest.class))).thenReturn(user);
-        when(authService.issueJwt(user)).thenReturn("jwt-token");
+        when(authService.loginAndCreateSession(any(LoginRequest.class)))
+                .thenReturn(new LoginSession(user, "jwt-token"));
 
         mockMvc.perform(post("/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                     {
-                      "username": "xanet",
-                      "password": "Password123!"
+                    "username": "xanet",
+                    "password": "Password123!"
                     }
                     """))
             .andExpect(status().isOk())
@@ -134,7 +139,7 @@ class AuthControllerTest {
         User user = user("xanet", "guest");
 
         when(authService.getUserFromRequest(any(HttpServletRequest.class))).thenReturn(user);
-        doNothing().when(authService).assertHasActiveSession(any());
+        doNothing().when(sessionService).assertHasActiveSession(any());
 
         mockMvc.perform(get("/auth/session")
                 .cookie(new jakarta.servlet.http.Cookie("test-cookie", "jwt-token")))
@@ -155,7 +160,7 @@ class AuthControllerTest {
 
     @Test
     void logout_authenticated_returnsOkAndExpiredCookie() throws Exception {
-        doNothing().when(authService).logoutByRequest(any(HttpServletRequest.class));
+        doNothing().when(sessionService).logoutByRequest(any(HttpServletRequest.class));
 
         mockMvc.perform(post("/auth/logout")
                 .cookie(new jakarta.servlet.http.Cookie("test-cookie", "jwt-token")))
@@ -171,8 +176,7 @@ class AuthControllerTest {
     @Test
     void logout_whenServiceThrowsBadRequest_returnsBadRequest() throws Exception {
         doThrow(new BadRequestException("User is not in session"))
-            .when(authService)
-            .logoutByRequest(any(HttpServletRequest.class));
+            .when(sessionService).logoutByRequest(any(HttpServletRequest.class));
 
         mockMvc.perform(post("/auth/logout"))
             .andExpect(status().isBadRequest())

@@ -50,6 +50,7 @@ import net.zalduaxa.backend.model.session.Session;
 import net.zalduaxa.backend.model.session.SessionRepository;
 import net.zalduaxa.backend.model.user.User;
 import net.zalduaxa.backend.service.AuthService;
+import net.zalduaxa.backend.service.SessionService;
 
 @RestController
 @RequestMapping("/project")
@@ -75,7 +76,7 @@ public class ProjectController {
     private AuthService authService;
 
     @Autowired
-    private SessionRepository sessionRepository;
+    private SessionService sessionService;
 
     public ProjectController(@Value("${storage.path}") String storagePathStr) {
         Path baseStorage = Paths.get(java.net.URI.create(storagePathStr)).toAbsolutePath().normalize();
@@ -375,10 +376,8 @@ public class ProjectController {
         return user;
     }
 
-    private Session requireValidSession(User user) {
-        return sessionRepository.findByUserId(user.getId().longValue())
-                .filter(s -> sessionRepository.existsById(s.getId()))
-                .orElseThrow(() -> new UnauthorizedException("Invalid session"));
+    private void requireValidSession(User user) {
+        sessionService.assertHasActiveSession(user.getId());
     }
 
     private void requireAdmin(User user) {

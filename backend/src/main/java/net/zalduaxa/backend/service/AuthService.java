@@ -1,21 +1,15 @@
 package net.zalduaxa.backend.service;
 
-import java.util.Optional;
-
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import jakarta.annotation.PostConstruct;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import net.zalduaxa.backend.exception.BadRequestException;
 import net.zalduaxa.backend.exception.UnauthorizedException;
 import net.zalduaxa.backend.model.requestUser.LoginRequest;
 import net.zalduaxa.backend.model.requestUser.SignupRequest;
 import net.zalduaxa.backend.model.role.RoleRepository;
-import net.zalduaxa.backend.model.session.Session;
-import net.zalduaxa.backend.model.session.SessionRepository;
 import net.zalduaxa.backend.model.user.User;
 import net.zalduaxa.backend.model.user.UserRepository;
 import net.zalduaxa.backend.utils.PasswordAuthentication;
@@ -25,21 +19,19 @@ public class AuthService {
 
     private final UserRepository userRepo;
     private final RoleRepository roleRepo;
-    private final SessionRepository sessionRepo;
     private final JwtService jwtService;
+    private final SessionService sessionService;
     private final PasswordAuthentication passAuth;
-    @Value("${app.auth.cookie.name:token}")
-    private String cookieName;
 
     public AuthService(
             UserRepository userRepo,
             RoleRepository roleRepo,
-            SessionRepository sessionRepo,
-            JwtService jwtService) {
+            JwtService jwtService,
+            SessionService sessionService) {
         this.userRepo = userRepo;
         this.roleRepo = roleRepo;
-        this.sessionRepo = sessionRepo;
         this.jwtService = jwtService;
+        this.sessionService = sessionService;
         this.passAuth = new PasswordAuthentication();
     }
 
@@ -48,10 +40,6 @@ public class AuthService {
         defaultUsers();
     }
 
-    // ------------------------
-    // Signup
-    // ------------------------
-    // TODO: Create require methods for more readibility
     public User register(SignupRequest req) {
         if (req.getUsername() == null || req.getUsername().isBlank()) {
             throw new BadRequestException("Username is required");
@@ -78,40 +66,20 @@ public class AuthService {
         user.setFullName(req.getFullName());
         user.setEmail(req.getEmail());
         user.setPasswordHash(passAuth.hash(req.getPassword().toCharArray()));
-
         user.setRole(roleRepo.findByName("guest"));
 
         return userRepo.save(user);
     }
 
-    // ------------------------
-    // Login + session creation
-    // ------------------------
-    // TODO: Create require methods for more readibility
-    public User loginAndCreateSession(LoginRequest req) {
+    public LoginSession loginAndCreateSession(LoginRequest req) {
         User user = authenticateCredentials(req);
 
-        if (sessionRepo.findByUserId(user.getId().longValue()).isPresent()) {
-            throw new BadRequestException("User already is in session");
-        }
-
         String token = jwtService.generateToken(user.getUsername());
+        sessionService.createSession(user.getId(), token);
 
-        try {
-            sessionRepo.save(new Session(user.getId(), token));
-        } catch (DataIntegrityViolationException e) {
-            throw new BadRequestException("User already is in session");
-        }
-
-        return user;
+        return new LoginSession(user, token);
     }
 
-    // Controller expects to call this separately
-    public String issueJwt(User user) {
-        return jwtService.generateToken(user.getUsername());
-    }
-
-    // TODO: Create require methods for more readibility
     private User authenticateCredentials(LoginRequest req) {
         if (req.getUsername() == null || req.getUsername().isBlank()) {
             throw new BadRequestException("Username is required");
@@ -121,7 +89,7 @@ public class AuthService {
         }
 
         User user = userRepo.findByUsername(req.getUsername())
-            .orElseThrow(() -> new UnauthorizedException("Invalid username or password"));
+                .orElseThrow(() -> new UnauthorizedException("Invalid username or password"));
 
         boolean ok = passAuth.authenticate(req.getPassword().toCharArray(), user.getPasswordHash());
         if (!ok) {
@@ -131,11 +99,8 @@ public class AuthService {
         return user;
     }
 
-    // ------------------------
-    // Session validation
-    // ------------------------
     public User getUserFromRequest(HttpServletRequest request) {
-        String token = extractToken(request);
+        String token = sessionService.extractToken(request);
         return getUserFromToken(token);
     }
 
@@ -155,58 +120,6 @@ public class AuthService {
                 .orElseThrow(() -> new UnauthorizedException("User not found"));
     }
 
-    public void assertHasActiveSession(Number userId) {
-        if (userId == null)
-            throw new UnauthorizedException("User id missing");
-
-        if (sessionRepo.findByUserId(userId.longValue()).isEmpty()) {
-            throw new UnauthorizedException("User is not in session");
-        }
-    }
-
-    // ------------------------
-    // Logout
-    // ------------------------
-    public void logoutByRequest(HttpServletRequest request) {
-        String token = extractToken(request);
-        logoutByToken(token);
-    }
-
-    // TODO: Create require methods for more readibility
-    private void logoutByToken(String token) {
-        if (token == null || token.isBlank()) {
-            throw new UnauthorizedException("Missing auth token");
-        }
-
-        // Best: implement SessionRepository.findByToken(token)
-        Optional<Session> session = sessionRepo.findByToken(token);
-        if (session.isEmpty()) {
-            throw new BadRequestException("User is not in session");
-        }
-
-        sessionRepo.delete(session.get());
-    }
-
-    // ------------------------
-    // Extract token from header or cookie (for logout endpoint)
-    // ------------------------
-    private String extractToken(HttpServletRequest request) {
-        String authHeader = request.getHeader("Authorization");
-        if (authHeader != null && authHeader.startsWith("Bearer "))
-            return authHeader.substring(7);
-
-        if (request.getCookies() != null) {
-            for (Cookie cookie : request.getCookies()) {
-                if (cookieName.equals(cookie.getName()))
-                    return cookie.getValue();
-            }
-        }
-        return null;
-    }
-
-    // ------------------------
-    // Create default users (seed)
-    // ------------------------
     @Value("${app.seed.enabled:true}")
     private boolean seedEnabled;
 
@@ -229,8 +142,9 @@ public class AuthService {
     private String guestEmail;
 
     private void defaultUsers() {
-        if (!seedEnabled)
+        if (!seedEnabled) {
             return;
+        }
 
         if (adminPassword == null || adminPassword.isBlank()) {
             throw new IllegalStateException("Admin seed password must be configured when seed is enabled");

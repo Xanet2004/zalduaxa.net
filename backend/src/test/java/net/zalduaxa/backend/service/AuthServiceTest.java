@@ -1,14 +1,13 @@
 package net.zalduaxa.backend.service;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Optional;
@@ -21,7 +20,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import net.zalduaxa.backend.exception.BadRequestException;
 import net.zalduaxa.backend.exception.UnauthorizedException;
@@ -29,8 +27,6 @@ import net.zalduaxa.backend.model.requestUser.LoginRequest;
 import net.zalduaxa.backend.model.requestUser.SignupRequest;
 import net.zalduaxa.backend.model.role.Role;
 import net.zalduaxa.backend.model.role.RoleRepository;
-import net.zalduaxa.backend.model.session.Session;
-import net.zalduaxa.backend.model.session.SessionRepository;
 import net.zalduaxa.backend.model.user.User;
 import net.zalduaxa.backend.model.user.UserRepository;
 import net.zalduaxa.backend.utils.PasswordAuthentication;
@@ -45,7 +41,7 @@ class AuthServiceTest {
     private RoleRepository roleRepo;
 
     @Mock
-    private SessionRepository sessionRepo;
+    private SessionService sessionService;
 
     @Mock
     private JwtService jwtService;
@@ -56,9 +52,7 @@ class AuthServiceTest {
 
     @BeforeEach
     void setUp() {
-        authService = new AuthService(userRepo, roleRepo, sessionRepo, jwtService);
-
-        ReflectionTestUtils.setField(authService, "cookieName", "test-cookie");
+        authService = new AuthService(userRepo, roleRepo, jwtService, sessionService);
 
         ReflectionTestUtils.setField(authService, "seedEnabled", false);
         ReflectionTestUtils.setField(authService, "adminUsername", "admin");
@@ -140,19 +134,18 @@ class AuthServiceTest {
     }
 
     @Test
-    void loginAndCreateSession_success_returnsUserAndSavesSession() {
+    void loginAndCreateSession_success_returnsLoginSessionAndCreatesSession() {
         User user = userWithPassword(1, "xanet", "Password123!", "guest");
-
         LoginRequest req = loginRequest("xanet", "Password123!");
 
         when(userRepo.findByUsername("xanet")).thenReturn(Optional.of(user));
-        when(sessionRepo.findByUserId(1L)).thenReturn(Optional.empty());
         when(jwtService.generateToken("xanet")).thenReturn("jwt-token");
 
-        User result = authService.loginAndCreateSession(req);
+        LoginSession result = authService.loginAndCreateSession(req);
 
-        assertEquals(user, result);
-        verify(sessionRepo).save(any(Session.class));
+        assertEquals(user, result.user());
+        assertEquals("jwt-token", result.token());
+        verify(sessionService).createSession(1, "jwt-token");
     }
 
     @Test
@@ -175,51 +168,26 @@ class AuthServiceTest {
     }
 
     @Test
-    void loginAndCreateSession_duplicateSession_throwsBadRequestException() {
+    void loginAndCreateSession_whenSessionServiceThrowsBadRequest_propagatesException() {
         User user = userWithPassword(1, "xanet", "Password123!", "guest");
         LoginRequest req = loginRequest("xanet", "Password123!");
-        Session existingSession = mock(Session.class);
 
         when(userRepo.findByUsername("xanet")).thenReturn(Optional.of(user));
-        when(sessionRepo.findByUserId(1L)).thenReturn(Optional.of(existingSession));
+        when(jwtService.generateToken("xanet")).thenReturn("jwt-token");
+
+        org.mockito.Mockito.doThrow(new BadRequestException("User already is in session"))
+                .when(sessionService)
+                .createSession(1, "jwt-token");
 
         assertThrows(BadRequestException.class, () -> authService.loginAndCreateSession(req));
     }
 
     @Test
-    void issueJwt_delegatesToJwtService() {
-        User user = userWithPassword(1, "xanet", "Password123!", "guest");
-
-        when(jwtService.generateToken("xanet")).thenReturn("jwt-token");
-
-        String token = authService.issueJwt(user);
-
-        assertEquals("jwt-token", token);
-    }
-
-    @Test
-    void getUserFromRequest_headerAuth_returnsUser() {
+    void getUserFromRequest_validToken_returnsUser() {
         HttpServletRequest request = mock(HttpServletRequest.class);
         User user = userWithPassword(1, "xanet", "Password123!", "guest");
 
-        when(request.getHeader("Authorization")).thenReturn("Bearer jwt-token");
-        when(jwtService.getUsername("jwt-token")).thenReturn("xanet");
-        when(userRepo.findByUsername("xanet")).thenReturn(Optional.of(user));
-
-        User result = authService.getUserFromRequest(request);
-
-        assertEquals(user, result);
-    }
-
-    @Test
-    void getUserFromRequest_cookieAuth_returnsUser() {
-        HttpServletRequest request = mock(HttpServletRequest.class);
-        User user = userWithPassword(1, "xanet", "Password123!", "guest");
-
-        when(request.getHeader("Authorization")).thenReturn(null);
-        when(request.getCookies()).thenReturn(new Cookie[] {
-            new Cookie("test-cookie", "jwt-token")
-        });
+        when(sessionService.extractToken(request)).thenReturn("jwt-token");
         when(jwtService.getUsername("jwt-token")).thenReturn("xanet");
         when(userRepo.findByUsername("xanet")).thenReturn(Optional.of(user));
 
@@ -232,49 +200,9 @@ class AuthServiceTest {
     void getUserFromRequest_missingToken_throwsUnauthorizedException() {
         HttpServletRequest request = mock(HttpServletRequest.class);
 
-        when(request.getHeader("Authorization")).thenReturn(null);
-        when(request.getCookies()).thenReturn(null);
+        when(sessionService.extractToken(request)).thenReturn(null);
 
         assertThrows(UnauthorizedException.class, () -> authService.getUserFromRequest(request));
-    }
-
-    @Test
-    void assertHasActiveSession_activeSession_doesNotThrow() {
-        Session session = mock(Session.class);
-
-        when(sessionRepo.findByUserId(1L)).thenReturn(Optional.of(session));
-
-        assertDoesNotThrow(() -> authService.assertHasActiveSession(1));
-    }
-
-    @Test
-    void assertHasActiveSession_missingSession_throwsUnauthorizedException() {
-        when(sessionRepo.findByUserId(1L)).thenReturn(Optional.empty());
-
-        assertThrows(UnauthorizedException.class, () -> authService.assertHasActiveSession(1));
-    }
-
-    @Test
-    void logoutByRequest_existingSession_deletesSession() {
-        HttpServletRequest request = mock(HttpServletRequest.class);
-        Session session = mock(Session.class);
-
-        when(request.getHeader("Authorization")).thenReturn("Bearer jwt-token");
-        when(sessionRepo.findByToken("jwt-token")).thenReturn(Optional.of(session));
-
-        authService.logoutByRequest(request);
-
-        verify(sessionRepo).delete(session);
-    }
-
-    @Test
-    void logoutByRequest_missingSession_throwsBadRequestException() {
-        HttpServletRequest request = mock(HttpServletRequest.class);
-
-        when(request.getHeader("Authorization")).thenReturn("Bearer jwt-token");
-        when(sessionRepo.findByToken("jwt-token")).thenReturn(Optional.empty());
-
-        assertThrows(BadRequestException.class, () -> authService.logoutByRequest(request));
     }
 
     @Test
