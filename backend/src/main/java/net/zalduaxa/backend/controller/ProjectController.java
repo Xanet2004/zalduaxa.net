@@ -49,11 +49,7 @@ import net.zalduaxa.backend.service.AuthService;
 
 @RestController
 @RequestMapping("/project")
-@CrossOrigin(
-    origins = "http://localhost:5173",
-    allowCredentials = "true",
-    maxAge = 3600
-)
+@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true", maxAge = 3600)
 public class ProjectController {
 
     // TODO: BASE PATH FROM STORAGE ON DDBB
@@ -85,18 +81,14 @@ public class ProjectController {
         this.PROJECTS_PATH = baseStorage.resolve("projects").toString();
     }
 
-
     @GetMapping(value = "/projectTypes", produces = { "application/json", "application/xml" })
     public ResponseEntity<List<ProjectType>> getProjectTypes() {
         List<ProjectType> projectTypes = projectTypeRepository.findAll();
         return new ResponseEntity<>(projectTypes, HttpStatus.OK);
     }
 
-    @PostMapping(
-        value = "/addProjectType",
-        consumes = "multipart/form-data",
-        produces = { "application/json", "application/xml" }
-    )
+    @PostMapping(value = "/addProjectType", consumes = "multipart/form-data", produces = { "application/json",
+            "application/xml" })
     public ResponseEntity<?> addProjectType(
             RequestProjectType projectTypeRequest,
             HttpServletRequest request) {
@@ -106,32 +98,35 @@ public class ProjectController {
             User user = requireUser(request);
             requireValidSession(user);
             requireAdmin(user);
-            require(projectTypeRequest.getName() != null && !projectTypeRequest.getName().isBlank(), new BadRequestException("Name is required"));
-            require(projectTypeRepository.findByName(projectTypeRequest.getName()) == null, new BadRequestException("Project Type already exists"));
-            
+            require(projectTypeRequest.getName() != null && !projectTypeRequest.getName().isBlank(),
+                    new BadRequestException("Name is required"));
+            require(projectTypeRepository.findByName(projectTypeRequest.getName()) == null,
+                    new BadRequestException("Project Type already exists"));
+
             // * Confirm slug
             String cleanSlug = (projectTypeRequest.getSlug() != null && !projectTypeRequest.getSlug().isBlank())
-                                ? slugify(projectTypeRequest.getSlug())
-                                : slugify(projectTypeRequest.getName());
-            
+                    ? slugify(projectTypeRequest.getSlug())
+                    : slugify(projectTypeRequest.getName());
+
             // * Save image
             saveRequestImage(cleanSlug, projectTypeRequest.getImage());
 
             // * Create and save projectType
-            ProjectType projectType = new ProjectType(projectTypeRequest.getName(), projectTypeRequest.getDescription(), cleanSlug);
+            ProjectType projectType = new ProjectType(projectTypeRequest.getName(), projectTypeRequest.getDescription(),
+                    cleanSlug);
             projectTypeRepository.save(projectType);
 
             return ResponseEntity.ok(Map.of("message", "Project successfully created"));
 
         } catch (Exception e) {
-            return new ResponseEntity<>(Map.of("message", "Error creating project type: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(Map.of("message", "Error creating project type: " + e.getMessage()),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     private void saveRequestImage(
             String projectTypeSlug,
-            MultipartFile image
-    ) {
+            MultipartFile image) {
         Path folder = Paths.get(PROJECT_TYPES_PATH).resolve(projectTypeSlug).normalize();
 
         saveImage(folder, icon, image, PROJECT_TYPE_IMAGE_PATH);
@@ -149,20 +144,21 @@ public class ProjectController {
 
             // TODO: Turn this into a method for more readability
             if ("admin".equals(user.getRole().getName())) {
-                for (ProjectType projectType : projectTypes) 
-                    if(projectType.getName().equals(requestProjectType.getName())) 
+                for (ProjectType projectType : projectTypes)
+                    if (projectType.getName().equals(requestProjectType.getName()))
                         deleteProjectType(projectType);
                 return ResponseEntity.ok(Map.of("message", "Project type successfully deleted"));
             }
 
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "You need to be admin to delete a new project type"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("message", "You need to be admin to delete a new project type"));
 
         } catch (Exception e) {
             return new ResponseEntity<>(projectTypes, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    private void deleteProjectType(ProjectType projectType){
+    private void deleteProjectType(ProjectType projectType) {
         for (Project project : projectRepository.findByProjectTypeSlug(projectType.getSlug())) {
             deleteProject(project, projectType);
         }
@@ -172,14 +168,15 @@ public class ProjectController {
 
     private void deleteProjectTypeFolder(String storagePath) {
         Path dirProjectType = safeResolve(Paths.get(PROJECT_TYPES_PATH), storagePath);
-        Path dirProjects = safeResolve(Paths.get(PROJECTS_PATH),        storagePath);
+        Path dirProjects = safeResolve(Paths.get(PROJECTS_PATH), storagePath);
 
         deleteTree(dirProjectType);
         deleteTree(dirProjects);
     }
 
     private void deleteTree(Path dir) {
-        if (Files.notExists(dir)) return;
+        if (Files.notExists(dir))
+            return;
 
         try (Stream<Path> walk = Files.walk(dir)) {
             for (Path p : walk.sorted(Comparator.reverseOrder()).toList()) {
@@ -215,7 +212,8 @@ public class ProjectController {
     }
 
     private static String slugify(String input) {
-        if (input == null) return "untitled";
+        if (input == null)
+            return "untitled";
 
         String text = input.trim().toLowerCase(Locale.ROOT);
 
@@ -238,11 +236,8 @@ public class ProjectController {
         }
     }
 
-    @PostMapping(
-        value = "/addProject",
-        consumes = "multipart/form-data",
-        produces = { "application/json", "application/xml" }
-    )
+    @PostMapping(value = "/addProject", consumes = "multipart/form-data", produces = { "application/json",
+            "application/xml" })
     // TODO: Shorter method header, requestProject with multipart file?
     public ResponseEntity<?> addProject(
             @RequestParam("typeSlug") String typeSlug,
@@ -266,24 +261,26 @@ public class ProjectController {
 
             // * Check project
             String cleanProjectSlug = (slug != null && !slug.isBlank()) ? slugify(slug) : slugify(name);
-            require(!projectRepository.existsBySlug(cleanProjectSlug), new BadRequestException("Project slug already exists"));
+            require(!projectRepository.existsBySlug(cleanProjectSlug),
+                    new BadRequestException("Project slug already exists"));
 
             // * Create and save project
-            Project p = new Project(1, user.getId(), projectTypeRepository.findBySlug(cleanTypeSlug).get().getId(), name, cleanProjectSlug, description, null);            
+            Project p = new Project(1, user.getId(), projectTypeRepository.findBySlug(cleanTypeSlug).get().getId(),
+                    name, cleanProjectSlug, description, null);
             projectRepository.save(p);
             saveProjectImage(cleanTypeSlug, cleanProjectSlug, image);
 
             return ResponseEntity.ok(Map.of("message", "Project successfully created"));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("message", "Unexpected server error"));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Unexpected server error"));
         }
     }
 
     private void saveProjectImage(
             String typeSlug,
             String projectSlug,
-            MultipartFile image
-    ) {
+            MultipartFile image) {
         Path folder = Paths.get(PROJECTS_PATH).resolve(typeSlug).resolve(projectSlug).normalize();
 
         saveImage(folder, icon, image, PROJECT_IMAGE_PATH);
@@ -293,8 +290,7 @@ public class ProjectController {
             Path targetFolder,
             String fileName,
             MultipartFile image,
-            String defaultClasspathImage
-    ) {
+            String defaultClasspathImage) {
         try {
             Files.createDirectories(targetFolder);
             Path destination = targetFolder.resolve(fileName);
@@ -303,7 +299,7 @@ public class ProjectController {
                 image.transferTo(destination.toFile());
                 return;
             }
-            
+
             ClassPathResource defaultImage = new ClassPathResource(defaultClasspathImage);
             try (InputStream in = defaultImage.getInputStream()) {
                 Files.copy(in, destination, StandardCopyOption.REPLACE_EXISTING);
@@ -328,7 +324,8 @@ public class ProjectController {
             // * Check project requisites
             require(body != null, new BadRequestException("Request body is required"));
             require(body.getName() != null && !body.getName().isBlank(), new BadRequestException("Name is required"));
-            require(body.getTypeSlug() != null && !body.getTypeSlug().isBlank(), new BadRequestException("Type slug is required"));
+            require(body.getTypeSlug() != null && !body.getTypeSlug().isBlank(),
+                    new BadRequestException("Type slug is required"));
 
             Optional<Project> pOpt = projectRepository.findByName(body.getName());
             require(pOpt.isPresent(), new BadRequestException("Project not found"));
@@ -353,8 +350,11 @@ public class ProjectController {
         }
     }
 
-    private void deleteProject(Project p, ProjectType pt){
-        require(p.getTypeId() != null || p.getTypeId().equals(pt.getId()), new RuntimeException("Cannot delete project"));
+    private void deleteProject(Project p, ProjectType pt) {
+        if (p.getTypeId() == null || !p.getTypeId().equals(pt.getId())) {
+            throw new RuntimeException("Cannot delete project");
+        }
+
         deleteProjectFolder(slugify(pt.getSlug()), slugify(p.getSlug()));
         projectRepository.deleteById(p.getId());
     }
@@ -367,7 +367,8 @@ public class ProjectController {
 
     private User requireUser(HttpServletRequest request) {
         User user = authService.getUserFromRequest(request);
-        if (user == null) throw new UnauthorizedException("Invalid user");
+        if (user == null)
+            throw new UnauthorizedException("Invalid user");
         return user;
     }
 
@@ -375,15 +376,18 @@ public class ProjectController {
         Boolean permission = false;
         User user = authService.getUserFromRequest(request);
         // TODO: Create global enum for visibility
-        if (user == null) if (visibility.getName() == "public"); // ! Temporal
-        else if (user.getRole().getId() != 2 && visibility.getName() != "private") permission = true;
+        if (user == null)
+            if (visibility.getName() == "public")
+                ; // ! Temporal
+            else if (user.getRole().getId() != 2 && visibility.getName() != "private")
+                permission = true;
         return permission;
     }
 
     private Session requireValidSession(User user) {
         return sessionRepository.findByUserId(user.getId().longValue())
-            .filter(s -> sessionRepository.existsById(s.getId()))
-            .orElseThrow(() -> new UnauthorizedException("Invalid session"));
+                .filter(s -> sessionRepository.existsById(s.getId()))
+                .orElseThrow(() -> new UnauthorizedException("Invalid session"));
     }
 
     private void requireAdmin(User user) {
@@ -393,8 +397,8 @@ public class ProjectController {
     }
 
     private static void require(boolean condition, RuntimeException ex) {
-        if (!condition) throw ex;
+        if (!condition)
+            throw ex;
     }
-
 
 }
