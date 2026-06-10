@@ -1,15 +1,15 @@
 package net.zalduaxa.backend.controller;
 
+import static net.zalduaxa.backend.utils.SlugUtils.slugify;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.text.Normalizer;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -32,9 +32,9 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import net.zalduaxa.backend.dto.MessageResponse;
 import net.zalduaxa.backend.exception.BadRequestException;
 import net.zalduaxa.backend.exception.ForbiddenException;
 import net.zalduaxa.backend.exception.UnauthorizedException;
@@ -49,7 +49,6 @@ import net.zalduaxa.backend.model.responseProjectType.ResponseProjectType;
 import net.zalduaxa.backend.model.session.Session;
 import net.zalduaxa.backend.model.session.SessionRepository;
 import net.zalduaxa.backend.model.user.User;
-import net.zalduaxa.backend.model.visibility.Visibility;
 import net.zalduaxa.backend.service.AuthService;
 
 @RestController
@@ -125,13 +124,13 @@ public class ProjectController {
                     cleanSlug);
             projectTypeRepository.save(projectType);
 
-            return ResponseEntity.ok(Map.of("message", "Project successfully created"));
+            return ResponseEntity.ok(new MessageResponse("Project successfully created"));
 
         } catch (BadRequestException | UnauthorizedException | ForbiddenException e) {
             throw e;
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("message", "Unexpected server error"));
+                    .body(new MessageResponse("Unexpected server error"));
         }
     }
 
@@ -145,7 +144,7 @@ public class ProjectController {
 
     @PostMapping(value = "/deleteProjectType", produces = { "application/json", "application/xml" })
     public ResponseEntity<?> deleteProjectType(@Valid @RequestBody RequestProjectType requestProjectType,
-            HttpServletResponse response, HttpServletRequest request) {
+            HttpServletRequest request) {
 
         List<ProjectType> projectTypes = projectTypeRepository.findAll();
         try {
@@ -158,17 +157,17 @@ public class ProjectController {
                 for (ProjectType projectType : projectTypes)
                     if (projectType.getName().equals(requestProjectType.getName()))
                         deleteProjectType(projectType);
-                return ResponseEntity.ok(Map.of("message", "Project type successfully deleted"));
+                return ResponseEntity.ok(new MessageResponse("Project type successfully deleted"));
             }
 
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", "You need to be admin to delete a new project type"));
+        .body(new MessageResponse("You need to be admin to delete a new project type"));
 
         } catch (BadRequestException | UnauthorizedException | ForbiddenException e) {
             throw e;
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("message", "Unexpected server error"));
+                    .body(new MessageResponse("Unexpected server error"));
         }
     }
 
@@ -228,20 +227,6 @@ public class ProjectController {
         return Map.of("projects", projects);
     }
 
-    private static String slugify(String input) {
-        if (input == null)
-            return "untitled";
-
-        String text = input.trim().toLowerCase(Locale.ROOT);
-
-        text = Normalizer.normalize(text, Normalizer.Form.NFD)
-                .replaceAll("\\p{M}+", "");
-        text = text.replaceAll("[^a-z0-9_-]+", "-");
-        text = text.replaceAll("^-+|-+$", "");
-
-        return text.isEmpty() ? "untitled" : text;
-    }
-
     @GetMapping("/getProject/{slug}")
     public ResponseEntity<ResponseProject> getProjectBySlug(@PathVariable @NotBlank String slug) {
         String cleanSlug = slugify(slug);
@@ -286,12 +271,12 @@ public class ProjectController {
             projectRepository.save(p);
             saveProjectImage(cleanTypeSlug, cleanProjectSlug, image);
 
-            return ResponseEntity.ok(Map.of("message", "Project successfully created"));
+            return ResponseEntity.ok(new MessageResponse("Project successfully created"));
         } catch (BadRequestException | UnauthorizedException | ForbiddenException e) {
             throw e;
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("message", "Unexpected server error"));
+                    .body(new MessageResponse("Unexpected server error"));
         }
     }
 
@@ -359,12 +344,12 @@ public class ProjectController {
 
             deleteProject(p, pt);
 
-            return ResponseEntity.ok(Map.of("message", "Project successfully deleted"));
+            return ResponseEntity.ok(new MessageResponse("Project successfully deleted"));
         } catch (BadRequestException | UnauthorizedException | ForbiddenException e) {
             throw e;
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("message", "Unexpected server error"));
+                    .body(new MessageResponse("Unexpected server error"));
         }
     }
 
@@ -388,18 +373,6 @@ public class ProjectController {
         if (user == null)
             throw new UnauthorizedException("Invalid user");
         return user;
-    }
-
-    private Boolean requireVisibility(HttpServletRequest request, Visibility visibility) {
-        Boolean permission = false;
-        User user = authService.getUserFromRequest(request);
-        // TODO: Create global enum for visibility
-        if (user == null)
-            if (visibility.getName() == "public")
-                ; // ! Temporal
-            else if (user.getRole().getId() != 2 && visibility.getName() != "private")
-                permission = true;
-        return permission;
     }
 
     private Session requireValidSession(User user) {

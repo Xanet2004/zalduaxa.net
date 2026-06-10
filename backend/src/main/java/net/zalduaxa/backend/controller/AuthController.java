@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,6 +16,8 @@ import org.springframework.web.bind.annotation.RestController;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import net.zalduaxa.backend.dto.AuthUserResponse;
+import net.zalduaxa.backend.dto.MessageResponse;
 import net.zalduaxa.backend.model.requestUser.LoginRequest;
 import net.zalduaxa.backend.model.requestUser.SignupRequest;
 import net.zalduaxa.backend.model.responseUser.ResponseUser;
@@ -70,7 +71,7 @@ public class AuthController {
         String token = authService.issueJwt(user);
 
         response.addHeader(HttpHeaders.SET_COOKIE, buildAuthCookie(token).toString());
-        return ResponseEntity.ok(new UserResponse(new ResponseUser(user)));
+        return ResponseEntity.ok(new AuthUserResponse(new ResponseUser(user)));
     }
 
     @PostMapping("/logout")
@@ -86,7 +87,7 @@ public class AuthController {
         User user = authService.getUserFromRequest(request);
         authService.assertHasActiveSession(user.getId());
 
-        return ResponseEntity.ok(new UserResponse(new ResponseUser(user)));
+        return ResponseEntity.ok(new AuthUserResponse(new ResponseUser(user)));
     }
 
     private ResponseCookie buildAuthCookie(String token) {
@@ -118,8 +119,4 @@ public class AuthController {
 
         return b.build();
     }
-
-    // ? simple response DTOs
-    public record MessageResponse(String message) {}
-    public record UserResponse(ResponseUser user) {}
 }
