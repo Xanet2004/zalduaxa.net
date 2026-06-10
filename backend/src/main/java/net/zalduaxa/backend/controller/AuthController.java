@@ -23,16 +23,10 @@ import net.zalduaxa.backend.service.AuthService;
 @RestController
 @RequestMapping("/auth")
 @CrossOrigin(
-    origins = "http://localhost:5173",
+    origins = "${app.cors.origin}",
     allowCredentials = "true",
     maxAge = 3600
 )
-// TODO: Use the correct frontend IP when building the services
-// @CrossOrigin(
-//     origins = "https://tu-frontend.com",
-//     allowCredentials = "true",
-//     maxAge = 3600
-// )
 public class AuthController {
 
     private final AuthService authService;
