@@ -16,7 +16,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import net.zalduaxa.backend.model.requestUser.RequestUser;
+import jakarta.validation.Valid;
+import net.zalduaxa.backend.model.requestUser.LoginRequest;
+import net.zalduaxa.backend.model.requestUser.SignupRequest;
 import net.zalduaxa.backend.model.responseUser.ResponseUser;
 import net.zalduaxa.backend.model.user.User;
 import net.zalduaxa.backend.service.AuthService;
@@ -56,13 +58,13 @@ public class AuthController {
     }
 
     @PostMapping(value = "/signup", consumes = "application/json")
-    public ResponseEntity<?> signup(@Validated(RequestUser.Signup.class) @RequestBody RequestUser req) {
+    public ResponseEntity<?> signup(@Valid @RequestBody SignupRequest req) {
         authService.register(req);
         return ResponseEntity.ok(new MessageResponse("User registered successfully"));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Validated(RequestUser.Login.class) @RequestBody RequestUser req, HttpServletResponse response) {
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest req, HttpServletResponse response) {
         User user = authService.loginAndCreateSession(req);
 
         String token = authService.issueJwt(user);

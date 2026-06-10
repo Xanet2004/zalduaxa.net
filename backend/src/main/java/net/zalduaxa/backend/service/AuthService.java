@@ -11,7 +11,8 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import net.zalduaxa.backend.exception.BadRequestException;
 import net.zalduaxa.backend.exception.UnauthorizedException;
-import net.zalduaxa.backend.model.requestUser.RequestUser;
+import net.zalduaxa.backend.model.requestUser.LoginRequest;
+import net.zalduaxa.backend.model.requestUser.SignupRequest;
 import net.zalduaxa.backend.model.role.RoleRepository;
 import net.zalduaxa.backend.model.session.Session;
 import net.zalduaxa.backend.model.session.SessionRepository;
@@ -51,7 +52,7 @@ public class AuthService {
     // Signup
     // ------------------------
     // TODO: Create require methods for more readibility
-    public User register(RequestUser req) {
+    public User register(SignupRequest req) {
         if (req.getUsername() == null || req.getUsername().isBlank()) {
             throw new BadRequestException("Username is required");
         }
@@ -68,7 +69,7 @@ public class AuthService {
         if (userRepo.existsByEmail(req.getEmail())) {
             throw new BadRequestException("Email already exists");
         }
-        if (!req.getPassword().equals(req.getRepeated_password())) {
+        if (!req.getPassword().equals(req.getRepeatedPassword())) {
             throw new BadRequestException("Passwords do not match");
         }
 
@@ -87,21 +88,18 @@ public class AuthService {
     // Login + session creation
     // ------------------------
     // TODO: Create require methods for more readibility
-    public User loginAndCreateSession(RequestUser req) {
+    public User loginAndCreateSession(LoginRequest req) {
         User user = authenticateCredentials(req);
 
-        // Enforce “only one session per user”
         if (sessionRepo.findByUserId(user.getId().longValue()).isPresent()) {
             throw new BadRequestException("User already is in session");
         }
 
-        // Create session after issuing JWT (token stored in DB)
         String token = jwtService.generateToken(user.getUsername());
 
         try {
             sessionRepo.save(new Session(user.getId(), token));
         } catch (DataIntegrityViolationException e) {
-            // In case you add a UNIQUE(user_id) constraint and there’s a race condition
             throw new BadRequestException("User already is in session");
         }
 
@@ -114,7 +112,7 @@ public class AuthService {
     }
 
     // TODO: Create require methods for more readibility
-    private User authenticateCredentials(RequestUser req) {
+    private User authenticateCredentials(LoginRequest req) {
         if (req.getUsername() == null || req.getUsername().isBlank()) {
             throw new BadRequestException("Username is required");
         }
@@ -123,7 +121,7 @@ public class AuthService {
         }
 
         User user = userRepo.findByUsername(req.getUsername())
-                .orElseThrow(() -> new UnauthorizedException("Invalid username or password"));
+            .orElseThrow(() -> new UnauthorizedException("Invalid username or password"));
 
         boolean ok = passAuth.authenticate(req.getPassword().toCharArray(), user.getPasswordHash());
         if (!ok) {

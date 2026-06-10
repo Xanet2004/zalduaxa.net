@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -26,7 +25,8 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import net.zalduaxa.backend.exception.BadRequestException;
 import net.zalduaxa.backend.exception.UnauthorizedException;
-import net.zalduaxa.backend.model.requestUser.RequestUser;
+import net.zalduaxa.backend.model.requestUser.LoginRequest;
+import net.zalduaxa.backend.model.requestUser.SignupRequest;
 import net.zalduaxa.backend.model.role.Role;
 import net.zalduaxa.backend.model.role.RoleRepository;
 import net.zalduaxa.backend.model.session.Session;
@@ -71,7 +71,7 @@ class AuthServiceTest {
 
     @Test
     void register_success_assignsGuestRoleAndPasswordHash() {
-        RequestUser req = requestUser("newuser", "new@example.com", "Password123!", "Password123!");
+        SignupRequest req = signupRequest("newuser", "new@example.com", "Password123!", "Password123!");
         Role guestRole = role("guest");
 
         when(userRepo.existsByUsername("newuser")).thenReturn(false);
@@ -91,28 +91,28 @@ class AuthServiceTest {
 
     @Test
     void register_missingUsername_throwsBadRequestException() {
-        RequestUser req = requestUser(null, "new@example.com", "Password123!", "Password123!");
+        SignupRequest req = signupRequest(null, "new@example.com", "Password123!", "Password123!");
 
         assertThrows(BadRequestException.class, () -> authService.register(req));
     }
 
     @Test
     void register_missingEmail_throwsBadRequestException() {
-        RequestUser req = requestUser("newuser", null, "Password123!", "Password123!");
+        SignupRequest req = signupRequest("newuser", null, "Password123!", "Password123!");
 
         assertThrows(BadRequestException.class, () -> authService.register(req));
     }
 
     @Test
     void register_missingPassword_throwsBadRequestException() {
-        RequestUser req = requestUser("newuser", "new@example.com", null, null);
+        SignupRequest req = signupRequest("newuser", "new@example.com", null, null);
 
         assertThrows(BadRequestException.class, () -> authService.register(req));
     }
 
     @Test
     void register_duplicateUsername_throwsBadRequestException() {
-        RequestUser req = requestUser("newuser", "new@example.com", "Password123!", "Password123!");
+        SignupRequest req = signupRequest("newuser", "new@example.com", "Password123!", "Password123!");
 
         when(userRepo.existsByUsername("newuser")).thenReturn(true);
 
@@ -121,7 +121,7 @@ class AuthServiceTest {
 
     @Test
     void register_duplicateEmail_throwsBadRequestException() {
-        RequestUser req = requestUser("newuser", "new@example.com", "Password123!", "Password123!");
+        SignupRequest req = signupRequest("newuser", "new@example.com", "Password123!", "Password123!");
 
         when(userRepo.existsByUsername("newuser")).thenReturn(false);
         when(userRepo.existsByEmail("new@example.com")).thenReturn(true);
@@ -131,7 +131,7 @@ class AuthServiceTest {
 
     @Test
     void register_passwordMismatch_throwsBadRequestException() {
-        RequestUser req = requestUser("newuser", "new@example.com", "Password123!", "Different123!");
+        SignupRequest req = signupRequest("newuser", "new@example.com", "Password123!", "Different123!");
 
         when(userRepo.existsByUsername("newuser")).thenReturn(false);
         when(userRepo.existsByEmail("new@example.com")).thenReturn(false);
@@ -143,7 +143,7 @@ class AuthServiceTest {
     void loginAndCreateSession_success_returnsUserAndSavesSession() {
         User user = userWithPassword(1, "xanet", "Password123!", "guest");
 
-        RequestUser req = requestUser("xanet", null, "Password123!", null);
+        LoginRequest req = loginRequest("xanet", "Password123!");
 
         when(userRepo.findByUsername("xanet")).thenReturn(Optional.of(user));
         when(sessionRepo.findByUserId(1L)).thenReturn(Optional.empty());
@@ -157,7 +157,7 @@ class AuthServiceTest {
 
     @Test
     void loginAndCreateSession_wrongUsername_throwsUnauthorizedException() {
-        RequestUser req = requestUser("unknown", null, "Password123!", null);
+        LoginRequest req = loginRequest("unknown", "Password123!");
 
         when(userRepo.findByUsername("unknown")).thenReturn(Optional.empty());
 
@@ -167,7 +167,7 @@ class AuthServiceTest {
     @Test
     void loginAndCreateSession_wrongPassword_throwsUnauthorizedException() {
         User user = userWithPassword(1, "xanet", "CorrectPassword123!", "guest");
-        RequestUser req = requestUser("xanet", null, "WrongPassword123!", null);
+        LoginRequest req = loginRequest("xanet", "WrongPassword123!");
 
         when(userRepo.findByUsername("xanet")).thenReturn(Optional.of(user));
 
@@ -177,7 +177,7 @@ class AuthServiceTest {
     @Test
     void loginAndCreateSession_duplicateSession_throwsBadRequestException() {
         User user = userWithPassword(1, "xanet", "Password123!", "guest");
-        RequestUser req = requestUser("xanet", null, "Password123!", null);
+        LoginRequest req = loginRequest("xanet", "Password123!");
         Session existingSession = mock(Session.class);
 
         when(userRepo.findByUsername("xanet")).thenReturn(Optional.of(user));
@@ -313,12 +313,19 @@ class AuthServiceTest {
         verify(userRepo, never()).save(any(User.class));
     }
 
-    private RequestUser requestUser(String username, String email, String password, String repeatedPassword) {
-        RequestUser req = new RequestUser();
+    private SignupRequest signupRequest(String username, String email, String password, String repeatedPassword) {
+        SignupRequest req = new SignupRequest();
         req.setUsername(username);
         req.setEmail(email);
         req.setPassword(password);
-        req.setRepeated_password(repeatedPassword);
+        req.setRepeatedPassword(repeatedPassword);
+        return req;
+    }
+
+    private LoginRequest loginRequest(String username, String password) {
+        LoginRequest req = new LoginRequest();
+        req.setUsername(username);
+        req.setPassword(password);
         return req;
     }
 

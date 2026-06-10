@@ -26,7 +26,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import net.zalduaxa.backend.exception.ApiExceptionHandler;
 import net.zalduaxa.backend.exception.BadRequestException;
 import net.zalduaxa.backend.exception.UnauthorizedException;
-import net.zalduaxa.backend.model.requestUser.RequestUser;
+import net.zalduaxa.backend.model.requestUser.LoginRequest;
+import net.zalduaxa.backend.model.requestUser.SignupRequest;
 import net.zalduaxa.backend.model.role.Role;
 import net.zalduaxa.backend.model.user.User;
 import net.zalduaxa.backend.service.AuthService;
@@ -51,7 +52,7 @@ class AuthControllerTest {
 
     @Test
     void signup_validRequest_returnsOk() throws Exception {
-        when(authService.register(any(RequestUser.class))).thenReturn(user("xanet", "guest"));
+        when(authService.register(any(SignupRequest.class))).thenReturn(user("xanet", "guest"));
 
         mockMvc.perform(post("/auth/signup")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -69,7 +70,7 @@ class AuthControllerTest {
 
     @Test
     void signup_whenServiceThrowsBadRequest_returnsBadRequest() throws Exception {
-        when(authService.register(any(RequestUser.class)))
+        when(authService.register(any(SignupRequest.class)))
             .thenThrow(new BadRequestException("Username already exists"));
 
         mockMvc.perform(post("/auth/signup")
@@ -91,7 +92,7 @@ class AuthControllerTest {
     void login_validCredentials_returnsOkAndAuthCookie() throws Exception {
         User user = user("xanet", "guest");
 
-        when(authService.loginAndCreateSession(any(RequestUser.class))).thenReturn(user);
+        when(authService.loginAndCreateSession(any(LoginRequest.class))).thenReturn(user);
         when(authService.issueJwt(user)).thenReturn("jwt-token");
 
         mockMvc.perform(post("/auth/login")
@@ -112,7 +113,7 @@ class AuthControllerTest {
 
     @Test
     void login_invalidCredentials_returnsUnauthorized() throws Exception {
-        when(authService.loginAndCreateSession(any(RequestUser.class)))
+        when(authService.loginAndCreateSession(any(LoginRequest.class)))
             .thenThrow(new UnauthorizedException("Invalid username or password"));
 
         mockMvc.perform(post("/auth/login")
