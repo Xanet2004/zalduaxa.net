@@ -12,7 +12,7 @@ services:
       - "5432:5432"
     volumes:
       - zalduaxa_net_postgres:/var/lib/postgresql/data
-      - ./ddbb/init:/docker-entrypoint-initdb.d:ro
+      - ./db/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U app -d zalduaxa_net"]
       interval: 5s
@@ -28,6 +28,7 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/zalduaxa_net
       SPRING_DATASOURCE_USERNAME: app
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      APP_PASSWORD_PEPPER: ${APP_PASSWORD_PEPPER}
 
       APP_JWT_SECRET: ${APP_JWT_SECRET}
       APP_CORS_ORIGIN: http://localhost:5173

@@ -16,7 +16,7 @@ This repository currently includes a working end-to-end flow between the fronten
 - Git structure and syntax: [/documentation/git_structure.md](/documentation/git_structure.md)
 - Project structure: [/documentation/project_structure.md](/documentation/project_structure.md)
 - Database diagram (dbdiagram.io): https://dbdiagram.io/d/zalduaxanet-69190b9f6735e11170fd8a62
-- Database details: [/documentation/ddbb.md](/documentation/ddbb.md)
+- Database details: [/documentation/db.md](/documentation/db.md)
 - Docker setup (dev + deploy): [/documentation/docker.md](/documentation/docker.md)
 - Todo list: [/documentation/todo.md](/documentation/todo.md)
 
