@@ -5,6 +5,8 @@ import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,7 +19,6 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import net.zalduaxa.backend.dto.request.DeleteProjectRequest;
@@ -28,11 +29,9 @@ import net.zalduaxa.backend.dto.response.ProjectTypeResponse;
 import net.zalduaxa.backend.exception.BadRequestException;
 import net.zalduaxa.backend.exception.ForbiddenException;
 import net.zalduaxa.backend.exception.UnauthorizedException;
-import net.zalduaxa.backend.model.user.User;
-import net.zalduaxa.backend.service.AuthService;
+import net.zalduaxa.backend.security.AuthenticatedUser;
 import net.zalduaxa.backend.service.ProjectService;
 import net.zalduaxa.backend.service.ProjectTypeService;
-import net.zalduaxa.backend.service.SessionService;
 
 @RestController
 @RequestMapping("/project")
@@ -40,18 +39,12 @@ import net.zalduaxa.backend.service.SessionService;
 @Validated
 public class ProjectController {
 
-    private final AuthService authService;
-    private final SessionService sessionService;
     private final ProjectTypeService projectTypeService;
     private final ProjectService projectService;
 
     public ProjectController(
-            AuthService authService,
-            SessionService sessionService,
             ProjectTypeService projectTypeService,
             ProjectService projectService) {
-        this.authService = authService;
-        this.sessionService = sessionService;
         this.projectTypeService = projectTypeService;
         this.projectService = projectService;
     }
@@ -61,19 +54,15 @@ public class ProjectController {
         return new ResponseEntity<>(projectTypeService.getAllProjectTypes(), HttpStatus.OK);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping(value = "/addProjectType", consumes = "multipart/form-data", produces = {
             "application/json",
             "application/xml"
     })
     public ResponseEntity<?> addProjectType(
-            @Valid ProjectTypeRequest projectTypeRequest,
-            HttpServletRequest request) {
+            @Valid ProjectTypeRequest projectTypeRequest) {
 
         try {
-            User user = requireUser(request);
-            requireValidSession(user);
-            requireAdmin(user);
-
             projectTypeService.createProjectType(projectTypeRequest);
 
             return ResponseEntity.ok(new MessageResponse("Project successfully created"));
@@ -86,24 +75,16 @@ public class ProjectController {
         }
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping(value = "/deleteProjectType", produces = { "application/json", "application/xml" })
     public ResponseEntity<?> deleteProjectType(
-            @Valid @RequestBody ProjectTypeRequest requestProjectType,
-            HttpServletRequest request) {
+            @Valid @RequestBody ProjectTypeRequest requestProjectType) {
 
         try {
-            User user = requireUser(request);
-            requireValidSession(user);
+            String projectTypeName = requestProjectType != null ? requestProjectType.getName() : null;
+            projectTypeService.deleteProjectType(projectTypeName);
 
-            if ("admin".equals(user.getRole().getName())) {
-                String projectTypeName = requestProjectType != null ? requestProjectType.getName() : null;
-                projectTypeService.deleteProjectType(projectTypeName);
-
-                return ResponseEntity.ok(new MessageResponse("Project type successfully deleted"));
-            }
-
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(new MessageResponse("You need to be admin to delete a new project type"));
+            return ResponseEntity.ok(new MessageResponse("Project type successfully deleted"));
 
         } catch (BadRequestException | UnauthorizedException | ForbiddenException e) {
             throw e;
@@ -125,6 +106,7 @@ public class ProjectController {
         return ResponseEntity.ok(projectService.getProjectBySlug(slug));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping(value = "/addProject", consumes = "multipart/form-data", produces = {
             "application/json",
             "application/xml"
@@ -135,14 +117,10 @@ public class ProjectController {
             @RequestParam(value = "slug", required = false) String slug,
             @RequestParam(value = "description", required = false) String description,
             @RequestPart(value = "image", required = false) MultipartFile image,
-            HttpServletRequest request) {
+            @AuthenticationPrincipal AuthenticatedUser principal) {
 
         try {
-            User user = requireUser(request);
-            requireValidSession(user);
-            requireAdmin(user);
-
-            projectService.createProject(user, typeSlug, name, slug, description, image);
+            projectService.createProject(principal.id(), typeSlug, name, slug, description, image);
 
             return ResponseEntity.ok(new MessageResponse("Project successfully created"));
 
@@ -154,16 +132,12 @@ public class ProjectController {
         }
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping(value = "/deleteProject", produces = { "application/json", "application/xml" })
     public ResponseEntity<?> deleteProject(
-            @Valid @RequestBody DeleteProjectRequest body,
-            HttpServletRequest request) {
+            @Valid @RequestBody DeleteProjectRequest body) {
 
         try {
-            User user = requireUser(request);
-            requireValidSession(user);
-            requireAdmin(user);
-
             String projectName = body != null ? body.getName() : null;
             String typeSlug = body != null ? body.getTypeSlug() : null;
 
@@ -176,25 +150,6 @@ public class ProjectController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new MessageResponse("Unexpected server error"));
-        }
-    }
-
-    private User requireUser(HttpServletRequest request) {
-        User user = authService.getUserFromRequest(request);
-        if (user == null) {
-            throw new UnauthorizedException("Invalid user");
-        }
-
-        return user;
-    }
-
-    private void requireValidSession(User user) {
-        sessionService.assertHasActiveSession(user.getId());
-    }
-
-    private void requireAdmin(User user) {
-        if (!"admin".equals(user.getRole().getName())) {
-            throw new ForbiddenException("You need to be admin");
         }
     }
 }

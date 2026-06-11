@@ -11,6 +11,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.List;
+
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -20,6 +23,9 @@ import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -33,8 +39,10 @@ import net.zalduaxa.backend.exception.BadRequestException;
 import net.zalduaxa.backend.exception.UnauthorizedException;
 import net.zalduaxa.backend.model.role.Role;
 import net.zalduaxa.backend.model.user.User;
+import net.zalduaxa.backend.security.AuthenticatedUser;
 import net.zalduaxa.backend.security.JwtAuthenticationFilter;
 import net.zalduaxa.backend.service.AuthService;
+import net.zalduaxa.backend.service.CurrentUserService;
 import net.zalduaxa.backend.service.LoginSession;
 import net.zalduaxa.backend.service.SessionService;
 
@@ -65,6 +73,14 @@ class AuthControllerTest {
 
     @MockitoBean
     private SessionService sessionService;
+
+    @MockitoBean
+    private CurrentUserService currentUserService;
+
+    @AfterEach
+    void clearSecurityContext() {
+        SecurityContextHolder.clearContext();
+    }
 
     @Test
     void signup_validRequest_returnsOk() throws Exception {
@@ -149,18 +165,17 @@ class AuthControllerTest {
     void session_authenticated_returnsOk() throws Exception {
         User user = user("xanet", "guest");
 
-        when(authService.getUserFromRequest(any(HttpServletRequest.class))).thenReturn(user);
-        doNothing().when(sessionService).assertHasActiveSession(any());
+        authenticateAs(new AuthenticatedUser(1, "xanet", "xanet@example.com", "guest"));
+        when(currentUserService.loadUser(any())).thenReturn(user);
 
-        mockMvc.perform(get("/auth/session")
-                .cookie(new jakarta.servlet.http.Cookie("test-cookie", "jwt-token")))
+        mockMvc.perform(get("/auth/session"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.user").exists());
     }
 
     @Test
     void session_unauthenticated_returnsUnauthorized() throws Exception {
-        when(authService.getUserFromRequest(any(HttpServletRequest.class)))
+        when(currentUserService.loadUser(null))
             .thenThrow(new UnauthorizedException("Missing auth token"));
 
         mockMvc.perform(get("/auth/session"))
@@ -193,6 +208,17 @@ class AuthControllerTest {
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.status").value(400))
             .andExpect(jsonPath("$.message").value("User is not in session"));
+    }
+
+    private void authenticateAs(AuthenticatedUser principal) {
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(
+                        principal,
+                        null,
+                        List.of(new SimpleGrantedAuthority("ROLE_" + principal.roleName().toUpperCase()))
+                );
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 
     private User user(String username, String roleName) {

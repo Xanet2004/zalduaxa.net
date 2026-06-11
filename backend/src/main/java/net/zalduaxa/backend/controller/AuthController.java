@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,7 +24,9 @@ import net.zalduaxa.backend.dto.response.AuthUserResponse;
 import net.zalduaxa.backend.dto.response.MessageResponse;
 import net.zalduaxa.backend.dto.response.UserResponse;
 import net.zalduaxa.backend.model.user.User;
+import net.zalduaxa.backend.security.AuthenticatedUser;
 import net.zalduaxa.backend.service.AuthService;
+import net.zalduaxa.backend.service.CurrentUserService;
 import net.zalduaxa.backend.service.LoginSession;
 import net.zalduaxa.backend.service.SessionService;
 
@@ -38,6 +41,7 @@ public class AuthController {
 
     private final AuthService authService;
     private final SessionService sessionService;
+    private final CurrentUserService currentUserService;
 
     @Value("${app.auth.cookie.name:token}")
     private String cookieName;
@@ -57,10 +61,13 @@ public class AuthController {
     @Value("${app.auth.cookie.maxAgeDays:1}")
     private long cookieMaxAgeDays;
 
-
-    public AuthController(AuthService authService, SessionService sessionService) {
+    public AuthController(
+            AuthService authService,
+            SessionService sessionService,
+            CurrentUserService currentUserService) {
         this.authService = authService;
         this.sessionService = sessionService;
+        this.currentUserService = currentUserService;
     }
 
     @PostMapping(value = "/signup", consumes = "application/json")
@@ -87,9 +94,8 @@ public class AuthController {
     }
 
     @GetMapping("/session")
-    public ResponseEntity<?> getSession(HttpServletRequest request) {
-        User user = authService.getUserFromRequest(request);
-        sessionService.assertHasActiveSession(user.getId());
+    public ResponseEntity<?> getSession(@AuthenticationPrincipal AuthenticatedUser principal) {
+        User user = currentUserService.loadUser(principal);
 
         return ResponseEntity.ok(new AuthUserResponse(new UserResponse(user)));
     }

@@ -15,7 +15,6 @@ import net.zalduaxa.backend.model.project.ProjectRepository;
 import net.zalduaxa.backend.model.projectType.ProjectType;
 import net.zalduaxa.backend.model.projectType.ProjectTypeRepository;
 import net.zalduaxa.backend.dto.response.ProjectResponse;
-import net.zalduaxa.backend.model.user.User;
 
 @Service
 public class ProjectService {
@@ -54,14 +53,14 @@ public class ProjectService {
     }
 
     public void createProject(
-            User user,
+            Integer userId,
             String typeSlug,
             String name,
             String slug,
             String description,
             MultipartFile image) {
 
-        if (user == null || user.getId() == null) {
+        if (userId == null) {
             throw new UnauthorizedException("Invalid user");
         }
 
@@ -82,7 +81,7 @@ public class ProjectService {
 
         Project project = new Project(
                 1,
-                user.getId(),
+                userId,
                 projectType.get().getId(),
                 name,
                 cleanProjectSlug,
