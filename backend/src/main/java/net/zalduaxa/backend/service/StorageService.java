@@ -38,10 +38,12 @@ public class StorageService {
     }
 
     public void saveProjectImage(String typeSlug, String projectSlug, MultipartFile image) {
-        Path folder = safeResolve(projectsPath, Paths.get(typeSlug, projectSlug).toString());
+        Path typeFolder = safeResolve(projectsPath, typeSlug);
+        Path projectFolder = safeResolve(typeFolder, projectSlug);
 
-        saveImage(folder, ICON, image, PROJECT_IMAGE_PATH);
+        saveImage(projectFolder, ICON, image, PROJECT_IMAGE_PATH);
     }
+
 
     public void deleteProjectTypeFolder(String projectTypeSlug) {
         Path dirProjectType = safeResolve(projectTypesPath, projectTypeSlug);
@@ -52,9 +54,10 @@ public class StorageService {
     }
 
     public void deleteProjectFolder(String typeSlug, String projectSlug) {
-        Path dir = safeResolve(projectsPath, Paths.get(typeSlug, projectSlug).toString());
+        Path typeFolder = safeResolve(projectsPath, typeSlug);
+        Path projectFolder = safeResolve(typeFolder, projectSlug);
 
-        deleteTree(dir);
+        deleteTree(projectFolder);
     }
 
     private void saveImage(
