@@ -25,11 +25,6 @@ public class Role {
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    // Optional: Relation with User
-    // @OneToMany(mappedBy = "role", cascade = CascadeType.ALL, orphanRemoval = true)
-    // private Set<User> users = new HashSet<>();
-
-    // Constructors
     public Role() {}
 
     public Role(String name, String description) {
@@ -37,7 +32,6 @@ public class Role {
         this.description = description;
     }
 
-    // Getters and Setters
     public Integer getId() {
         return id;
     }
@@ -70,22 +64,4 @@ public class Role {
         this.createdAt = createdAt;
     }
 
-    // public Set<User> getUsers() {
-    //     return users;
-    // }
-
-    // public void setUsers(Set<User> users) {
-    //     this.users = users;
-    // }
-
-    // // Helper methods
-    // public void addUser(User user) {
-    //     users.add(user);
-    //     user.setRole(this);
-    // }
-
-    // public void removeUser(User user) {
-    //     users.remove(user);
-    //     user.setRole(null);
-    // }
 }

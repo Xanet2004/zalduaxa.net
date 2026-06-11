@@ -1,7 +1,9 @@
 package net.zalduaxa.backend.model.role;
 
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface RoleRepository extends JpaRepository<Role, Integer> {
-    Role findByName(String username);
+    Optional<Role> findByName(String name);
 }

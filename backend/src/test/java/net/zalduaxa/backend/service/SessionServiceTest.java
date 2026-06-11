@@ -111,7 +111,7 @@ class SessionServiceTest {
         ArgumentCaptor<Session> captor = ArgumentCaptor.forClass(Session.class);
         verify(sessionRepository).save(captor.capture());
 
-        assertEquals(1, captor.getValue().getUser());
+        assertEquals(1, captor.getValue().getUserId());
         assertEquals("jwt-token", captor.getValue().getToken());
     }
 

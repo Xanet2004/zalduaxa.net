@@ -70,7 +70,7 @@ class AuthServiceTest {
 
         when(userRepo.existsByUsername("newuser")).thenReturn(false);
         when(userRepo.existsByEmail("new@example.com")).thenReturn(false);
-        when(roleRepo.findByName("guest")).thenReturn(guestRole);
+        when(roleRepo.findByName("guest")).thenReturn(Optional.of(guestRole));
         when(userRepo.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         User result = authService.register(req);
@@ -131,6 +131,40 @@ class AuthServiceTest {
         when(userRepo.existsByEmail("new@example.com")).thenReturn(false);
 
         assertThrows(BadRequestException.class, () -> authService.register(req));
+    }
+
+    @Test
+    void register_missingGuestRole_throwsIllegalStateException() {
+        SignupRequest req = signupRequest("newuser", "new@example.com", "Password123!", "Password123!");
+
+        when(userRepo.existsByUsername("newuser")).thenReturn(false);
+        when(userRepo.existsByEmail("new@example.com")).thenReturn(false);
+        when(roleRepo.findByName("guest")).thenReturn(Optional.empty());
+
+        assertThrows(IllegalStateException.class, () -> authService.register(req));
+    }
+
+    @Test
+    void defaultUsers_seedEnabledAndEmptyDb_missingAdminRole_throwsIllegalStateException() {
+        ReflectionTestUtils.setField(authService, "seedEnabled", true);
+
+        when(userRepo.count()).thenReturn(0L);
+        when(roleRepo.findByName("admin")).thenReturn(Optional.empty());
+
+        assertThrows(IllegalStateException.class,
+                () -> ReflectionTestUtils.invokeMethod(authService, "defaultUsers"));
+    }
+
+    @Test
+    void defaultUsers_seedEnabledAndEmptyDb_missingGuestRole_throwsIllegalStateException() {
+        ReflectionTestUtils.setField(authService, "seedEnabled", true);
+
+        when(userRepo.count()).thenReturn(0L);
+        when(roleRepo.findByName("admin")).thenReturn(Optional.of(role("admin")));
+        when(roleRepo.findByName("guest")).thenReturn(Optional.empty());
+
+        assertThrows(IllegalStateException.class,
+                () -> ReflectionTestUtils.invokeMethod(authService, "defaultUsers"));
     }
 
     @Test
@@ -219,8 +253,8 @@ class AuthServiceTest {
         ReflectionTestUtils.setField(authService, "seedEnabled", true);
 
         when(userRepo.count()).thenReturn(0L);
-        when(roleRepo.findByName("admin")).thenReturn(role("admin"));
-        when(roleRepo.findByName("guest")).thenReturn(role("guest"));
+        when(roleRepo.findByName("admin")).thenReturn(Optional.of(role("admin")));
+        when(roleRepo.findByName("guest")).thenReturn(Optional.of(role("guest")));
 
         ReflectionTestUtils.invokeMethod(authService, "defaultUsers");
 

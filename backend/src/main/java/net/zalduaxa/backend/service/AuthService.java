@@ -9,6 +9,7 @@ import net.zalduaxa.backend.exception.BadRequestException;
 import net.zalduaxa.backend.exception.UnauthorizedException;
 import net.zalduaxa.backend.dto.request.LoginRequest;
 import net.zalduaxa.backend.dto.request.SignupRequest;
+import net.zalduaxa.backend.model.role.Role;
 import net.zalduaxa.backend.model.role.RoleRepository;
 import net.zalduaxa.backend.model.user.User;
 import net.zalduaxa.backend.model.user.UserRepository;
@@ -66,7 +67,8 @@ public class AuthService {
         user.setFullName(req.getFullName());
         user.setEmail(req.getEmail());
         user.setPasswordHash(passAuth.hash(req.getPassword().toCharArray()));
-        user.setRole(roleRepo.findByName("guest"));
+        user.setRole(roleRepo.findByName("guest")
+                .orElseThrow(() -> new IllegalStateException("Guest role not found")));
 
         return userRepo.save(user);
     }
@@ -155,11 +157,16 @@ public class AuthService {
         }
 
         if (userRepo.count() == 0) {
+            Role adminRole = roleRepo.findByName("admin")
+                    .orElseThrow(() -> new IllegalStateException("Admin role not found"));
+            Role guestRole = roleRepo.findByName("guest")
+                    .orElseThrow(() -> new IllegalStateException("Guest role not found"));
+
             User admin = new User();
             admin.setUsername(adminUsername);
             admin.setFullName("Admin User");
             admin.setEmail(adminEmail);
-            admin.setRole(roleRepo.findByName("admin"));
+            admin.setRole(adminRole);
             admin.setPasswordHash(passAuth.hash(adminPassword.toCharArray()));
             userRepo.save(admin);
 
@@ -167,7 +174,7 @@ public class AuthService {
             guest.setUsername(guestUsername);
             guest.setFullName("Guest User");
             guest.setEmail(guestEmail);
-            guest.setRole(roleRepo.findByName("guest"));
+            guest.setRole(guestRole);
             guest.setPasswordHash(passAuth.hash(guestPassword.toCharArray()));
             userRepo.save(guest);
         }
