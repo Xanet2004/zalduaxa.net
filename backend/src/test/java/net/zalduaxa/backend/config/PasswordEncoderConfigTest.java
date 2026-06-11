@@ -8,20 +8,16 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 class PasswordEncoderConfigTest {
 
-    private final PasswordEncoder passwordEncoder = new PasswordEncoderConfig().passwordEncoder();
-
     @Test
-    void passwordEncoder_encode_returnsBCryptHash() {
-        String hash = passwordEncoder.encode("Password123!");
+    void passwordEncoder_withPepper_returnsWorkingEncoder() {
+        PasswordEncoderConfig config = new PasswordEncoderConfig();
+
+        PasswordEncoder encoder = config.passwordEncoder("test-pepper-secret");
+
+        String hash = encoder.encode("Password123!");
 
         assertTrue(hash.startsWith("$2"));
-        assertTrue(passwordEncoder.matches("Password123!", hash));
-    }
-
-    @Test
-    void passwordEncoder_matches_returnsFalseForWrongPassword() {
-        String hash = passwordEncoder.encode("Password123!");
-
-        assertFalse(passwordEncoder.matches("WrongPassword123!", hash));
+        assertTrue(encoder.matches("Password123!", hash));
+        assertFalse(encoder.matches("WrongPassword123!", hash));
     }
 }
