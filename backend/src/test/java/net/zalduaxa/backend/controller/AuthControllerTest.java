@@ -13,28 +13,39 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 
 import jakarta.servlet.http.HttpServletRequest;
+import net.zalduaxa.backend.dto.request.LoginRequest;
+import net.zalduaxa.backend.dto.request.SignupRequest;
 import net.zalduaxa.backend.exception.ApiExceptionHandler;
 import net.zalduaxa.backend.exception.BadRequestException;
 import net.zalduaxa.backend.exception.UnauthorizedException;
-import net.zalduaxa.backend.dto.request.LoginRequest;
-import net.zalduaxa.backend.dto.request.SignupRequest;
 import net.zalduaxa.backend.model.role.Role;
 import net.zalduaxa.backend.model.user.User;
+import net.zalduaxa.backend.security.JwtAuthenticationFilter;
 import net.zalduaxa.backend.service.AuthService;
 import net.zalduaxa.backend.service.LoginSession;
 import net.zalduaxa.backend.service.SessionService;
 
-@WebMvcTest(AuthController.class)
+@WebMvcTest(
+    controllers = AuthController.class,
+    excludeFilters = @ComponentScan.Filter(
+        type = FilterType.ASSIGNABLE_TYPE,
+        classes = JwtAuthenticationFilter.class
+    )
+)
+@AutoConfigureMockMvc(addFilters = false)
 @Import(ApiExceptionHandler.class)
 @TestPropertySource(properties = {
     "app.auth.cookie.name=test-cookie",
