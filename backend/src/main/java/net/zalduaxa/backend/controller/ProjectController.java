@@ -46,8 +46,6 @@ import net.zalduaxa.backend.model.requestProject.RequestProject;
 import net.zalduaxa.backend.model.requestProjectType.RequestProjectType;
 import net.zalduaxa.backend.model.responseProject.ResponseProject;
 import net.zalduaxa.backend.model.responseProjectType.ResponseProjectType;
-import net.zalduaxa.backend.model.session.Session;
-import net.zalduaxa.backend.model.session.SessionRepository;
 import net.zalduaxa.backend.model.user.User;
 import net.zalduaxa.backend.service.AuthService;
 import net.zalduaxa.backend.service.SessionService;
