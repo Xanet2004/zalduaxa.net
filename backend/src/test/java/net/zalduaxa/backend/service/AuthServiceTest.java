@@ -221,9 +221,8 @@ class AuthServiceTest {
         when(passwordEncoder.matches("Password123!", ENCODED_PASSWORD)).thenReturn(true);
         when(jwtService.generateToken("xanet")).thenReturn("jwt-token");
 
-        org.mockito.Mockito.doThrow(new BadRequestException("User already is in session"))
-                .when(sessionService)
-                .createSession(1, "jwt-token");
+        org.mockito.Mockito.doThrow(new BadRequestException("Could not create session"))
+                .when(sessionService).createSession(any(), any());
 
         assertThrows(BadRequestException.class, () -> authService.loginAndCreateSession(req));
     }
