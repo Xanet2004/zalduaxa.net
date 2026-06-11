@@ -36,10 +36,12 @@ public class ProjectService {
     public List<ResponseProject> getProjectsByType(String slug) {
         String cleanSlug = slugify(slug);
 
-        return projectRepository.findByProjectTypeSlug(cleanSlug)
-                .stream()
-                .map(ResponseProject::new)
-                .toList();
+        return projectTypeRepository.findBySlug(cleanSlug)
+                .map(projectType -> projectRepository.findByTypeId(projectType.getId())
+                        .stream()
+                        .map(ResponseProject::new)
+                        .toList())
+                .orElseGet(List::of);
     }
 
     public ResponseProject getProjectBySlug(String slug) {

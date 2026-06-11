@@ -42,7 +42,7 @@ public class ProjectTypeService {
         require(request.getName() != null && !request.getName().isBlank(),
                 new BadRequestException("Name is required"));
 
-        require(projectTypeRepository.findByName(request.getName()) == null,
+        require(projectTypeRepository.findByName(request.getName()).isEmpty(),
                 new BadRequestException("Project Type already exists"));
 
         String cleanSlug = (request.getSlug() != null && !request.getSlug().isBlank())
@@ -62,10 +62,10 @@ public class ProjectTypeService {
     public void deleteProjectType(String name) {
         require(name != null && !name.isBlank(), new BadRequestException("Name is required"));
 
-        ProjectType projectType = projectTypeRepository.findByName(name);
-        require(projectType != null, new BadRequestException("Project type not found"));
+        ProjectType projectType = projectTypeRepository.findByName(name)
+                .orElseThrow(() -> new BadRequestException("Project type not found"));
 
-        for (Project project : projectRepository.findByProjectTypeSlug(projectType.getSlug())) {
+        for (Project project : projectRepository.findByTypeId(projectType.getId())) {
             deleteProject(project, projectType);
         }
 
