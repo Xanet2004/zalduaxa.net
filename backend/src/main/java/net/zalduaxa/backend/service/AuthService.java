@@ -1,19 +1,19 @@
 package net.zalduaxa.backend.service;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
-import net.zalduaxa.backend.exception.BadRequestException;
-import net.zalduaxa.backend.exception.UnauthorizedException;
 import net.zalduaxa.backend.dto.request.LoginRequest;
 import net.zalduaxa.backend.dto.request.SignupRequest;
+import net.zalduaxa.backend.exception.BadRequestException;
+import net.zalduaxa.backend.exception.UnauthorizedException;
 import net.zalduaxa.backend.model.role.Role;
 import net.zalduaxa.backend.model.role.RoleRepository;
 import net.zalduaxa.backend.model.user.User;
 import net.zalduaxa.backend.model.user.UserRepository;
-import net.zalduaxa.backend.utils.PasswordAuthentication;
 
 @Service
 public class AuthService {
@@ -22,18 +22,19 @@ public class AuthService {
     private final RoleRepository roleRepo;
     private final JwtService jwtService;
     private final SessionService sessionService;
-    private final PasswordAuthentication passAuth;
+    private final PasswordEncoder passwordEncoder;
 
     public AuthService(
             UserRepository userRepo,
             RoleRepository roleRepo,
             JwtService jwtService,
-            SessionService sessionService) {
+            SessionService sessionService,
+            PasswordEncoder passwordEncoder) {
         this.userRepo = userRepo;
         this.roleRepo = roleRepo;
         this.jwtService = jwtService;
         this.sessionService = sessionService;
-        this.passAuth = new PasswordAuthentication();
+        this.passwordEncoder = passwordEncoder;
     }
 
     @PostConstruct
@@ -66,7 +67,7 @@ public class AuthService {
         user.setUsername(req.getUsername());
         user.setFullName(req.getFullName());
         user.setEmail(req.getEmail());
-        user.setPasswordHash(passAuth.hash(req.getPassword().toCharArray()));
+        user.setPasswordHash(passwordEncoder.encode(req.getPassword()));
         user.setRole(roleRepo.findByName("guest")
                 .orElseThrow(() -> new IllegalStateException("Guest role not found")));
 
@@ -93,7 +94,7 @@ public class AuthService {
         User user = userRepo.findByUsername(req.getUsername())
                 .orElseThrow(() -> new UnauthorizedException("Invalid username or password"));
 
-        boolean ok = passAuth.authenticate(req.getPassword().toCharArray(), user.getPasswordHash());
+        boolean ok = passwordEncoder.matches(req.getPassword(), user.getPasswordHash());
         if (!ok) {
             throw new UnauthorizedException("Invalid username or password");
         }
@@ -167,7 +168,7 @@ public class AuthService {
             admin.setFullName("Admin User");
             admin.setEmail(adminEmail);
             admin.setRole(adminRole);
-            admin.setPasswordHash(passAuth.hash(adminPassword.toCharArray()));
+            admin.setPasswordHash(passwordEncoder.encode(adminPassword));
             userRepo.save(admin);
 
             User guest = new User();
@@ -175,7 +176,7 @@ public class AuthService {
             guest.setFullName("Guest User");
             guest.setEmail(guestEmail);
             guest.setRole(guestRole);
-            guest.setPasswordHash(passAuth.hash(guestPassword.toCharArray()));
+            guest.setPasswordHash(passwordEncoder.encode(guestPassword));
             userRepo.save(guest);
         }
     }

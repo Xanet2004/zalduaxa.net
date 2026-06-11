@@ -18,21 +18,23 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import jakarta.servlet.http.HttpServletRequest;
-import net.zalduaxa.backend.exception.BadRequestException;
-import net.zalduaxa.backend.exception.UnauthorizedException;
 import net.zalduaxa.backend.dto.request.LoginRequest;
 import net.zalduaxa.backend.dto.request.SignupRequest;
+import net.zalduaxa.backend.exception.BadRequestException;
+import net.zalduaxa.backend.exception.UnauthorizedException;
 import net.zalduaxa.backend.model.role.Role;
 import net.zalduaxa.backend.model.role.RoleRepository;
 import net.zalduaxa.backend.model.user.User;
 import net.zalduaxa.backend.model.user.UserRepository;
-import net.zalduaxa.backend.utils.PasswordAuthentication;
 
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
+
+    private static final String ENCODED_PASSWORD = "encoded-password";
 
     @Mock
     private UserRepository userRepo;
@@ -46,13 +48,14 @@ class AuthServiceTest {
     @Mock
     private JwtService jwtService;
 
-    private AuthService authService;
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
-    private final PasswordAuthentication passwordAuthentication = new PasswordAuthentication();
+    private AuthService authService;
 
     @BeforeEach
     void setUp() {
-        authService = new AuthService(userRepo, roleRepo, jwtService, sessionService);
+        authService = new AuthService(userRepo, roleRepo, jwtService, sessionService, passwordEncoder);
 
         ReflectionTestUtils.setField(authService, "seedEnabled", false);
         ReflectionTestUtils.setField(authService, "adminUsername", "admin");
@@ -70,6 +73,7 @@ class AuthServiceTest {
 
         when(userRepo.existsByUsername("newuser")).thenReturn(false);
         when(userRepo.existsByEmail("new@example.com")).thenReturn(false);
+        when(passwordEncoder.encode("Password123!")).thenReturn(ENCODED_PASSWORD);
         when(roleRepo.findByName("guest")).thenReturn(Optional.of(guestRole));
         when(userRepo.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -78,9 +82,11 @@ class AuthServiceTest {
         assertNotNull(result);
         assertEquals("newuser", result.getUsername());
         assertEquals("new@example.com", result.getEmail());
-        assertNotNull(result.getPasswordHash());
+        assertEquals(ENCODED_PASSWORD, result.getPasswordHash());
         assertNotNull(result.getRole());
         assertEquals("guest", result.getRole().getName());
+
+        verify(passwordEncoder).encode("Password123!");
     }
 
     @Test
@@ -139,6 +145,7 @@ class AuthServiceTest {
 
         when(userRepo.existsByUsername("newuser")).thenReturn(false);
         when(userRepo.existsByEmail("new@example.com")).thenReturn(false);
+        when(passwordEncoder.encode("Password123!")).thenReturn(ENCODED_PASSWORD);
         when(roleRepo.findByName("guest")).thenReturn(Optional.empty());
 
         assertThrows(IllegalStateException.class, () -> authService.register(req));
@@ -169,16 +176,18 @@ class AuthServiceTest {
 
     @Test
     void loginAndCreateSession_success_returnsLoginSessionAndCreatesSession() {
-        User user = userWithPassword(1, "xanet", "Password123!", "guest");
+        User user = userWithPassword(1, "xanet", "guest");
         LoginRequest req = loginRequest("xanet", "Password123!");
 
         when(userRepo.findByUsername("xanet")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("Password123!", ENCODED_PASSWORD)).thenReturn(true);
         when(jwtService.generateToken("xanet")).thenReturn("jwt-token");
 
         LoginSession result = authService.loginAndCreateSession(req);
 
         assertEquals(user, result.user());
         assertEquals("jwt-token", result.token());
+        verify(passwordEncoder).matches("Password123!", ENCODED_PASSWORD);
         verify(sessionService).createSession(1, "jwt-token");
     }
 
@@ -193,20 +202,23 @@ class AuthServiceTest {
 
     @Test
     void loginAndCreateSession_wrongPassword_throwsUnauthorizedException() {
-        User user = userWithPassword(1, "xanet", "CorrectPassword123!", "guest");
+        User user = userWithPassword(1, "xanet", "guest");
         LoginRequest req = loginRequest("xanet", "WrongPassword123!");
 
         when(userRepo.findByUsername("xanet")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("WrongPassword123!", ENCODED_PASSWORD)).thenReturn(false);
 
         assertThrows(UnauthorizedException.class, () -> authService.loginAndCreateSession(req));
+        verify(passwordEncoder).matches("WrongPassword123!", ENCODED_PASSWORD);
     }
 
     @Test
     void loginAndCreateSession_whenSessionServiceThrowsBadRequest_propagatesException() {
-        User user = userWithPassword(1, "xanet", "Password123!", "guest");
+        User user = userWithPassword(1, "xanet", "guest");
         LoginRequest req = loginRequest("xanet", "Password123!");
 
         when(userRepo.findByUsername("xanet")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("Password123!", ENCODED_PASSWORD)).thenReturn(true);
         when(jwtService.generateToken("xanet")).thenReturn("jwt-token");
 
         org.mockito.Mockito.doThrow(new BadRequestException("User already is in session"))
@@ -219,7 +231,7 @@ class AuthServiceTest {
     @Test
     void getUserFromRequest_validToken_returnsUser() {
         HttpServletRequest request = mock(HttpServletRequest.class);
-        User user = userWithPassword(1, "xanet", "Password123!", "guest");
+        User user = userWithPassword(1, "xanet", "guest");
 
         when(sessionService.extractToken(request)).thenReturn("jwt-token");
         when(jwtService.getUsername("jwt-token")).thenReturn("xanet");
@@ -255,6 +267,8 @@ class AuthServiceTest {
         when(userRepo.count()).thenReturn(0L);
         when(roleRepo.findByName("admin")).thenReturn(Optional.of(role("admin")));
         when(roleRepo.findByName("guest")).thenReturn(Optional.of(role("guest")));
+        when(passwordEncoder.encode("Admin123!")).thenReturn("encoded-admin-password");
+        when(passwordEncoder.encode("Guest123!")).thenReturn("encoded-guest-password");
 
         ReflectionTestUtils.invokeMethod(authService, "defaultUsers");
 
@@ -262,6 +276,10 @@ class AuthServiceTest {
         verify(userRepo, times(2)).save(userCaptor.capture());
 
         assertEquals(2, userCaptor.getAllValues().size());
+        assertEquals("admin", userCaptor.getAllValues().get(0).getUsername());
+        assertEquals("encoded-admin-password", userCaptor.getAllValues().get(0).getPasswordHash());
+        assertEquals("guest", userCaptor.getAllValues().get(1).getUsername());
+        assertEquals("encoded-guest-password", userCaptor.getAllValues().get(1).getPasswordHash());
     }
 
     @Test
@@ -291,14 +309,14 @@ class AuthServiceTest {
         return req;
     }
 
-    private User userWithPassword(Number id, String username, String rawPassword, String roleName) {
+    private User userWithPassword(Number id, String username, String roleName) {
         User user = new User();
 
         setId(user, id);
         user.setUsername(username);
         user.setFullName(username + " Full Name");
         user.setEmail(username + "@example.com");
-        user.setPasswordHash(passwordAuthentication.hash(rawPassword.toCharArray()));
+        user.setPasswordHash(ENCODED_PASSWORD);
         user.setRole(role(roleName));
 
         return user;
