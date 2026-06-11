@@ -91,6 +91,18 @@ class SessionServiceTest {
     }
 
     @Test
+    void extractToken_cookieArrayWithoutAuthCookie_returnsNull() {
+        when(request.getHeader("Authorization")).thenReturn(null);
+        when(request.getCookies()).thenReturn(new Cookie[] {
+                new Cookie("other-cookie", "value")
+        });
+
+        String token = sessionService.extractToken(request);
+
+        assertNull(token);
+    }
+
+    @Test
     void extractToken_nullRequest_returnsNull() {
         String token = sessionService.extractToken(null);
 
@@ -99,8 +111,6 @@ class SessionServiceTest {
 
     @Test
     void createSession_savesAndReturnsSession() {
-        when(sessionRepository.findByUserId(1L)).thenReturn(Optional.empty());
-
         Session saved = new Session(1, "jwt-token");
         when(sessionRepository.save(any(Session.class))).thenReturn(saved);
 
@@ -109,6 +119,7 @@ class SessionServiceTest {
         assertSame(saved, result);
 
         ArgumentCaptor<Session> captor = ArgumentCaptor.forClass(Session.class);
+        verify(sessionRepository).deleteByUserId(1);
         verify(sessionRepository).save(captor.capture());
 
         assertEquals(1, captor.getValue().getUserId());
@@ -116,22 +127,27 @@ class SessionServiceTest {
     }
 
     @Test
-    void createSession_existingSession_throwsBadRequestException() {
-        when(sessionRepository.findByUserId(1L)).thenReturn(Optional.of(new Session(1, "old-token")));
+    void createSession_existingSession_replacesOldSessionAndCreatesNewOne() {
+        Session saved = new Session(1, "new-token");
+        when(sessionRepository.save(any(Session.class))).thenReturn(saved);
 
-        assertThrows(
-                BadRequestException.class,
-                () -> sessionService.createSession(1, "new-token"));
+        Session result = sessionService.createSession(1, "new-token");
+
+        assertSame(saved, result);
+        verify(sessionRepository).deleteByUserId(1);
+        verify(sessionRepository).save(any(Session.class));
     }
 
     @Test
     void createSession_saveThrowsDataIntegrityViolation_throwsBadRequestException() {
-        when(sessionRepository.findByUserId(1L)).thenReturn(Optional.empty());
-        when(sessionRepository.save(any(Session.class))).thenThrow(new DataIntegrityViolationException("duplicate"));
+        when(sessionRepository.save(any(Session.class)))
+                .thenThrow(new DataIntegrityViolationException("duplicate"));
 
         assertThrows(
                 BadRequestException.class,
                 () -> sessionService.createSession(1, "jwt-token"));
+
+        verify(sessionRepository).deleteByUserId(1);
     }
 
     @Test
@@ -139,6 +155,13 @@ class SessionServiceTest {
         assertThrows(
                 UnauthorizedException.class,
                 () -> sessionService.createSession(null, "jwt-token"));
+    }
+
+    @Test
+    void createSession_nullToken_throwsUnauthorizedException() {
+        assertThrows(
+                UnauthorizedException.class,
+                () -> sessionService.createSession(1, null));
     }
 
     @Test
@@ -150,14 +173,14 @@ class SessionServiceTest {
 
     @Test
     void assertHasActiveSession_found_doesNotThrow() {
-        when(sessionRepository.findByUserId(1L)).thenReturn(Optional.of(new Session(1, "jwt-token")));
+        when(sessionRepository.findByUserId(1)).thenReturn(Optional.of(new Session(1, "jwt-token")));
 
         assertDoesNotThrow(() -> sessionService.assertHasActiveSession(1));
     }
 
     @Test
     void assertHasActiveSession_notFound_throwsUnauthorizedException() {
-        when(sessionRepository.findByUserId(1L)).thenReturn(Optional.empty());
+        when(sessionRepository.findByUserId(1)).thenReturn(Optional.empty());
 
         assertThrows(
                 UnauthorizedException.class,
@@ -173,14 +196,14 @@ class SessionServiceTest {
 
     @Test
     void hasActiveSession_found_returnsTrue() {
-        when(sessionRepository.findByUserId(1L)).thenReturn(Optional.of(new Session(1, "jwt-token")));
+        when(sessionRepository.findByUserId(1)).thenReturn(Optional.of(new Session(1, "jwt-token")));
 
         assertTrue(sessionService.hasActiveSession(1));
     }
 
     @Test
     void hasActiveSession_notFound_returnsFalse() {
-        when(sessionRepository.findByUserId(1L)).thenReturn(Optional.empty());
+        when(sessionRepository.findByUserId(1)).thenReturn(Optional.empty());
 
         assertFalse(sessionService.hasActiveSession(1));
     }
@@ -210,6 +233,13 @@ class SessionServiceTest {
     }
 
     @Test
+    void logoutByToken_nullToken_throwsUnauthorizedException() {
+        assertThrows(
+                UnauthorizedException.class,
+                () -> sessionService.logoutByToken(null));
+    }
+
+    @Test
     void logoutByToken_blankToken_throwsUnauthorizedException() {
         assertThrows(
                 UnauthorizedException.class,
@@ -229,5 +259,15 @@ class SessionServiceTest {
         sessionService.logoutByRequest(request);
 
         verify(sessionRepository).delete(session);
+    }
+
+    @Test
+    void logoutByRequest_missingToken_throwsUnauthorizedException() {
+        when(request.getHeader("Authorization")).thenReturn(null);
+        when(request.getCookies()).thenReturn(null);
+
+        assertThrows(
+                UnauthorizedException.class,
+                () -> sessionService.logoutByRequest(request));
     }
 }

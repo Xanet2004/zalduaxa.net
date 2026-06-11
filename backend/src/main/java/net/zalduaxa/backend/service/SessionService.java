@@ -3,6 +3,7 @@ package net.zalduaxa.backend.service;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,7 +24,7 @@ public class SessionService {
         this.sessionRepository = sessionRepository;
     }
 
-    // TODO: Create require methods for more readibility
+    @Transactional
     public Session createSession(Integer userId, String token) {
         if (userId == null) {
             throw new UnauthorizedException("User id missing");
@@ -33,23 +34,19 @@ public class SessionService {
             throw new UnauthorizedException("Missing auth token");
         }
 
-        if (sessionRepository.findByUserId(userId.longValue()).isPresent()) {
-            throw new BadRequestException("User already is in session");
-        }
+        sessionRepository.deleteByUserId(userId);
 
         try {
             return sessionRepository.save(new Session(userId, token));
         } catch (DataIntegrityViolationException e) {
-            throw new BadRequestException("User already is in session");
+            throw new BadRequestException("Could not create session");
         }
     }
 
     public void assertHasActiveSession(Number userId) {
-        if (userId == null) {
-            throw new UnauthorizedException("User id missing");
-        }
+        Integer cleanUserId = requireUserId(userId);
 
-        sessionRepository.findByUserId(userId.longValue())
+        sessionRepository.findByUserId(cleanUserId)
                 .orElseThrow(() -> new UnauthorizedException("User is not in session"));
     }
 
@@ -58,7 +55,7 @@ public class SessionService {
             return false;
         }
 
-        return sessionRepository.findByUserId(userId.longValue()).isPresent();
+        return sessionRepository.findByUserId(userId.intValue()).isPresent();
     }
 
     public void logoutByRequest(HttpServletRequest request) {
@@ -99,5 +96,13 @@ public class SessionService {
         }
 
         return null;
+    }
+
+    private Integer requireUserId(Number userId) {
+        if (userId == null) {
+            throw new UnauthorizedException("User id missing");
+        }
+
+        return userId.intValue();
     }
 }
