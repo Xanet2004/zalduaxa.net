@@ -16,11 +16,11 @@ import org.springframework.web.bind.annotation.RestController;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
-import net.zalduaxa.backend.dto.AuthUserResponse;
-import net.zalduaxa.backend.dto.MessageResponse;
-import net.zalduaxa.backend.model.requestUser.LoginRequest;
-import net.zalduaxa.backend.model.requestUser.SignupRequest;
-import net.zalduaxa.backend.model.responseUser.ResponseUser;
+import net.zalduaxa.backend.dto.request.LoginRequest;
+import net.zalduaxa.backend.dto.request.SignupRequest;
+import net.zalduaxa.backend.dto.response.AuthUserResponse;
+import net.zalduaxa.backend.dto.response.MessageResponse;
+import net.zalduaxa.backend.dto.response.UserResponse;
 import net.zalduaxa.backend.model.user.User;
 import net.zalduaxa.backend.service.AuthService;
 import net.zalduaxa.backend.service.LoginSession;
@@ -73,7 +73,7 @@ public class AuthController {
         LoginSession loginSession = authService.loginAndCreateSession(req);
 
         response.addHeader(HttpHeaders.SET_COOKIE, buildAuthCookie(loginSession.token()).toString());
-        return ResponseEntity.ok(new AuthUserResponse(new ResponseUser(loginSession.user())));
+        return ResponseEntity.ok(new AuthUserResponse(new UserResponse(loginSession.user())));
     }
 
     @PostMapping("/logout")
@@ -89,7 +89,7 @@ public class AuthController {
         User user = authService.getUserFromRequest(request);
         sessionService.assertHasActiveSession(user.getId());
 
-        return ResponseEntity.ok(new AuthUserResponse(new ResponseUser(user)));
+        return ResponseEntity.ok(new AuthUserResponse(new UserResponse(user)));
     }
 
     private ResponseCookie buildAuthCookie(String token) {

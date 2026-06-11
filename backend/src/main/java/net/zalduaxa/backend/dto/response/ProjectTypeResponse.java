@@ -1,24 +1,24 @@
-package net.zalduaxa.backend.model.responseProjectType;
+package net.zalduaxa.backend.dto.response;
 
 import net.zalduaxa.backend.model.projectType.ProjectType;
 
-public class ResponseProjectType {
+public class ProjectTypeResponse {
 
     private Integer id;
     private String name;
     private String slug;
     private String description;
 
-    public ResponseProjectType() {}
+    public ProjectTypeResponse() {}
 
-    public ResponseProjectType(ProjectType projectType) {
+    public ProjectTypeResponse(ProjectType projectType) {
         this.id = projectType.getId();
         this.name = projectType.getName();
         this.slug = projectType.getSlug();
         this.description = projectType.getDescription();
     }
 
-    public ResponseProjectType(String name, String slug, String description) {
+    public ProjectTypeResponse(String name, String slug, String description) {
         this.name = name;
         this.slug = slug;
         this.description = description;

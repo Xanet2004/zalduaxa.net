@@ -1,16 +1,16 @@
-package net.zalduaxa.backend.model.responseUser;
+package net.zalduaxa.backend.dto.response;
 
 import net.zalduaxa.backend.model.role.Role;
 
-public class SimpleRoleResponse {
+public class RoleResponse {
 
     private Integer id;
     private String name;
     private String description;
 
-    public SimpleRoleResponse() {}
+    public RoleResponse() {}
 
-    public SimpleRoleResponse(Role role) {
+    public RoleResponse(Role role) {
         if (role != null) {
             this.id = role.getId();
             this.name = role.getName();

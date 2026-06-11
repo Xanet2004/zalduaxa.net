@@ -1,4 +1,4 @@
-package net.zalduaxa.backend.model.requestProjectType;
+package net.zalduaxa.backend.dto.request;
 
 import org.springframework.web.multipart.MultipartFile;
 
@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
-public class RequestProjectType {
+public class ProjectTypeRequest {
 
     @NotBlank(message = "Name is required")
     @Size(max = 255, message = "Name must be at most 255 characters")
@@ -24,9 +24,9 @@ public class RequestProjectType {
 
     private MultipartFile image;
 
-    public RequestProjectType() {}
+    public ProjectTypeRequest() {}
 
-    public RequestProjectType(String name, String slug, String description, MultipartFile image) {
+    public ProjectTypeRequest(String name, String slug, String description, MultipartFile image) {
         this.name = name;
         this.slug = slug;
         this.description = description;

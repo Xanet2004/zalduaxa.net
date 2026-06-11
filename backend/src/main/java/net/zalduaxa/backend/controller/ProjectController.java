@@ -20,14 +20,14 @@ import org.springframework.web.multipart.MultipartFile;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
-import net.zalduaxa.backend.dto.MessageResponse;
+import net.zalduaxa.backend.dto.request.DeleteProjectRequest;
+import net.zalduaxa.backend.dto.request.ProjectTypeRequest;
+import net.zalduaxa.backend.dto.response.MessageResponse;
+import net.zalduaxa.backend.dto.response.ProjectResponse;
+import net.zalduaxa.backend.dto.response.ProjectTypeResponse;
 import net.zalduaxa.backend.exception.BadRequestException;
 import net.zalduaxa.backend.exception.ForbiddenException;
 import net.zalduaxa.backend.exception.UnauthorizedException;
-import net.zalduaxa.backend.model.requestProject.RequestProject;
-import net.zalduaxa.backend.model.requestProjectType.RequestProjectType;
-import net.zalduaxa.backend.model.responseProject.ResponseProject;
-import net.zalduaxa.backend.model.responseProjectType.ResponseProjectType;
 import net.zalduaxa.backend.model.user.User;
 import net.zalduaxa.backend.service.AuthService;
 import net.zalduaxa.backend.service.ProjectService;
@@ -57,7 +57,7 @@ public class ProjectController {
     }
 
     @GetMapping(value = "/projectTypes", produces = { "application/json", "application/xml" })
-    public ResponseEntity<List<ResponseProjectType>> getProjectTypes() {
+    public ResponseEntity<List<ProjectTypeResponse>> getProjectTypes() {
         return new ResponseEntity<>(projectTypeService.getAllProjectTypes(), HttpStatus.OK);
     }
 
@@ -66,7 +66,7 @@ public class ProjectController {
             "application/xml"
     })
     public ResponseEntity<?> addProjectType(
-            @Valid RequestProjectType projectTypeRequest,
+            @Valid ProjectTypeRequest projectTypeRequest,
             HttpServletRequest request) {
 
         try {
@@ -88,7 +88,7 @@ public class ProjectController {
 
     @PostMapping(value = "/deleteProjectType", produces = { "application/json", "application/xml" })
     public ResponseEntity<?> deleteProjectType(
-            @Valid @RequestBody RequestProjectType requestProjectType,
+            @Valid @RequestBody ProjectTypeRequest requestProjectType,
             HttpServletRequest request) {
 
         try {
@@ -115,13 +115,13 @@ public class ProjectController {
 
     @GetMapping("/projects/{slug}")
     public Map<String, Object> getProjectsByType(@PathVariable @NotBlank String slug) {
-        List<ResponseProject> projects = projectService.getProjectsByType(slug);
+        List<ProjectResponse> projects = projectService.getProjectsByType(slug);
 
         return Map.of("projects", projects);
     }
 
     @GetMapping("/getProject/{slug}")
-    public ResponseEntity<ResponseProject> getProjectBySlug(@PathVariable @NotBlank String slug) {
+    public ResponseEntity<ProjectResponse> getProjectBySlug(@PathVariable @NotBlank String slug) {
         return ResponseEntity.ok(projectService.getProjectBySlug(slug));
     }
 
@@ -156,7 +156,7 @@ public class ProjectController {
 
     @PostMapping(value = "/deleteProject", produces = { "application/json", "application/xml" })
     public ResponseEntity<?> deleteProject(
-            @Valid @RequestBody RequestProject body,
+            @Valid @RequestBody DeleteProjectRequest body,
             HttpServletRequest request) {
 
         try {

@@ -1,4 +1,4 @@
-package net.zalduaxa.backend.model.requestUser;
+package net.zalduaxa.backend.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 

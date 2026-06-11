@@ -1,29 +1,29 @@
-package net.zalduaxa.backend.model.responseUser;
+package net.zalduaxa.backend.dto.response;
 
 import net.zalduaxa.backend.model.user.User;
 
-public class ResponseUser {
+public class UserResponse {
 
     private String username;
     private String fullName;
     private String email;
     private String profilePicture;
-    private SimpleRoleResponse role;
+    private RoleResponse role;
 
-    public ResponseUser() {}
+    public UserResponse() {}
 
-    public ResponseUser(String username, String fullName, String email) {
+    public UserResponse(String username, String fullName, String email) {
         this.username = username;
         this.fullName = fullName;
         this.email = email;
     }
 
-    public ResponseUser(User user) {
+    public UserResponse(User user) {
         this.username = user.getUsername();
         this.fullName = user.getFullName();
         this.email = user.getEmail();
         this.profilePicture = user.getProfilePicture();
-        this.role = new SimpleRoleResponse(user.getRole());
+        this.role = new RoleResponse(user.getRole());
     }
 
     public String getUsername() {
@@ -58,11 +58,11 @@ public class ResponseUser {
         this.profilePicture = profilePicture;
     }
 
-    public SimpleRoleResponse getRole() {
+    public RoleResponse getRole() {
         return role;
     }
 
-    public void setRole(SimpleRoleResponse role) {
+    public void setRole(RoleResponse role) {
         this.role = role;
     }
 }

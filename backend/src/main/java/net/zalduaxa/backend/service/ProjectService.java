@@ -14,7 +14,7 @@ import net.zalduaxa.backend.model.project.Project;
 import net.zalduaxa.backend.model.project.ProjectRepository;
 import net.zalduaxa.backend.model.projectType.ProjectType;
 import net.zalduaxa.backend.model.projectType.ProjectTypeRepository;
-import net.zalduaxa.backend.model.responseProject.ResponseProject;
+import net.zalduaxa.backend.dto.response.ProjectResponse;
 import net.zalduaxa.backend.model.user.User;
 
 @Service
@@ -33,24 +33,24 @@ public class ProjectService {
         this.storageService = storageService;
     }
 
-    public List<ResponseProject> getProjectsByType(String slug) {
+    public List<ProjectResponse> getProjectsByType(String slug) {
         String cleanSlug = slugify(slug);
 
         return projectTypeRepository.findBySlug(cleanSlug)
                 .map(projectType -> projectRepository.findByTypeId(projectType.getId())
                         .stream()
-                        .map(ResponseProject::new)
+                        .map(ProjectResponse::new)
                         .toList())
                 .orElseGet(List::of);
     }
 
-    public ResponseProject getProjectBySlug(String slug) {
+    public ProjectResponse getProjectBySlug(String slug) {
         String cleanSlug = slugify(slug);
 
         Project project = projectRepository.findBySlug(cleanSlug)
                 .orElseThrow(() -> new BadRequestException("Project not found"));
 
-        return new ResponseProject(project);
+        return new ProjectResponse(project);
     }
 
     public void createProject(

@@ -1,4 +1,4 @@
-package net.zalduaxa.backend.model.responseProject;
+package net.zalduaxa.backend.dto.response;
 
 import java.time.LocalDateTime;
 
@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import net.zalduaxa.backend.model.project.Project;
 
-public class ResponseProject {
+public class ProjectResponse {
 
     private Integer id;
     private String name;
@@ -17,9 +17,9 @@ public class ResponseProject {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    public ResponseProject() {}
+    public ProjectResponse() {}
 
-    public ResponseProject(Project project) {
+    public ProjectResponse(Project project) {
         this.id = project.getId();
         this.name = project.getName();
         this.slug = project.getSlug();

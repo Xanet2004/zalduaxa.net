@@ -1,9 +1,9 @@
-package net.zalduaxa.backend.model.requestProject;
+package net.zalduaxa.backend.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
-public class RequestProject {
+public class DeleteProjectRequest {
 
     @NotBlank(message = "Name is required")
     @Size(max = 255, message = "Name must be at most 255 characters")
@@ -13,9 +13,9 @@ public class RequestProject {
     @Size(max = 255, message = "Type slug must be at most 255 characters")
     private String typeSlug;
 
-    public RequestProject() {}
+    public DeleteProjectRequest() {}
 
-    public RequestProject(String name, String typeSlug) {
+    public DeleteProjectRequest(String name, String typeSlug) {
         this.name = name;
         this.typeSlug = typeSlug;
     }

@@ -14,7 +14,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -26,8 +26,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import net.zalduaxa.backend.exception.ApiExceptionHandler;
 import net.zalduaxa.backend.exception.BadRequestException;
 import net.zalduaxa.backend.exception.UnauthorizedException;
-import net.zalduaxa.backend.model.requestUser.LoginRequest;
-import net.zalduaxa.backend.model.requestUser.SignupRequest;
+import net.zalduaxa.backend.dto.request.LoginRequest;
+import net.zalduaxa.backend.dto.request.SignupRequest;
 import net.zalduaxa.backend.model.role.Role;
 import net.zalduaxa.backend.model.user.User;
 import net.zalduaxa.backend.service.AuthService;
@@ -49,10 +49,10 @@ class AuthControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     private AuthService authService;
 
-    @MockBean
+    @MockitoBean
     private SessionService sessionService;
 
     @Test

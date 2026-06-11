@@ -11,8 +11,8 @@ import net.zalduaxa.backend.model.project.Project;
 import net.zalduaxa.backend.model.project.ProjectRepository;
 import net.zalduaxa.backend.model.projectType.ProjectType;
 import net.zalduaxa.backend.model.projectType.ProjectTypeRepository;
-import net.zalduaxa.backend.model.requestProjectType.RequestProjectType;
-import net.zalduaxa.backend.model.responseProjectType.ResponseProjectType;
+import net.zalduaxa.backend.dto.request.ProjectTypeRequest;
+import net.zalduaxa.backend.dto.response.ProjectTypeResponse;
 
 @Service
 public class ProjectTypeService {
@@ -30,14 +30,14 @@ public class ProjectTypeService {
         this.storageService = storageService;
     }
 
-    public List<ResponseProjectType> getAllProjectTypes() {
+    public List<ProjectTypeResponse> getAllProjectTypes() {
         return projectTypeRepository.findAll()
                 .stream()
-                .map(ResponseProjectType::new)
+                .map(ProjectTypeResponse::new)
                 .toList();
     }
 
-    public void createProjectType(RequestProjectType request) {
+    public void createProjectType(ProjectTypeRequest request) {
         require(request != null, new BadRequestException("Request body is required"));
         require(request.getName() != null && !request.getName().isBlank(),
                 new BadRequestException("Name is required"));
