@@ -1,4 +1,4 @@
-package net.zalduaxa.backend.exception;
+package net.zalduaxa.backend.common.exception;
 
 public class NotFoundException extends RuntimeException {
     public NotFoundException(String message) { super(message); }

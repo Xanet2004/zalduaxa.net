@@ -1,4 +1,4 @@
-package net.zalduaxa.backend.dto.request;
+package net.zalduaxa.backend.auth.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 

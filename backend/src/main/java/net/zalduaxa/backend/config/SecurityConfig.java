@@ -17,9 +17,9 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import net.zalduaxa.backend.security.JwtAuthenticationFilter;
-import net.zalduaxa.backend.security.RestAccessDeniedHandler;
-import net.zalduaxa.backend.security.RestAuthenticationEntryPoint;
+import net.zalduaxa.backend.auth.security.JwtAuthenticationFilter;
+import net.zalduaxa.backend.auth.security.RestAccessDeniedHandler;
+import net.zalduaxa.backend.auth.security.RestAuthenticationEntryPoint;
 
 @Configuration
 @EnableWebSecurity

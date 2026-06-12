@@ -1,6 +1,6 @@
-package net.zalduaxa.backend.dto.response;
+package net.zalduaxa.backend.auth.dto.response;
 
-import net.zalduaxa.backend.model.user.User;
+import net.zalduaxa.backend.auth.model.User;
 
 public class UserResponse {
 

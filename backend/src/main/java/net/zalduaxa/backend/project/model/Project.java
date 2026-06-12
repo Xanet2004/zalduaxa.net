@@ -1,4 +1,4 @@
-package net.zalduaxa.backend.model.project;
+package net.zalduaxa.backend.project.model;
 
 import java.time.LocalDateTime;
 

@@ -1,4 +1,4 @@
-package net.zalduaxa.backend.model.visibility;
+package net.zalduaxa.backend.project.model;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

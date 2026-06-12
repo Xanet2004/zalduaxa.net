@@ -1,4 +1,4 @@
-package net.zalduaxa.backend.model.projectType;
+package net.zalduaxa.backend.project.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

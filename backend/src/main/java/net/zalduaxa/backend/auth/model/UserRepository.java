@@ -1,4 +1,4 @@
-package net.zalduaxa.backend.model.user;
+package net.zalduaxa.backend.auth.model;
 
 import java.util.Optional;
 

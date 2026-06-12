@@ -1,4 +1,4 @@
-package net.zalduaxa.backend.dto.request;
+package net.zalduaxa.backend.project.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

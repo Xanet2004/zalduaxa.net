@@ -1,4 +1,4 @@
-package net.zalduaxa.backend.controller;
+package net.zalduaxa.backend.project.controller;
 
 import java.util.List;
 import java.util.Map;
@@ -21,17 +21,17 @@ import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
-import net.zalduaxa.backend.dto.request.DeleteProjectRequest;
-import net.zalduaxa.backend.dto.request.ProjectTypeRequest;
-import net.zalduaxa.backend.dto.response.MessageResponse;
-import net.zalduaxa.backend.dto.response.ProjectResponse;
-import net.zalduaxa.backend.dto.response.ProjectTypeResponse;
-import net.zalduaxa.backend.exception.BadRequestException;
-import net.zalduaxa.backend.exception.ForbiddenException;
-import net.zalduaxa.backend.exception.UnauthorizedException;
-import net.zalduaxa.backend.security.AuthenticatedUser;
-import net.zalduaxa.backend.service.ProjectService;
-import net.zalduaxa.backend.service.ProjectTypeService;
+import net.zalduaxa.backend.project.dto.request.DeleteProjectRequest;
+import net.zalduaxa.backend.project.dto.request.ProjectTypeRequest;
+import net.zalduaxa.backend.common.dto.MessageResponse;
+import net.zalduaxa.backend.project.dto.response.ProjectResponse;
+import net.zalduaxa.backend.project.dto.response.ProjectTypeResponse;
+import net.zalduaxa.backend.common.exception.BadRequestException;
+import net.zalduaxa.backend.common.exception.ForbiddenException;
+import net.zalduaxa.backend.common.exception.UnauthorizedException;
+import net.zalduaxa.backend.auth.security.AuthenticatedUser;
+import net.zalduaxa.backend.project.service.ProjectService;
+import net.zalduaxa.backend.project.service.ProjectTypeService;
 
 @RestController
 @CrossOrigin(origins = "${app.cors.origin}", allowCredentials = "true", maxAge = 3600)

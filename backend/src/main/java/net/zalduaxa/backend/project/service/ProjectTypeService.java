@@ -1,18 +1,19 @@
-package net.zalduaxa.backend.service;
+package net.zalduaxa.backend.project.service;
 
-import static net.zalduaxa.backend.utils.SlugUtils.slugify;
+import static net.zalduaxa.backend.common.util.SlugUtils.slugify;
 
 import java.util.List;
 
 import org.springframework.stereotype.Service;
 
-import net.zalduaxa.backend.dto.request.ProjectTypeRequest;
-import net.zalduaxa.backend.dto.response.ProjectTypeResponse;
-import net.zalduaxa.backend.exception.BadRequestException;
-import net.zalduaxa.backend.model.project.Project;
-import net.zalduaxa.backend.model.project.ProjectRepository;
-import net.zalduaxa.backend.model.projectType.ProjectType;
-import net.zalduaxa.backend.model.projectType.ProjectTypeRepository;
+import net.zalduaxa.backend.project.dto.request.ProjectTypeRequest;
+import net.zalduaxa.backend.project.dto.response.ProjectTypeResponse;
+import net.zalduaxa.backend.common.exception.BadRequestException;
+import net.zalduaxa.backend.project.model.Project;
+import net.zalduaxa.backend.project.model.ProjectRepository;
+import net.zalduaxa.backend.project.model.ProjectType;
+import net.zalduaxa.backend.project.model.ProjectTypeRepository;
+import net.zalduaxa.backend.storage.service.StorageService;
 
 @Service
 public class ProjectTypeService {

@@ -1,11 +1,11 @@
-package net.zalduaxa.backend.service;
+package net.zalduaxa.backend.auth.service;
 
 import org.springframework.stereotype.Service;
 
-import net.zalduaxa.backend.exception.UnauthorizedException;
-import net.zalduaxa.backend.model.user.User;
-import net.zalduaxa.backend.model.user.UserRepository;
-import net.zalduaxa.backend.security.AuthenticatedUser;
+import net.zalduaxa.backend.common.exception.UnauthorizedException;
+import net.zalduaxa.backend.auth.model.User;
+import net.zalduaxa.backend.auth.model.UserRepository;
+import net.zalduaxa.backend.auth.security.AuthenticatedUser;
 
 @Service
 public class CurrentUserService {

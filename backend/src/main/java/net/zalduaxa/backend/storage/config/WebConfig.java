@@ -1,4 +1,4 @@
-package net.zalduaxa.backend.webConfig;
+package net.zalduaxa.backend.storage.config;
 
 import java.net.URI;
 import java.nio.file.Paths;

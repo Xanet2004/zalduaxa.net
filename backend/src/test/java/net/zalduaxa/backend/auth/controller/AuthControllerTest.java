@@ -1,4 +1,4 @@
-package net.zalduaxa.backend.controller;
+package net.zalduaxa.backend.auth.controller;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
@@ -32,19 +32,19 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 
 import jakarta.servlet.http.HttpServletRequest;
-import net.zalduaxa.backend.dto.request.LoginRequest;
-import net.zalduaxa.backend.dto.request.SignupRequest;
-import net.zalduaxa.backend.exception.ApiExceptionHandler;
-import net.zalduaxa.backend.exception.BadRequestException;
-import net.zalduaxa.backend.exception.UnauthorizedException;
-import net.zalduaxa.backend.model.role.Role;
-import net.zalduaxa.backend.model.user.User;
-import net.zalduaxa.backend.security.AuthenticatedUser;
-import net.zalduaxa.backend.security.JwtAuthenticationFilter;
-import net.zalduaxa.backend.service.AuthService;
-import net.zalduaxa.backend.service.CurrentUserService;
-import net.zalduaxa.backend.service.LoginSession;
-import net.zalduaxa.backend.service.SessionService;
+import net.zalduaxa.backend.auth.dto.request.LoginRequest;
+import net.zalduaxa.backend.auth.dto.request.SignupRequest;
+import net.zalduaxa.backend.common.exception.ApiExceptionHandler;
+import net.zalduaxa.backend.common.exception.BadRequestException;
+import net.zalduaxa.backend.common.exception.UnauthorizedException;
+import net.zalduaxa.backend.auth.model.Role;
+import net.zalduaxa.backend.auth.model.User;
+import net.zalduaxa.backend.auth.security.AuthenticatedUser;
+import net.zalduaxa.backend.auth.security.JwtAuthenticationFilter;
+import net.zalduaxa.backend.auth.service.AuthService;
+import net.zalduaxa.backend.auth.service.CurrentUserService;
+import net.zalduaxa.backend.auth.service.LoginSession;
+import net.zalduaxa.backend.auth.service.SessionService;
 
 @WebMvcTest(
     controllers = AuthController.class,

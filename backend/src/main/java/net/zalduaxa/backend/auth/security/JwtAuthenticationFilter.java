@@ -1,4 +1,4 @@
-package net.zalduaxa.backend.security;
+package net.zalduaxa.backend.auth.security;
 
 import java.io.IOException;
 import java.util.List;
@@ -14,11 +14,11 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import net.zalduaxa.backend.model.role.Role;
-import net.zalduaxa.backend.model.user.User;
-import net.zalduaxa.backend.model.user.UserRepository;
-import net.zalduaxa.backend.service.JwtService;
-import net.zalduaxa.backend.service.SessionService;
+import net.zalduaxa.backend.auth.model.Role;
+import net.zalduaxa.backend.auth.model.User;
+import net.zalduaxa.backend.auth.model.UserRepository;
+import net.zalduaxa.backend.auth.service.JwtService;
+import net.zalduaxa.backend.auth.service.SessionService;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {

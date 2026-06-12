@@ -1,4 +1,4 @@
-package net.zalduaxa.backend.service;
+package net.zalduaxa.backend.storage.service;
 
 import java.io.IOException;
 import java.io.InputStream;

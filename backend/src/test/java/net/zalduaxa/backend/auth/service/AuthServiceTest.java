@@ -1,4 +1,4 @@
-package net.zalduaxa.backend.service;
+package net.zalduaxa.backend.auth.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -22,14 +22,14 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import jakarta.servlet.http.HttpServletRequest;
-import net.zalduaxa.backend.dto.request.LoginRequest;
-import net.zalduaxa.backend.dto.request.SignupRequest;
-import net.zalduaxa.backend.exception.BadRequestException;
-import net.zalduaxa.backend.exception.UnauthorizedException;
-import net.zalduaxa.backend.model.role.Role;
-import net.zalduaxa.backend.model.role.RoleRepository;
-import net.zalduaxa.backend.model.user.User;
-import net.zalduaxa.backend.model.user.UserRepository;
+import net.zalduaxa.backend.auth.dto.request.LoginRequest;
+import net.zalduaxa.backend.auth.dto.request.SignupRequest;
+import net.zalduaxa.backend.common.exception.BadRequestException;
+import net.zalduaxa.backend.common.exception.UnauthorizedException;
+import net.zalduaxa.backend.auth.model.Role;
+import net.zalduaxa.backend.auth.model.RoleRepository;
+import net.zalduaxa.backend.auth.model.User;
+import net.zalduaxa.backend.auth.model.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {

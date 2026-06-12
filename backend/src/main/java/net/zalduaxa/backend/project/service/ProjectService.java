@@ -1,6 +1,6 @@
-package net.zalduaxa.backend.service;
+package net.zalduaxa.backend.project.service;
 
-import static net.zalduaxa.backend.utils.SlugUtils.slugify;
+import static net.zalduaxa.backend.common.util.SlugUtils.slugify;
 
 import java.util.List;
 import java.util.Optional;
@@ -8,13 +8,14 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import net.zalduaxa.backend.dto.response.ProjectResponse;
-import net.zalduaxa.backend.exception.BadRequestException;
-import net.zalduaxa.backend.exception.UnauthorizedException;
-import net.zalduaxa.backend.model.project.Project;
-import net.zalduaxa.backend.model.project.ProjectRepository;
-import net.zalduaxa.backend.model.projectType.ProjectType;
-import net.zalduaxa.backend.model.projectType.ProjectTypeRepository;
+import net.zalduaxa.backend.project.dto.response.ProjectResponse;
+import net.zalduaxa.backend.common.exception.BadRequestException;
+import net.zalduaxa.backend.common.exception.UnauthorizedException;
+import net.zalduaxa.backend.project.model.Project;
+import net.zalduaxa.backend.project.model.ProjectRepository;
+import net.zalduaxa.backend.project.model.ProjectType;
+import net.zalduaxa.backend.project.model.ProjectTypeRepository;
+import net.zalduaxa.backend.storage.service.StorageService;
 
 @Service
 public class ProjectService {

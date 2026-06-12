@@ -1,4 +1,4 @@
-package net.zalduaxa.backend.security;
+package net.zalduaxa.backend.auth.security;
 
 public record AuthenticatedUser(
         Integer id,

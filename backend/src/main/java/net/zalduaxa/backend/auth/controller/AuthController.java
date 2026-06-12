@@ -1,4 +1,4 @@
-package net.zalduaxa.backend.controller;
+package net.zalduaxa.backend.auth.controller;
 
 import java.time.Duration;
 
@@ -18,17 +18,17 @@ import org.springframework.web.bind.annotation.RestController;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
-import net.zalduaxa.backend.dto.request.LoginRequest;
-import net.zalduaxa.backend.dto.request.SignupRequest;
-import net.zalduaxa.backend.dto.response.AuthUserResponse;
-import net.zalduaxa.backend.dto.response.MessageResponse;
-import net.zalduaxa.backend.dto.response.UserResponse;
-import net.zalduaxa.backend.model.user.User;
-import net.zalduaxa.backend.security.AuthenticatedUser;
-import net.zalduaxa.backend.service.AuthService;
-import net.zalduaxa.backend.service.CurrentUserService;
-import net.zalduaxa.backend.service.LoginSession;
-import net.zalduaxa.backend.service.SessionService;
+import net.zalduaxa.backend.auth.dto.request.LoginRequest;
+import net.zalduaxa.backend.auth.dto.request.SignupRequest;
+import net.zalduaxa.backend.auth.dto.response.AuthUserResponse;
+import net.zalduaxa.backend.common.dto.MessageResponse;
+import net.zalduaxa.backend.auth.dto.response.UserResponse;
+import net.zalduaxa.backend.auth.model.User;
+import net.zalduaxa.backend.auth.security.AuthenticatedUser;
+import net.zalduaxa.backend.auth.service.AuthService;
+import net.zalduaxa.backend.auth.service.CurrentUserService;
+import net.zalduaxa.backend.auth.service.LoginSession;
+import net.zalduaxa.backend.auth.service.SessionService;
 
 @RestController
 @RequestMapping("/auth")

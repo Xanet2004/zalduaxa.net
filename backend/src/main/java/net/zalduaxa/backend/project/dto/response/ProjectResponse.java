@@ -1,10 +1,10 @@
-package net.zalduaxa.backend.dto.response;
+package net.zalduaxa.backend.project.dto.response;
 
 import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-import net.zalduaxa.backend.model.project.Project;
+import net.zalduaxa.backend.project.model.Project;
 
 public class ProjectResponse {
 

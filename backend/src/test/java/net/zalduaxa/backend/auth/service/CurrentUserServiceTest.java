@@ -1,4 +1,4 @@
-package net.zalduaxa.backend.service;
+package net.zalduaxa.backend.auth.service;
 
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -11,10 +11,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import net.zalduaxa.backend.exception.UnauthorizedException;
-import net.zalduaxa.backend.model.user.User;
-import net.zalduaxa.backend.model.user.UserRepository;
-import net.zalduaxa.backend.security.AuthenticatedUser;
+import net.zalduaxa.backend.common.exception.UnauthorizedException;
+import net.zalduaxa.backend.auth.model.User;
+import net.zalduaxa.backend.auth.model.UserRepository;
+import net.zalduaxa.backend.auth.security.AuthenticatedUser;
 
 @ExtendWith(MockitoExtension.class)
 class CurrentUserServiceTest {

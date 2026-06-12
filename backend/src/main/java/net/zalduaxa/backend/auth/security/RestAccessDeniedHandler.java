@@ -1,4 +1,4 @@
-package net.zalduaxa.backend.security;
+package net.zalduaxa.backend.auth.security;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -13,7 +13,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import net.zalduaxa.backend.exception.ApiExceptionHandler.ErrorResponse;
+import net.zalduaxa.backend.common.exception.ApiExceptionHandler.ErrorResponse;
 
 @Component
 public class RestAccessDeniedHandler implements AccessDeniedHandler {

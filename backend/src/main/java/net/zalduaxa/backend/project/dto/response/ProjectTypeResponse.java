@@ -1,6 +1,6 @@
-package net.zalduaxa.backend.dto.response;
+package net.zalduaxa.backend.project.dto.response;
 
-import net.zalduaxa.backend.model.projectType.ProjectType;
+import net.zalduaxa.backend.project.model.ProjectType;
 
 public class ProjectTypeResponse {
 

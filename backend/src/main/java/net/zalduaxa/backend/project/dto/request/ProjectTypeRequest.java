@@ -1,4 +1,4 @@
-package net.zalduaxa.backend.dto.request;
+package net.zalduaxa.backend.project.dto.request;
 
 import org.springframework.web.multipart.MultipartFile;
 

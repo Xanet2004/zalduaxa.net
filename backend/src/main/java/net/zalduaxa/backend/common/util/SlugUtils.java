@@ -1,4 +1,4 @@
-package net.zalduaxa.backend.utils;
+package net.zalduaxa.backend.common.util;
 
 import java.text.Normalizer;
 import java.util.Locale;

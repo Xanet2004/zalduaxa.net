@@ -1,3 +1,3 @@
-package net.zalduaxa.backend.dto.response;
+package net.zalduaxa.backend.common.dto;
 
 public record MessageResponse(String message) {}

@@ -1,4 +1,4 @@
-package net.zalduaxa.backend.exception;
+package net.zalduaxa.backend.common.exception;
 
 import java.time.Instant;
 import java.util.List;

@@ -1,4 +1,4 @@
-package net.zalduaxa.backend.model.session;
+package net.zalduaxa.backend.auth.model;
 
 import java.time.LocalDateTime;
 

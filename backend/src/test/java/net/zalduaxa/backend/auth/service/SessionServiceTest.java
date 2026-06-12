@@ -1,4 +1,4 @@
-package net.zalduaxa.backend.service;
+package net.zalduaxa.backend.auth.service;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -25,10 +25,10 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
-import net.zalduaxa.backend.exception.BadRequestException;
-import net.zalduaxa.backend.exception.UnauthorizedException;
-import net.zalduaxa.backend.model.session.Session;
-import net.zalduaxa.backend.model.session.SessionRepository;
+import net.zalduaxa.backend.common.exception.BadRequestException;
+import net.zalduaxa.backend.common.exception.UnauthorizedException;
+import net.zalduaxa.backend.auth.model.Session;
+import net.zalduaxa.backend.auth.model.SessionRepository;
 
 @ExtendWith(MockitoExtension.class)
 class SessionServiceTest {

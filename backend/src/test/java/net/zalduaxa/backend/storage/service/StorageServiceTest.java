@@ -1,4 +1,4 @@
-package net.zalduaxa.backend.service;
+package net.zalduaxa.backend.storage.service;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;

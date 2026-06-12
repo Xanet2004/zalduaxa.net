@@ -1,7 +1,7 @@
-package net.zalduaxa.backend.model.user;
+package net.zalduaxa.backend.auth.model;
 
 import jakarta.persistence.*;
-import net.zalduaxa.backend.model.role.Role;
+import net.zalduaxa.backend.auth.model.Role;
 
 import java.time.LocalDateTime;
 

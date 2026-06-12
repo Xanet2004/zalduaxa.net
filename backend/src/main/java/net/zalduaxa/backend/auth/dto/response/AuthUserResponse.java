@@ -1,3 +1,3 @@
-package net.zalduaxa.backend.dto.response;
+package net.zalduaxa.backend.auth.dto.response;
 
 public record AuthUserResponse(UserResponse user) {}

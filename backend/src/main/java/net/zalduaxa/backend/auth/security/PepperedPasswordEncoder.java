@@ -1,4 +1,4 @@
-package net.zalduaxa.backend.security;
+package net.zalduaxa.backend.auth.security;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;

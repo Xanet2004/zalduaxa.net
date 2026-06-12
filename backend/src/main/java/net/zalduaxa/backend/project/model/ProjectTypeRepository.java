@@ -1,4 +1,4 @@
-package net.zalduaxa.backend.model.projectType;
+package net.zalduaxa.backend.project.model;
 
 import java.util.Optional;
 

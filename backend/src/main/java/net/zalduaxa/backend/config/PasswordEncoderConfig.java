@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import net.zalduaxa.backend.security.PepperedPasswordEncoder;
+import net.zalduaxa.backend.auth.security.PepperedPasswordEncoder;
 
 @Configuration
 public class PasswordEncoderConfig {
