@@ -1,14 +1,23 @@
-import type { RequestProject } from "@/types/requestProject";
+import { slugify } from "@/scripts/slugify";
 
-export async function deleteProject(form: { typeSlug: string; name: string }) {
-  const res = await fetch(`${import.meta.env.VITE_API_URL}/project/deleteProject`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(form),
-    credentials: "include",
-  });
+export async function deleteProject(form: { typeSlug?: string; name?: string; slug?: string; projectSlug?: string }) {
+    const rawSlug = form.projectSlug ?? form.slug ?? form.name ?? "";
+    const slug = slugify(rawSlug);
 
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data?.message ?? "Error");
-  return data;
+    if (!slug) {
+        throw new Error("Project slug is required");
+    }
+
+    const res = await fetch(`/api/projects/${encodeURIComponent(slug)}`, {
+        method: "DELETE",
+        credentials: "include",
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+        throw new Error(data?.message ?? "Error deleting project");
+    }
+
+    return data;
 }

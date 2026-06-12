@@ -5,7 +5,7 @@ export async function logout() {
     const navigate = useNavigate();
     const { setUser } = useSession();
     try {
-        await fetch(`${import.meta.env.VITE_API_URL}/auth/logout`, {
+        await fetch(`/api/auth/logout`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             credentials: "include",

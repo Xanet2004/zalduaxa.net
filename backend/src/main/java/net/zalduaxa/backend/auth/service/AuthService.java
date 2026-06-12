@@ -1,0 +1,183 @@
+package net.zalduaxa.backend.auth.service;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import jakarta.annotation.PostConstruct;
+import jakarta.servlet.http.HttpServletRequest;
+import net.zalduaxa.backend.auth.dto.request.LoginRequest;
+import net.zalduaxa.backend.auth.dto.request.SignupRequest;
+import net.zalduaxa.backend.common.exception.BadRequestException;
+import net.zalduaxa.backend.common.exception.UnauthorizedException;
+import net.zalduaxa.backend.auth.model.Role;
+import net.zalduaxa.backend.auth.model.RoleRepository;
+import net.zalduaxa.backend.auth.model.User;
+import net.zalduaxa.backend.auth.model.UserRepository;
+
+@Service
+public class AuthService {
+
+    private final UserRepository userRepo;
+    private final RoleRepository roleRepo;
+    private final JwtService jwtService;
+    private final SessionService sessionService;
+    private final PasswordEncoder passwordEncoder;
+
+    public AuthService(
+            UserRepository userRepo,
+            RoleRepository roleRepo,
+            JwtService jwtService,
+            SessionService sessionService,
+            PasswordEncoder passwordEncoder) {
+        this.userRepo = userRepo;
+        this.roleRepo = roleRepo;
+        this.jwtService = jwtService;
+        this.sessionService = sessionService;
+        this.passwordEncoder = passwordEncoder;
+    }
+
+    @PostConstruct
+    private void init() {
+        defaultUsers();
+    }
+
+    public User register(SignupRequest req) {
+        if (req.getUsername() == null || req.getUsername().isBlank()) {
+            throw new BadRequestException("Username is required");
+        }
+        if (req.getEmail() == null || req.getEmail().isBlank()) {
+            throw new BadRequestException("Email is required");
+        }
+        if (req.getPassword() == null || req.getPassword().isBlank()) {
+            throw new BadRequestException("Password is required");
+        }
+
+        if (userRepo.existsByUsername(req.getUsername())) {
+            throw new BadRequestException("Username already exists");
+        }
+        if (userRepo.existsByEmail(req.getEmail())) {
+            throw new BadRequestException("Email already exists");
+        }
+        if (!req.getPassword().equals(req.getRepeatedPassword())) {
+            throw new BadRequestException("Passwords do not match");
+        }
+
+        User user = new User();
+        user.setUsername(req.getUsername());
+        user.setFullName(req.getFullName());
+        user.setEmail(req.getEmail());
+        user.setPasswordHash(passwordEncoder.encode(req.getPassword()));
+        user.setRole(roleRepo.findByName("guest")
+                .orElseThrow(() -> new IllegalStateException("Guest role not found")));
+
+        return userRepo.save(user);
+    }
+
+    public LoginSession loginAndCreateSession(LoginRequest req) {
+        User user = authenticateCredentials(req);
+
+        String token = jwtService.generateToken(user.getUsername());
+        sessionService.createSession(user.getId(), token);
+
+        return new LoginSession(user, token);
+    }
+
+    private User authenticateCredentials(LoginRequest req) {
+        if (req.getUsername() == null || req.getUsername().isBlank()) {
+            throw new BadRequestException("Username is required");
+        }
+        if (req.getPassword() == null || req.getPassword().isBlank()) {
+            throw new BadRequestException("Password is required");
+        }
+
+        User user = userRepo.findByUsername(req.getUsername())
+                .orElseThrow(() -> new UnauthorizedException("Invalid username or password"));
+
+        boolean ok = passwordEncoder.matches(req.getPassword(), user.getPasswordHash());
+        if (!ok) {
+            throw new UnauthorizedException("Invalid username or password");
+        }
+
+        return user;
+    }
+
+    public User getUserFromRequest(HttpServletRequest request) {
+        String token = sessionService.extractToken(request);
+        return getUserFromToken(token);
+    }
+
+    private User getUserFromToken(String token) {
+        if (token == null || token.isBlank()) {
+            throw new UnauthorizedException("Missing auth token");
+        }
+
+        String username;
+        try {
+            username = jwtService.getUsername(token);
+        } catch (Exception e) {
+            throw new UnauthorizedException("Invalid token");
+        }
+
+        return userRepo.findByUsername(username)
+                .orElseThrow(() -> new UnauthorizedException("User not found"));
+    }
+
+    @Value("${app.seed.enabled:true}")
+    private boolean seedEnabled;
+
+    @Value("${app.seed.admin.username}")
+    private String adminUsername;
+
+    @Value("${app.seed.admin.password}")
+    private String adminPassword;
+
+    @Value("${app.seed.admin.email}")
+    private String adminEmail;
+
+    @Value("${app.seed.guest.username}")
+    private String guestUsername;
+
+    @Value("${app.seed.guest.password}")
+    private String guestPassword;
+
+    @Value("${app.seed.guest.email}")
+    private String guestEmail;
+
+    private void defaultUsers() {
+        if (!seedEnabled) {
+            return;
+        }
+
+        if (adminPassword == null || adminPassword.isBlank()) {
+            throw new IllegalStateException("Admin seed password must be configured when seed is enabled");
+        }
+
+        if (guestPassword == null || guestPassword.isBlank()) {
+            throw new IllegalStateException("Guest seed password must be configured when seed is enabled");
+        }
+
+        if (userRepo.count() == 0) {
+            Role adminRole = roleRepo.findByName("admin")
+                    .orElseThrow(() -> new IllegalStateException("Admin role not found"));
+            Role guestRole = roleRepo.findByName("guest")
+                    .orElseThrow(() -> new IllegalStateException("Guest role not found"));
+
+            User admin = new User();
+            admin.setUsername(adminUsername);
+            admin.setFullName("Admin User");
+            admin.setEmail(adminEmail);
+            admin.setRole(adminRole);
+            admin.setPasswordHash(passwordEncoder.encode(adminPassword));
+            userRepo.save(admin);
+
+            User guest = new User();
+            guest.setUsername(guestUsername);
+            guest.setFullName("Guest User");
+            guest.setEmail(guestEmail);
+            guest.setRole(guestRole);
+            guest.setPasswordHash(passwordEncoder.encode(guestPassword));
+            userRepo.save(guest);
+        }
+    }
+}

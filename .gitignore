@@ -1,5 +1,13 @@
 target/
 *.db
 *.class
+
+# Real environment files
 .env
+.env.passwords
+.env.production.passwords
+
+# Runtime/generated files
 storage/
+backend/guest-cookies.txt
+*.zip

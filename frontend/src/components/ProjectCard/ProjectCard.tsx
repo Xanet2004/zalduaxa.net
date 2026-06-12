@@ -14,7 +14,7 @@ export default function ProjectCard({ projectTypeSlug, project }: ProjectCardPro
         {project.description && <p>Description: {project.description}</p>}
 
         <img
-          src={`${import.meta.env.VITE_API_URL}/storage/projects/${projectTypeSlug}/${project.slug}/icon.png`}
+          src={`/api/storage/projects/${projectTypeSlug}/${project.slug}/icon.png`}
           alt={project.name}
           style={{ width: "64px", height: "64px" }}
         />

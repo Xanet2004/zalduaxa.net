@@ -4,10 +4,14 @@ services:
   postgres:
     image: postgres:16
     container_name: zalduaxa-net-postgres
+    env_file:
+      - ${APP_ENV_FILE:-.env}
+      - ${APP_PASSWORD_ENV_FILE:-.env.passwords}
     environment:
       POSTGRES_DB: zalduaxa_net
       POSTGRES_USER: app
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
     volumes:
       - zalduaxa_net_postgres:/var/lib/postgresql/data
     healthcheck:
@@ -21,16 +25,23 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: zalduaxa-net-backend
+    env_file:
+      - ${APP_ENV_FILE:-.env}
+      - ${APP_PASSWORD_ENV_FILE:-.env.passwords}
     environment:
+      # Docker-specific datasource URL.
+      # Inside Docker, the database host is the postgres service, not localhost.
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/zalduaxa_net
       SPRING_DATASOURCE_USERNAME: app
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
-      SPRING_PROFILES_ACTIVE: prod
+    volumes:
+      - ./storage:/app/storage
     depends_on:
       postgres:
         condition: service_healthy
     expose:
       - "8080"
+    ports:
+      - "8080:8080"
 
   frontend:
     build:
@@ -40,7 +51,7 @@ services:
     depends_on:
       - backend
     ports:
-      - "80:80"
+      - "5173:5173"
 
 volumes:
   zalduaxa_net_postgres:

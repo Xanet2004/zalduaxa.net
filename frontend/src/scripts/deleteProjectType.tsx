@@ -1,20 +1,36 @@
-export async function deleteProjectType(form: any) {
+import { slugify } from "@/scripts/slugify";
+
+type DeleteProjectTypeForm = {
+    name?: string;
+    slug?: string;
+    projectTypeSlug?: string;
+};
+
+export async function deleteProjectType(form: DeleteProjectTypeForm) {
     try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/project/deleteProjectType`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
+        const rawSlug = form.projectTypeSlug ?? form.slug ?? form.name ?? "";
+        const slug = slugify(rawSlug);
+
+        if (!slug) {
+            throw new Error("Project type slug is required");
+        }
+
+        const res = await fetch(`/api/project-types/${encodeURIComponent(slug)}`, {
+            method: "DELETE",
             credentials: "include",
-            body: JSON.stringify(form)
         });
 
-        let data;
-        try { data = await res.json(); }
-        catch { data = {}; }
+        let data: { message?: string };
+        try {
+            data = await res.json();
+        } catch {
+            data = {};
+        }
 
-        console.log(data)
+        console.log(data);
 
         if (!res.ok) {
-            throw new Error(data.message || "Error adding project type");
+            throw new Error(data.message || "Error deleting project type");
         }
 
         return data;

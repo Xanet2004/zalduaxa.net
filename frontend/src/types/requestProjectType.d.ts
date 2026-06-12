@@ -1,7 +1,7 @@
-export interface RequestProjectType{
-    id?: integer,
-    name: string,
-    slug: string,
-    description: string,
-    image: File | null
+export interface RequestProjectType {
+    id?: number;
+    name: string;
+    slug: string;
+    description: string;
+    image: File | null;
 }
