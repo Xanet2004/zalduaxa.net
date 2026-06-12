@@ -1,0 +1,22 @@
+title: Zalduaxa Tools
+theme: dark
+color: slate
+language: en
+
+headerStyle: clean
+hideVersion: true
+statusStyle: dot
+
+layout:
+  Development:
+    style: row
+    columns: 4
+  Quality:
+    style: row
+    columns: 4
+  Runtime:
+    style: row
+    columns: 4
+  Documentation:
+    style: row
+    columns: 4

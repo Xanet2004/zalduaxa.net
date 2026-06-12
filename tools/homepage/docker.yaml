@@ -1,0 +1,2 @@
+# Docker integration intentionally disabled for now.
+# We are not mounting /var/run/docker.sock yet.

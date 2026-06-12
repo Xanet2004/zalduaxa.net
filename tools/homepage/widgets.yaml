@@ -1,0 +1,9 @@
+- datetime:
+    text_size: xl
+    format:
+      dateStyle: long
+      timeStyle: short
+
+- greeting:
+    text_size: xl
+    text: Zalduaxa.net tools

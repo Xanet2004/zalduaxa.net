@@ -1,0 +1,63 @@
+- Development:
+    - Frontend:
+        icon: mdi-react
+        href: http://localhost:5173
+        description: Vite React frontend
+
+    - Backend API:
+        icon: mdi-api
+        href: http://localhost:8080
+        description: Spring Boot backend
+
+    - GitHub Repository:
+        icon: github.png
+        href: https://github.com/Xanet2004/zalduaxa.net
+        description: Source code
+
+    - GitHub Actions:
+        icon: github-actions.png
+        href: https://github.com/Xanet2004/zalduaxa.net/actions
+        description: CI workflow runs
+
+- Quality:
+    - SonarQube:
+        icon: sonarqube.png
+        href: http://localhost:9000
+        description: Local code quality analysis
+
+    - Dependabot PRs:
+        icon: github.png
+        href: https://github.com/Xanet2004/zalduaxa.net/pulls?q=is%3Apr+author%3Aapp%2Fdependabot
+        description: Dependency update pull requests
+
+- Runtime:
+    - Homepage:
+        icon: homepage.png
+        href: http://localhost:3001
+        description: Local tools dashboard
+
+    - PostgreSQL:
+        icon: postgres.png
+        href: http://localhost:5432
+        description: Local database port
+
+- Documentation:
+    - README:
+        icon: mdi-book-open-page-variant
+        href: https://github.com/Xanet2004/zalduaxa.net/blob/observability/README.md
+        description: Project README
+
+    - Tooling docs:
+        icon: mdi-tools
+        href: https://github.com/Xanet2004/zalduaxa.net/blob/observability/documentation/tooling.md
+        description: Selected tooling architecture
+
+    - Todo:
+        icon: mdi-checkbox-marked-outline
+        href: https://github.com/Xanet2004/zalduaxa.net/blob/observability/documentation/todo.md
+        description: Project implementation roadmap
+
+    - DB docs:
+        icon: mdi-database
+        href: https://github.com/Xanet2004/zalduaxa.net/blob/observability/documentation/db.md
+        description: Database documentation

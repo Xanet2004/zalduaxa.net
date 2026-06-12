@@ -1,0 +1,11 @@
+services:
+  homepage:
+    image: ghcr.io/gethomepage/homepage:latest
+    container_name: zalduaxa-homepage
+    ports:
+      - "3001:3000"
+    environment:
+      HOMEPAGE_ALLOWED_HOSTS: "localhost:3001,127.0.0.1:3001"
+    volumes:
+      - ./tools/homepage:/app/config
+    restart: unless-stopped

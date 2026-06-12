@@ -1,0 +1,29 @@
+- Developer:
+    - GitHub:
+        - icon: github.png
+          href: https://github.com
+
+    - GitHub Docs:
+        - icon: github.png
+          href: https://docs.github.com
+
+    - SonarQube Docs:
+        - icon: sonarqube.png
+          href: https://docs.sonarsource.com/sonarqube-server/
+
+    - Homepage Docs:
+        - icon: homepage.png
+          href: https://gethomepage.dev/
+
+- Local:
+    - Frontend Local:
+        - icon: mdi-react
+          href: http://localhost:5173
+
+    - Backend Local:
+        - icon: mdi-api
+          href: http://localhost:8080
+
+    - SonarQube Local:
+        - icon: sonarqube.png
+          href: http://localhost:9000
