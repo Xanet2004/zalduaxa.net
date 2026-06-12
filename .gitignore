@@ -11,3 +11,6 @@ target/
 /storage/
 backend/guest-cookies.txt
 *.zip
+
+# SonarQube
+.scannerwork/
