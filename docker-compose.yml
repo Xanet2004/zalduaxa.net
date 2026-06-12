@@ -14,7 +14,6 @@ services:
       - "5432:5432"
     volumes:
       - zalduaxa_net_postgres:/var/lib/postgresql/data
-      - ./db/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U app -d zalduaxa_net"]
       interval: 5s
