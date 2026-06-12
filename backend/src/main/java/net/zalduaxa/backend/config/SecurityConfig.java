@@ -57,9 +57,15 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/auth/signup").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
 
+                        // Deprecated public project endpoints kept for backward compatibility.
                         .requestMatchers(HttpMethod.GET, "/project/projectTypes").permitAll()
                         .requestMatchers(HttpMethod.GET, "/project/projects/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/project/getProject/**").permitAll()
+
+                        // New REST-style public project endpoints.
+                        .requestMatchers(HttpMethod.GET, "/project-types").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/project-types/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/projects/**").permitAll()
 
                         .requestMatchers(HttpMethod.GET, "/storage/**").permitAll()
                         .requestMatchers("/error").permitAll()

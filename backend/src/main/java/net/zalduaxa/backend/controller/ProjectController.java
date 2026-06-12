@@ -9,11 +9,11 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
@@ -34,7 +34,6 @@ import net.zalduaxa.backend.service.ProjectService;
 import net.zalduaxa.backend.service.ProjectTypeService;
 
 @RestController
-@RequestMapping("/project")
 @CrossOrigin(origins = "${app.cors.origin}", allowCredentials = "true", maxAge = 3600)
 @Validated
 public class ProjectController {
@@ -49,23 +48,33 @@ public class ProjectController {
         this.projectService = projectService;
     }
 
-    @GetMapping(value = "/projectTypes", produces = { "application/json", "application/xml" })
+    // ---------------------------------------------------------------------
+    // New REST endpoints
+    // ---------------------------------------------------------------------
+
+    @GetMapping(value = "/project-types", produces = { "application/json", "application/xml" })
     public ResponseEntity<List<ProjectTypeResponse>> getProjectTypes() {
-        return new ResponseEntity<>(projectTypeService.getAllProjectTypes(), HttpStatus.OK);
+        return getProjectTypesResponse();
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PostMapping(value = "/addProjectType", consumes = "multipart/form-data", produces = {
+    @PostMapping(value = "/project-types", consumes = "multipart/form-data", produces = {
             "application/json",
             "application/xml"
     })
     public ResponseEntity<?> addProjectType(
             @Valid ProjectTypeRequest projectTypeRequest) {
+        return createProjectTypeResponse(projectTypeRequest);
+    }
 
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping(value = "/project-types/{slug}", produces = { "application/json", "application/xml" })
+    public ResponseEntity<?> deleteProjectTypeBySlug(
+            @PathVariable @NotBlank String slug) {
         try {
-            projectTypeService.createProjectType(projectTypeRequest);
+            projectTypeService.deleteProjectTypeBySlug(slug);
 
-            return ResponseEntity.ok(new MessageResponse("Project successfully created"));
+            return ResponseEntity.ok(new MessageResponse("Project type successfully deleted"));
 
         } catch (BadRequestException | UnauthorizedException | ForbiddenException e) {
             throw e;
@@ -75,9 +84,73 @@ public class ProjectController {
         }
     }
 
+    @GetMapping("/project-types/{slug}/projects")
+    public Map<String, Object> getProjectsByType(@PathVariable @NotBlank String slug) {
+        return getProjectsByTypeResponse(slug);
+    }
+
+    @GetMapping("/projects/{slug}")
+    public ResponseEntity<ProjectResponse> getProjectBySlug(@PathVariable @NotBlank String slug) {
+        return getProjectBySlugResponse(slug);
+    }
+
     @PreAuthorize("hasRole('ADMIN')")
-    @PostMapping(value = "/deleteProjectType", produces = { "application/json", "application/xml" })
-    public ResponseEntity<?> deleteProjectType(
+    @PostMapping(value = "/projects", consumes = "multipart/form-data", produces = {
+            "application/json",
+            "application/xml"
+    })
+    public ResponseEntity<?> addProject(
+            @RequestParam("typeSlug") @NotBlank(message = "Type slug is required") String typeSlug,
+            @RequestParam("name") @NotBlank(message = "Name is required") String name,
+            @RequestParam(value = "slug", required = false) String slug,
+            @RequestParam(value = "description", required = false) String description,
+            @RequestPart(value = "image", required = false) MultipartFile image,
+            @AuthenticationPrincipal AuthenticatedUser principal) {
+        return createProjectResponse(typeSlug, name, slug, description, image, principal);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping(value = "/projects/{slug}", produces = { "application/json", "application/xml" })
+    public ResponseEntity<?> deleteProjectBySlug(
+            @PathVariable @NotBlank String slug) {
+        try {
+            projectService.deleteProjectBySlug(slug);
+
+            return ResponseEntity.ok(new MessageResponse("Project successfully deleted"));
+
+        } catch (BadRequestException | UnauthorizedException | ForbiddenException e) {
+            throw e;
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new MessageResponse("Unexpected server error"));
+        }
+    }
+
+    // ---------------------------------------------------------------------
+    // Deprecated legacy endpoints
+    // ---------------------------------------------------------------------
+
+    @Deprecated
+    @GetMapping(value = "/project/projectTypes", produces = { "application/json", "application/xml" })
+    public ResponseEntity<List<ProjectTypeResponse>> getProjectTypesLegacy() {
+        return getProjectTypesResponse();
+    }
+
+    @Deprecated
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping(value = "/project/addProjectType", consumes = "multipart/form-data", produces = {
+            "application/json",
+            "application/xml"
+    })
+    public ResponseEntity<?> addProjectTypeLegacy(
+            @Valid ProjectTypeRequest projectTypeRequest) {
+        return createProjectTypeResponse(projectTypeRequest);
+    }
+
+    @Deprecated
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping(value = "/project/deleteProjectType", produces = { "application/json", "application/xml" })
+    public ResponseEntity<?> deleteProjectTypeLegacy(
             @Valid @RequestBody ProjectTypeRequest requestProjectType) {
 
         try {
@@ -94,33 +167,67 @@ public class ProjectController {
         }
     }
 
-    @GetMapping("/projects/{slug}")
-    public Map<String, Object> getProjectsByType(@PathVariable @NotBlank String slug) {
-        List<ProjectResponse> projects = projectService.getProjectsByType(slug);
-
-        return Map.of("projects", projects);
+    @Deprecated
+    @GetMapping("/project/projects/{slug}")
+    public Map<String, Object> getProjectsByTypeLegacy(@PathVariable @NotBlank String slug) {
+        return getProjectsByTypeResponse(slug);
     }
 
-    @GetMapping("/getProject/{slug}")
-    public ResponseEntity<ProjectResponse> getProjectBySlug(@PathVariable @NotBlank String slug) {
-        return ResponseEntity.ok(projectService.getProjectBySlug(slug));
+    @Deprecated
+    @GetMapping("/project/getProject/{slug}")
+    public ResponseEntity<ProjectResponse> getProjectBySlugLegacy(@PathVariable @NotBlank String slug) {
+        return getProjectBySlugResponse(slug);
     }
 
+    @Deprecated
     @PreAuthorize("hasRole('ADMIN')")
-    @PostMapping(value = "/addProject", consumes = "multipart/form-data", produces = {
+    @PostMapping(value = "/project/addProject", consumes = "multipart/form-data", produces = {
             "application/json",
             "application/xml"
     })
-    public ResponseEntity<?> addProject(
+    public ResponseEntity<?> addProjectLegacy(
             @RequestParam("typeSlug") @NotBlank(message = "Type slug is required") String typeSlug,
             @RequestParam("name") @NotBlank(message = "Name is required") String name,
             @RequestParam(value = "slug", required = false) String slug,
             @RequestParam(value = "description", required = false) String description,
             @RequestPart(value = "image", required = false) MultipartFile image,
             @AuthenticationPrincipal AuthenticatedUser principal) {
+        return createProjectResponse(typeSlug, name, slug, description, image, principal);
+    }
+
+    @Deprecated
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping(value = "/project/deleteProject", produces = { "application/json", "application/xml" })
+    public ResponseEntity<?> deleteProjectLegacy(
+            @Valid @RequestBody DeleteProjectRequest body) {
 
         try {
-            projectService.createProject(principal.id(), typeSlug, name, slug, description, image);
+            String projectName = body != null ? body.getName() : null;
+            String typeSlug = body != null ? body.getTypeSlug() : null;
+
+            projectService.deleteProject(projectName, typeSlug);
+
+            return ResponseEntity.ok(new MessageResponse("Project successfully deleted"));
+
+        } catch (BadRequestException | UnauthorizedException | ForbiddenException e) {
+            throw e;
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new MessageResponse("Unexpected server error"));
+        }
+    }
+
+    // ---------------------------------------------------------------------
+    // Shared response helpers
+    // ---------------------------------------------------------------------
+
+    private ResponseEntity<List<ProjectTypeResponse>> getProjectTypesResponse() {
+        return new ResponseEntity<>(projectTypeService.getAllProjectTypes(), HttpStatus.OK);
+    }
+
+    private ResponseEntity<?> createProjectTypeResponse(ProjectTypeRequest projectTypeRequest) {
+        try {
+            projectTypeService.createProjectType(projectTypeRequest);
 
             return ResponseEntity.ok(new MessageResponse("Project successfully created"));
 
@@ -132,18 +239,30 @@ public class ProjectController {
         }
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
-    @PostMapping(value = "/deleteProject", produces = { "application/json", "application/xml" })
-    public ResponseEntity<?> deleteProject(
-            @Valid @RequestBody DeleteProjectRequest body) {
+    private Map<String, Object> getProjectsByTypeResponse(String slug) {
+        List<ProjectResponse> projects = projectService.getProjectsByType(slug);
+
+        return Map.of("projects", projects);
+    }
+
+    private ResponseEntity<ProjectResponse> getProjectBySlugResponse(String slug) {
+        return ResponseEntity.ok(projectService.getProjectBySlug(slug));
+    }
+
+    private ResponseEntity<?> createProjectResponse(
+            String typeSlug,
+            String name,
+            String slug,
+            String description,
+            MultipartFile image,
+            AuthenticatedUser principal) {
 
         try {
-            String projectName = body != null ? body.getName() : null;
-            String typeSlug = body != null ? body.getTypeSlug() : null;
+            Integer userId = principal != null ? principal.id() : null;
 
-            projectService.deleteProject(projectName, typeSlug);
+            projectService.createProject(userId, typeSlug, name, slug, description, image);
 
-            return ResponseEntity.ok(new MessageResponse("Project successfully deleted"));
+            return ResponseEntity.ok(new MessageResponse("Project successfully created"));
 
         } catch (BadRequestException | UnauthorizedException | ForbiddenException e) {
             throw e;

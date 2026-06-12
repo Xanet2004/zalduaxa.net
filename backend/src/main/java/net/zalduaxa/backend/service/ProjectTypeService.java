@@ -6,13 +6,13 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import net.zalduaxa.backend.dto.request.ProjectTypeRequest;
+import net.zalduaxa.backend.dto.response.ProjectTypeResponse;
 import net.zalduaxa.backend.exception.BadRequestException;
 import net.zalduaxa.backend.model.project.Project;
 import net.zalduaxa.backend.model.project.ProjectRepository;
 import net.zalduaxa.backend.model.projectType.ProjectType;
 import net.zalduaxa.backend.model.projectType.ProjectTypeRepository;
-import net.zalduaxa.backend.dto.request.ProjectTypeRequest;
-import net.zalduaxa.backend.dto.response.ProjectTypeResponse;
 
 @Service
 public class ProjectTypeService {
@@ -65,6 +65,21 @@ public class ProjectTypeService {
         ProjectType projectType = projectTypeRepository.findByName(name)
                 .orElseThrow(() -> new BadRequestException("Project type not found"));
 
+        deleteProjectType(projectType);
+    }
+
+    public void deleteProjectTypeBySlug(String slug) {
+        require(slug != null && !slug.isBlank(), new BadRequestException("Slug is required"));
+
+        String cleanSlug = slugify(slug);
+
+        ProjectType projectType = projectTypeRepository.findBySlug(cleanSlug)
+                .orElseThrow(() -> new BadRequestException("Project type not found"));
+
+        deleteProjectType(projectType);
+    }
+
+    private void deleteProjectType(ProjectType projectType) {
         for (Project project : projectRepository.findByTypeId(projectType.getId())) {
             deleteProject(project, projectType);
         }

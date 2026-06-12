@@ -8,13 +8,13 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import net.zalduaxa.backend.dto.response.ProjectResponse;
 import net.zalduaxa.backend.exception.BadRequestException;
 import net.zalduaxa.backend.exception.UnauthorizedException;
 import net.zalduaxa.backend.model.project.Project;
 import net.zalduaxa.backend.model.project.ProjectRepository;
 import net.zalduaxa.backend.model.projectType.ProjectType;
 import net.zalduaxa.backend.model.projectType.ProjectTypeRepository;
-import net.zalduaxa.backend.dto.response.ProjectResponse;
 
 @Service
 public class ProjectService {
@@ -105,6 +105,20 @@ public class ProjectService {
         require(projectType.isPresent(), new BadRequestException("Project type not found"));
 
         deleteProject(project.get(), projectType.get());
+    }
+
+    public void deleteProjectBySlug(String slug) {
+        require(slug != null && !slug.isBlank(), new BadRequestException("Slug is required"));
+
+        String cleanSlug = slugify(slug);
+
+        Project project = projectRepository.findBySlug(cleanSlug)
+                .orElseThrow(() -> new BadRequestException("Project not found"));
+
+        ProjectType projectType = projectTypeRepository.findById(project.getTypeId())
+                .orElseThrow(() -> new BadRequestException("Project type not found"));
+
+        deleteProject(project, projectType);
     }
 
     private void deleteProject(Project project, ProjectType projectType) {
