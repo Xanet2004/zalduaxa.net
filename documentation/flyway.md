@@ -1,5 +1,9 @@
 # Flyway Database Migrations
 
+[Back to menu](/README.md)
+
+> See also: [Docker setup](docker.md) | [Database schema](db.md)
+
 ## Purpose
 
 Flyway version-controls the database schema. It runs SQL migrations in order and records which migrations have been executed in the `zalduaxanet.flyway_schema_history` table. Hibernate no longer creates or updates tables automatically — it now validates schema compatibility with JPA entities using `spring.jpa.hibernate.ddl-auto=validate`.
@@ -10,7 +14,7 @@ Flyway version-controls the database schema. It runs SQL migrations in order and
 - Initial migration: `V1__init_schema.sql`
 - Active schema: `zalduaxanet`
 - Flyway history table: `zalduaxanet.flyway_schema_history`
-- Old schema file: `db/init/00-create-schema.sql`
+- Old schema file: `db/init/00-create-schema.sql` (historical reference only, not executed by Docker)
 
 The old `db/init/00-create-schema.sql` file is historical reference only. Docker no longer executes that file. When the backend starts, Flyway runs first, then Hibernate validates.
 
@@ -53,6 +57,13 @@ docker compose up --build
 ```
 
 This destroys the Postgres volume and reruns all migrations from scratch. **Never do this in production.**
+
+For the dev-only PostgreSQL container:
+
+```bash
+docker compose -f docker-compose.dev.yml down -v
+docker compose -f docker-compose.dev.yml up -d
+```
 
 ## How to add a new table
 
@@ -120,6 +131,13 @@ docker compose up --build
 - Flyway reruns all migrations from scratch.
 - This is only safe in development.
 
+To reset only the dev PostgreSQL container (when using `docker-compose.dev.yml`):
+
+```bash
+docker compose -f docker-compose.dev.yml down -v
+docker compose -f docker-compose.dev.yml up -d
+```
+
 ## Inspecting migration history
 
 ```bash
@@ -147,6 +165,10 @@ If the backend fails to start with a validation error, the most likely cause is 
 **Fix:** Create a new Flyway migration (e.g., `V2__add_missing_column.sql`) to add the missing column or table.
 
 **Do not** switch to `ddl-auto=update` as a normal fix. It can be used as a temporary local workaround, but never commit that change.
+
+## Profile note
+
+Flyway is enabled in both `dev` and `prod` profiles. The active profile is selected via `SPRING_PROFILES_ACTIVE` (defaults to `dev`).
 
 ## Local backend workflow
 
