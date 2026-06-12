@@ -1,6 +1,6 @@
 export async function getProjectBySlug(projectSlug: string) {
   try {
-        const res = await fetch(`/api/project/getProject/${encodeURIComponent(projectSlug)}`, {
+        const res = await fetch(`/api/projects/${encodeURIComponent(projectSlug)}`, {
             method: "GET",
             credentials: "include",
         });

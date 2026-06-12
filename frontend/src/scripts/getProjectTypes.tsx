@@ -1,6 +1,6 @@
 export async function getProjectTypes() {
     try {
-        const res = await fetch(`/api/project/projectTypes`, {
+        const res = await fetch(`/api/project-types`, {
             method: "GET",
             headers: { "Content-Type": "application/json" },
         });

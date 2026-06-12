@@ -4,15 +4,16 @@ services:
   postgres:
     image: postgres:16
     container_name: zalduaxa-net-postgres
+    env_file:
+      - ${APP_ENV_FILE:-.env}
+      - ${APP_PASSWORD_ENV_FILE:-.env.passwords}
     environment:
       POSTGRES_DB: zalduaxa_net
       POSTGRES_USER: app
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
       - zalduaxa_net_postgres:/var/lib/postgresql/data
-      - ./ddbb/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U app -d zalduaxa_net"]
       interval: 5s
@@ -24,20 +25,14 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: zalduaxa-net-backend
+    env_file:
+      - ${APP_ENV_FILE:-.env}
+      - ${APP_PASSWORD_ENV_FILE:-.env.passwords}
     environment:
+      # Docker-specific datasource URL.
+      # Inside Docker, the database host is the postgres service, not localhost.
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/zalduaxa_net
       SPRING_DATASOURCE_USERNAME: app
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
-
-      APP_SEED_ENABLED: ${APP_SEED_ENABLED}
-      APP_SEED_ADMIN_USERNAME: ${APP_SEED_ADMIN_USERNAME}
-      APP_SEED_ADMIN_PASSWORD: ${APP_SEED_ADMIN_PASSWORD}
-      APP_SEED_ADMIN_EMAIL: ${APP_SEED_ADMIN_EMAIL}
-      APP_SEED_GUEST_USERNAME: ${APP_SEED_GUEST_USERNAME}
-      APP_SEED_GUEST_PASSWORD: ${APP_SEED_GUEST_PASSWORD}
-      APP_SEED_GUEST_EMAIL: ${APP_SEED_GUEST_EMAIL}
-
-      STORAGE_PATH: file:/app/storage/
     volumes:
       - ./storage:/app/storage
     depends_on:

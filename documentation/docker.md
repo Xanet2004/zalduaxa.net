@@ -1,46 +1,102 @@
 # Docker (development and deploy)
+
 [Back to menu](/README.md)
 
-# Docker
+## Overview
 
-This document explains how to run **PostgreSQL in Docker for development** and how to **build + run the full stack (frontend + backend + PostgreSQL) in Docker** for deployment.
+The project uses two Docker Compose files:
+
+| File | Purpose |
+|------|---------|
+| `docker-compose.yml` | Full stack: PostgreSQL + backend + frontend (for deploy or full local run) |
+| `docker-compose.dev.yml` | PostgreSQL-only helper for local backend development |
+
+## Ports
+
+| Service | Port |
+|---------|------|
+| Frontend | `http://localhost:5173` |
+| Backend | `http://localhost:8080` |
+| PostgreSQL | `localhost:5432` |
 
 ---
 
-## 1) Development setup (local backend + local frontend + PostgreSQL in Docker)
+## Environment file split
 
-In development, you run:
-- **Backend** (Spring Boot) locally
-- **Frontend** (Vite) locally
-- **PostgreSQL** in Docker (so your DB is always consistent)
+Secrets and non-secret config are split across separate files:
 
-### 1.1 Start PostgreSQL (dev)
+| File | Contents | Tracked? |
+|------|----------|----------|
+| `.env` | Non-secret runtime config (CORS, cookie, DB URL, log level) | No (gitignored; template is `.env.example`) |
+| `.env.passwords` | Local secrets/passwords (JWT secret, pepper, DB password) | No (gitignored; template is `.env.passwords.example`) |
+| `.env.example` | Tracked template for non-secret vars | Yes |
+| `.env.passwords.example` | Tracked template for secrets | Yes |
+| `.env.production` | Production non-secret config | No |
+| `.env.production.passwords` | Production secrets | No |
 
-From the repository root:
+### Key environment variables
+
+| Variable | Purpose |
+|----------|---------|
+| `SPRING_PROFILES_ACTIVE` | Selects `dev` or `prod` profile (default: `dev`) |
+| `APP_ENV_FILE` | Path to the non-secret env file (default: `.env`) |
+| `APP_PASSWORD_ENV_FILE` | Path to the secrets env file (default: `.env.passwords`) |
+| `APP_JWT_SECRET` | Key for signing JWT tokens |
+| `APP_PASSWORD_PEPPER` | HMAC-SHA256 key applied before BCrypt |
+| `APP_CORS_ORIGIN` | Allowed CORS origin (default: `http://localhost:5173`) |
+| `APP_AUTH_COOKIE_SECURE` | Whether auth cookie has the Secure flag (dev: `false`, prod: `true`) |
+
+---
+
+## Workflow 1: Full Docker stack
+
+Run all three services (PostgreSQL + backend + frontend) in containers:
+
+```bash
+docker compose up --build
+```
+
+This builds and starts:
+- **postgres**: PostgreSQL 16 with persistent volume
+- **backend**: Spring Boot on port 8080
+- **frontend**: Built with Vite, served by nginx on port 5173
+
+Access the app at `http://localhost:5173`.
+
+Stop:
+
+```bash
+docker compose down
+```
+
+---
+
+## Workflow 2: Local backend + database in Docker
+
+Run only PostgreSQL in Docker while developing the backend locally:
 
 ```bash
 docker compose -f docker-compose.dev.yml up -d
 ```
 
-Check it is running:
+Then start the backend:
 
 ```bash
-docker ps
+cd backend
+mvn spring-boot:run
 ```
 
-(Optional) Check logs:
+The dev compose file uses:
+- Database name: `zalduaxa_net_dev`
+- User: `app` / password: `app`
 
-```bash
-docker logs -f zalduaxa-net-postgres-dev
-```
-
-### 1.2 Stop development DB
+Stop the dev database:
 
 ```bash
 docker compose -f docker-compose.dev.yml down
 ```
 
-To also delete the dev database volume (WARNING: deletes dev data):
+To delete the dev database volume (resets all data):
 
 ```bash
 docker compose -f docker-compose.dev.yml down -v
@@ -48,99 +104,88 @@ docker compose -f docker-compose.dev.yml down -v
 
 ---
 
-## 2) Deploy setup (frontend + backend + PostgreSQL in Docker)
+## Frontend nginx proxy
 
-In production (or a full local Docker run), the three services run inside containers:
-- **postgres**: database with persistent volume
-- **backend**: Spring Boot container
-- **frontend**: built with Vite and served by Nginx
+When running in Docker, the frontend nginx proxies API requests:
 
-### 2.1 Create environment file
-
-Create a file named `.env` in the repository root:
-
-```env
-POSTGRES_PASSWORD=put_a_strong_password_here
+```
+Browser → /api/project-types → nginx → http://backend:8080/project-types
 ```
 
-> Do not commit `.env` to Git. Add it to `.gitignore`.
+- The frontend always calls `/api/...` (e.g. `/api/project-types`, `/api/auth/login`).
+- Nginx strips the `/api` prefix and forwards to the backend.
+- The backend receives paths without the `/api` prefix.
 
-### 2.2 Build and run all containers
+**Note for local frontend development:** The Vite dev server currently does not define a proxy. When running the frontend locally (`npm run dev`), `/api/...` requests go to `localhost:5173` instead of the backend on `localhost:8080`. To test the full stack locally, run it in Docker or add a Vite proxy configuration.
 
-From the repository root:
+---
+
+## Storage volume
+
+The local `./storage` directory is mounted into the backend container at `/app/storage`:
+
+```yaml
+volumes:
+  - ./storage:/app/storage
+```
+
+Files placed in `./storage/` on the host are served by the backend at `/storage/**`.
+
+---
+
+## Profiles
+
+The backend has two Spring profiles:
+
+| Profile | Defaults | Purpose |
+|---------|----------|---------|
+| `dev` | Active by default | CORS allows `localhost:5173`, DB runs on port 5432, seed users created, DEBUG logging |
+| `prod` | Switch via `SPRING_PROFILES_ACTIVE=prod` | CORS points to production origin, seeds disabled, WARN logging |
+
+The default profile is set in `application.properties`:
+
+```properties
+spring.profiles.default=dev
+```
+
+Override at runtime:
 
 ```bash
-docker compose up -d --build
+SPRING_PROFILES_ACTIVE=prod docker compose up --build
 ```
 
-Check status:
+## Flyway database reset
 
-```bash
-docker compose ps
-```
-
-Check logs:
-
-```bash
-docker compose logs -f
-```
-
-### 2.3 Access the services
-
-- Frontend: `http://localhost/`
-- Backend (if exposed): `http://localhost:8080/`
-
-> If your frontend reverse-proxies `/api` to the backend, you will mostly use the frontend URL.
-
-### 2.4 Stop production stack
-
-```bash
-docker compose down
-```
-
-To also delete the production database volume (WARNING: deletes prod data):
+Flyway manages the database schema. To reset the development database:
 
 ```bash
 docker compose down -v
+docker compose up --build
 ```
+
+- `down -v` deletes the PostgreSQL Docker volume, including all data and the Flyway history table.
+- On next startup, Flyway recreates the schema from scratch.
+
+**Never run `down -v` in production** — it destroys all data.
 
 ---
 
-## 3) Rebuild a single service (optional)
-
-Rebuild + restart backend:
+## Useful Docker commands
 
 ```bash
-docker compose up -d --build backend
-```
-
-Rebuild + restart frontend:
-
-```bash
-docker compose up -d --build frontend
-```
-
----
-
-## 4) Useful Docker commands
-
-List running containers:
-
-```bash
+# List running containers
 docker ps
-```
 
-See service logs:
-
-```bash
+# View service logs
 docker compose logs -f backend
 docker compose logs -f frontend
 docker compose logs -f postgres
-```
 
-Open a shell inside a container:
+# Rebuild and restart a single service
+docker compose up -d --build backend
+docker compose up -d --build frontend
 
-```bash
+# Open a shell in a container
 docker exec -it zalduaxa-net-backend sh
 docker exec -it zalduaxa-net-frontend sh
 docker exec -it zalduaxa-net-postgres bash

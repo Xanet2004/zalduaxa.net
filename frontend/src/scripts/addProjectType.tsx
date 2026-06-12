@@ -1,6 +1,9 @@
-export async function addProjectType(form: any) {
+import type { RequestProjectType } from "@/types/requestProjectType";
+
+export async function addProjectType(form: RequestProjectType) {
     try {
         const formData = new FormData();
+
         formData.append("name", form.name ?? "");
         formData.append("slug", form.slug ?? "");
         formData.append("description", form.description ?? "");
@@ -9,17 +12,20 @@ export async function addProjectType(form: any) {
             formData.append("image", form.image);
         }
 
-        const res = await fetch(`/api/project/addProjectType`, {
+        const res = await fetch(`/api/project-types`, {
             method: "POST",
             credentials: "include",
-            body: formData
+            body: formData,
         });
 
-        let data;
-        try { data = await res.json(); }
-        catch { data = {}; }
+        let data: { message?: string };
+        try {
+            data = await res.json();
+        } catch {
+            data = {};
+        }
 
-        console.log(data)
+        console.log(data);
 
         if (!res.ok) {
             throw new Error(data.message || "Error adding project type");
