@@ -4,12 +4,14 @@
 
 ## Overview
 
-The project uses two Docker Compose files:
+The project uses four Docker Compose files, all under the project name `zalduaxa-net`:
 
 | File | Purpose |
 |------|---------|
 | `docker-compose.yml` | Full stack: PostgreSQL + backend + frontend (for deploy or full local run) |
 | `docker-compose.dev.yml` | PostgreSQL-only helper for local backend development |
+| `docker-compose.quality.yml` | Local quality tooling: SonarQube + SonarQube DB |
+| `docker-compose.tools.yml` | Local tools dashboard: Homepage |
 
 ## Ports
 
@@ -135,14 +137,17 @@ Files placed in `./storage/` on the host are served by the backend at `/storage/
 
 ---
 
-## Optional tooling overlays
+## Docker Compose organization
 
-Additional Compose files provide local quality and dashboard tools without affecting the core stack:
+All services use the same Docker Compose project name `zalduaxa-net` for consistent management, but are logically separated into dedicated networks:
 
-| File | Services |
-|------|----------|
-| `docker-compose.quality.yml` | SonarQube community + dedicated PostgreSQL 16 database |
-| `docker-compose.tools.yml` | Homepage local tools dashboard (port 3001) |
+| Network | Services |
+|---------|----------|
+| `zalduaxa-net_default` | Core app: backend, frontend, postgres |
+| `zalduaxa-net-quality` | Quality tooling: SonarQube, SonarQube DB |
+| `zalduaxa-net-tools` | Tools dashboard: Homepage |
+
+Separate networks keep quality and tooling containers isolated from the app network. The same project name prevents Docker Desktop from splitting containers into multiple groups.
 
 ### Start SonarQube
 
@@ -162,6 +167,28 @@ docker compose -f docker-compose.tools.yml up -d
 Homepage is then reachable at `http://localhost:3001`.
 
 See [Local Quality Tooling](local_quality.md) for the full workflow.
+
+### Safe recreation guidance
+
+If you need to recreate quality or tools containers (e.g., after adding `name:` or `networks:` to the compose files), follow this sequence manually:
+
+```bash
+# 1. Stop and remove old quality/tools containers (deletes volumes too; resets SonarQube data)
+docker compose -f docker-compose.quality.yml -f docker-compose.tools.yml down
+
+# 2. Start quality tooling
+docker compose -f docker-compose.quality.yml up -d
+
+# 3. Start tools dashboard
+docker compose -f docker-compose.tools.yml up -d
+
+# 4. Verify all containers are under the same project
+docker compose ls
+docker ps --format '{{.Names}}\t{{.Label "com.docker.compose.project"}}\t{{.Label "com.docker.compose.service"}}'
+docker network ls
+```
+
+**Warning**: Running `docker compose -f docker-compose.quality.yml down -v` will delete SonarQube's database, data, and extensions volumes. This resets all local analysis results and the SonarQube admin token. It does **not** affect the app database because quality and app compose files use separate volumes.
 
 ---
 
