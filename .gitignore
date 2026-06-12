@@ -8,6 +8,6 @@ target/
 .env.production.passwords
 
 # Runtime/generated files
-storage/
+/storage/
 backend/guest-cookies.txt
 *.zip
