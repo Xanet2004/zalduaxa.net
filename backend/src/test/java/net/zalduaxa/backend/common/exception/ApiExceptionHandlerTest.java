@@ -15,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
@@ -25,9 +26,6 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Path;
-
-import org.springframework.security.access.AccessDeniedException;
-
 import net.zalduaxa.backend.common.exception.ApiExceptionHandler.ErrorResponse;
 
 class ApiExceptionHandlerTest {
@@ -111,8 +109,8 @@ class ApiExceptionHandlerTest {
 
     @Test
     void handleMissingServletRequestParameter_returnsFieldError() {
-        MissingServletRequestParameterException exception = new MissingServletRequestParameterException("typeSlug",
-                "String");
+        MissingServletRequestParameterException exception =
+                new MissingServletRequestParameterException("typeSlug", "String");
 
         ResponseEntity<ErrorResponse> response = handler.handleMissingServletRequestParameter(exception);
 
@@ -132,8 +130,8 @@ class ApiExceptionHandlerTest {
 
     @Test
     void handleHttpMediaTypeNotSupported_returnsUnsupportedMediaType() {
-        HttpMediaTypeNotSupportedException exception = new HttpMediaTypeNotSupportedException(MediaType.TEXT_PLAIN,
-                List.of(MediaType.APPLICATION_JSON));
+        HttpMediaTypeNotSupportedException exception =
+                new HttpMediaTypeNotSupportedException(MediaType.TEXT_PLAIN, List.of(MediaType.APPLICATION_JSON));
 
         ResponseEntity<ErrorResponse> response = handler.handleHttpMediaTypeNotSupported(exception);
 
@@ -185,6 +183,7 @@ class ApiExceptionHandlerTest {
     private static class TestController {
         @SuppressWarnings("unused")
         void create(TestRequest request) {
+            throw new UnsupportedOperationException("Test-only method used only to build MethodParameter metadata");
         }
     }
 }
