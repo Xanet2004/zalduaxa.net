@@ -4,12 +4,14 @@
 
 ## Overview
 
-The project uses two Docker Compose files:
+The project uses four Docker Compose files, all under the project name `zalduaxa-net`:
 
 | File | Purpose |
 |------|---------|
-| `docker-compose.yml` | Full stack: PostgreSQL + backend + frontend (for deploy or full local run) |
+| `docker-compose.yml` | **Main entrypoint.** Includes quality/tools files. Starts: postgres, backend, frontend, SonarQube, SonarQube DB, Homepage |
 | `docker-compose.dev.yml` | PostgreSQL-only helper for local backend development |
+| `docker-compose.quality.yml` | Local quality tooling: SonarQube + SonarQube DB (included by main file) |
+| `docker-compose.tools.yml` | Local tools dashboard: Homepage (included by main file) |
 
 ## Ports
 
@@ -48,26 +50,41 @@ Secrets and non-secret config are split across separate files:
 
 ---
 
-## Workflow 1: Full Docker stack
+## Workflow 1: Full local stack
 
-Run all three services (PostgreSQL + backend + frontend) in containers:
+Start the complete local environment — app, quality tooling, and tools dashboard — in one command:
 
 ```bash
-docker compose up --build
+docker compose up -d --build
 ```
 
-This builds and starts:
-- **postgres**: PostgreSQL 16 with persistent volume
+This builds and starts all six services:
+- **postgres**: App PostgreSQL 16 with persistent volume
 - **backend**: Spring Boot on port 8080
 - **frontend**: Built with Vite, served by nginx on port 5173
+- **sonarqube-db**: SonarQube PostgreSQL 16 database
+- **sonarqube**: SonarQube community on port 9000
+- **homepage**: Tools dashboard on port 3001
 
-Access the app at `http://localhost:5173`.
+Access points:
+- App frontend: `http://localhost:5173`
+- Backend API: `http://localhost:8080`
+- SonarQube: `http://localhost:9000`
+- Homepage: `http://localhost:3001`
 
-Stop:
+Stop all services:
+
+```bash
+docker compose stop
+```
+
+To stop and remove containers (preserves volumes):
 
 ```bash
 docker compose down
 ```
+
+**Warning**: `docker compose down -v` deletes volumes for ALL included services, including the app database and SonarQube data.
 
 ---
 
@@ -135,33 +152,39 @@ Files placed in `./storage/` on the host are served by the backend at `/storage/
 
 ---
 
-## Optional tooling overlays
+## Docker Compose organization
 
-Additional Compose files provide local quality and dashboard tools without affecting the core stack:
+`docker-compose.yml` is the main entrypoint. It uses the `include` directive to compose in `docker-compose.quality.yml` and `docker-compose.tools.yml`. Running `docker compose up -d --build` from the repository root starts all services under the single project name `zalduaxa-net`.
 
-| File | Services |
-|------|----------|
-| `docker-compose.quality.yml` | SonarQube community + dedicated PostgreSQL 16 database |
-| `docker-compose.tools.yml` | Homepage local tools dashboard (port 3001) |
+All services are logically separated into dedicated networks:
 
-### Start SonarQube
+| Network | Services |
+|---------|----------|
+| `zalduaxa-net_default` | Core app: backend, frontend, postgres |
+| `zalduaxa-net-quality` | Quality tooling: SonarQube, SonarQube DB |
+| `zalduaxa-net-tools` | Tools dashboard: Homepage |
+
+Separate networks keep quality and tooling containers isolated from the app network. The same project name prevents Docker Desktop from splitting containers into multiple groups.
+
+### Individual file usage
+
+The quality and tools compose files can still be used standalone if needed:
 
 ```bash
 docker compose -f docker-compose.quality.yml up -d
-```
-
-SonarQube is then reachable at `http://localhost:9000`.<br>
-Requires `vm.max_map_count >= 262144` on the host.
-
-### Start Homepage
-
-```bash
 docker compose -f docker-compose.tools.yml up -d
 ```
 
-Homepage is then reachable at `http://localhost:3001`.
+See [Local Quality Tooling](local_quality.md) for the full quality workflow.
 
-See [Local Quality Tooling](local_quality.md) for the full workflow.
+### Safe volume guidance
+
+**Warning**: Running `docker compose down -v` from the main file will delete volumes for ALL included services, including the app database and SonarQube data. To target a specific file only:
+
+```bash
+docker compose -f docker-compose.quality.yml down -v     # resets SonarQube only
+docker compose -f docker-compose.dev.yml down -v         # resets dev database only
+```
 
 ---
 

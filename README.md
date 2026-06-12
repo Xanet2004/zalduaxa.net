@@ -15,10 +15,15 @@ A personal portfolio/project platform. Built with Spring Boot, React, PostgreSQL
 ```bash
 cp .env.example .env
 cp .env.passwords.example .env.passwords
-docker compose up --build
+docker compose up -d --build
 ```
 
-Access the app at `http://localhost:5173`.
+This starts the full local stack: app frontend, backend API, PostgreSQL database, SonarQube quality dashboard, and Homepage tools dashboard.
+
+Access points:
+- App frontend: `http://localhost:5173`
+- SonarQube: `http://localhost:9000`
+- Homepage: `http://localhost:3001`
 
 ### Run backend tests
 

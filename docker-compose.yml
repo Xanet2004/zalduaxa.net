@@ -1,5 +1,9 @@
 name: zalduaxa-net
 
+include:
+  - docker-compose.quality.yml
+  - docker-compose.tools.yml
+
 services:
   postgres:
     image: postgres:16
