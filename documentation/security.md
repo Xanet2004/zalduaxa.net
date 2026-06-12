@@ -30,9 +30,11 @@ The workflow runs automatically on:
 
 ### Steps
 
-1. Generate a SARIF report scanning for HIGH and CRITICAL issues.
-2. Upload the SARIF report to GitHub Code Scanning (available in the Security tab).
-3. Run a separate enforcement gate that fails the workflow only on CRITICAL findings.
+1. Set up Java 21 and restore the Maven dependency cache from previous workflow runs.
+2. Populate the Maven local repository (`~/.m2`) by resolving all dependencies offline.
+3. Generate a SARIF report scanning for HIGH and CRITICAL issues, with `~/.m2` mounted read-only into the Trivy container to avoid Maven Central rate limits.
+4. Upload the SARIF report to GitHub Code Scanning (available in the Security tab).
+5. Run a separate enforcement gate that fails the workflow only on CRITICAL findings (also with `~/.m2` mounted).
 
 SARIF upload is non-blocking — if upload fails (e.g., on fork PRs), the workflow still reports results in logs.
 
@@ -74,11 +76,20 @@ HIGH blocking may be enabled later after the initial scan results have been revi
 
 ## Local Trivy command
 
-No local install required — run Trivy via Docker:
+No local install required — run Trivy via Docker. To avoid Maven Central rate limits, populate the Maven cache first:
+
+```bash
+cd backend
+./mvnw -B -q -DskipTests dependency:go-offline
+cd ..
+```
+
+Then run Trivy with the Maven cache mounted:
 
 ```bash
 docker run --rm \
   -v "$(pwd):/project" \
+  -v "$HOME/.m2:/root/.m2:ro" \
   aquasec/trivy:latest fs \
   --scanners vuln,secret,misconfig \
   --severity HIGH,CRITICAL \
@@ -97,6 +108,7 @@ Remove `--ignore-unfixed` to also see vulnerabilities that have no available fix
 ```bash
 docker run --rm \
   -v "$(pwd):/project" \
+  -v "$HOME/.m2:/root/.m2:ro" \
   aquasec/trivy:latest fs \
   --scanners vuln,secret,misconfig \
   --severity HIGH,CRITICAL \

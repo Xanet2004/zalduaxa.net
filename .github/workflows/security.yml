@@ -20,6 +20,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+
+      - name: Populate Maven dependency cache
+        working-directory: backend
+        run: ./mvnw -B -q -DskipTests dependency:go-offline
+
       - name: Prepare Trivy cache
         run: mkdir -p "${{ runner.temp }}/trivy-cache"
 
@@ -27,6 +38,7 @@ jobs:
         run: |
           docker run --rm \
             -v "${{ github.workspace }}:/project" \
+            -v "$HOME/.m2:/root/.m2:ro" \
             -v "${{ runner.temp }}/trivy-cache:/root/.cache/trivy" \
             aquasec/trivy:latest fs \
             --scanners vuln,secret,misconfig \
@@ -53,6 +65,7 @@ jobs:
         run: |
           docker run --rm \
             -v "${{ github.workspace }}:/project" \
+            -v "$HOME/.m2:/root/.m2:ro" \
             -v "${{ runner.temp }}/trivy-cache:/root/.cache/trivy" \
             aquasec/trivy:latest fs \
             --scanners vuln,secret,misconfig \
