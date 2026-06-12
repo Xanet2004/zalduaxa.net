@@ -27,26 +27,23 @@ This document tracks the implementation roadmap for the portfolio platform (back
 
 ---
 
-## Next task
-
-**Task 15 — Analyze monitoring/analytics/quality tools**
-
----
-
 ## Phase 2 — Observability, quality, analytics & usability
 
-- [ ] Task 15 — Analyze monitoring/analytics/quality tools
-- [ ] Task 16 — Define observability architecture
-- [ ] Task 17 — Backend metrics with Spring Boot Actuator
-- [ ] Task 18 — Container/host monitoring
-- [ ] Task 19 — Decide Grafana stack vs Zabbix
-- [ ] Task 20 — Log monitoring
-- [ ] Task 21 — SonarQube code quality
-- [ ] Task 22 — Frontend analytics
-- [ ] Task 23 — Accessibility/usability checks
-- [ ] Task 24 — Alerting strategy
-- [ ] Task 25 — Monitoring Docker Compose overlay
-- [ ] Task 26 — Dashboards and monitoring docs
+The selected tooling stack is defined in [documentation/tooling.md](tooling.md).
+
+- [ ] Backend metrics with Spring Boot Actuator and Micrometer
+- [ ] Prometheus and Grafana dashboards
+- [ ] Centralized logging with Loki and Alloy
+- [ ] Uptime monitoring with Uptime Kuma
+- [ ] Web analytics with Matomo
+- [ ] SonarQube and JaCoCo code quality
+- [ ] Trivy security scanning
+- [ ] End-to-end tests with Playwright
+- [ ] Automated accessibility checks with axe-core
+- [ ] Performance audits with Lighthouse CI
+- [ ] API documentation with springdoc-openapi
+- [ ] Monitoring Docker Compose overlay files
+- [ ] Alerting strategy
 
 ---
 
