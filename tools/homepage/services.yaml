@@ -41,6 +41,17 @@
         href: http://localhost:5432
         description: Local database port
 
+- Security:
+    - GitHub Security:
+        icon: github.png
+        href: https://github.com/Xanet2004/zalduaxa.net/security
+        description: Code scanning and repository security alerts
+
+    - Security docs:
+        icon: mdi-shield-check
+        href: https://github.com/Xanet2004/zalduaxa.net/blob/observability/documentation/security.md
+        description: Local and CI security scanning workflow
+
 - Documentation:
     - README:
         icon: mdi-book-open-page-variant

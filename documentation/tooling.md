@@ -127,6 +127,21 @@ Trivy scans the repository filesystem and container images for known vulnerabili
 
 Trivy complements Dependabot by catching issues in the runtime container layer that Dependabot cannot see. It runs quickly and produces actionable output without requiring an external service.
 
+### Current implementation status
+
+| Component | Status | Details |
+|-----------|--------|---------|
+| Trivy repository scan | Implemented | `.github/workflows/security.yml` |
+| Vulnerability scanning | Implemented | Maven/npm manifests and lockfiles |
+| Secret scanning | Implemented | Repository filesystem scan |
+| Misconfiguration scanning | Implemented | Dockerfiles, Compose files and GitHub Actions workflows |
+| SARIF upload | Implemented | Uploaded to GitHub Code Scanning when available |
+| Docker image scanning | Postponed | Will be added after repository scanning is stable |
+
+The first implementation intentionally fails only on CRITICAL findings. HIGH findings are reported but do not block the workflow yet.
+
+See [Security Scanning](security.md) for the full workflow.
+
 ---
 
 ## 8. Backend health and metrics

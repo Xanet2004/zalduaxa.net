@@ -43,7 +43,11 @@ The selected tooling stack is defined in [documentation/tooling.md](tooling.md).
 - [ ] Integrate SonarQube with CI after deciding self-hosted runner or secure network exposure
 - [ ] Quality Gate enforcement
 - [ ] Frontend test coverage
-- [ ] Trivy security scanning
+- [x] Trivy repository filesystem scanning (vulnerabilities, secrets, misconfigurations)
+- [x] SARIF report upload to GitHub Code Scanning
+- [ ] Docker image scanning with Trivy
+- [ ] Decide whether HIGH severity should block pull requests
+- [ ] Add `.trivyignore` only if real false positives appear
 - [ ] End-to-end tests with Playwright
 - [ ] Automated accessibility checks with axe-core
 - [ ] Performance audits with Lighthouse CI
