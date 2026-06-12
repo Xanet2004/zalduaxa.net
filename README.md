@@ -94,6 +94,8 @@ npm run build
 - [Docker setup](/documentation/docker.md)
 - [Database schema](/documentation/db.md)
 - [Flyway migrations](/documentation/flyway.md)
+- [Local Quality Tooling](/documentation/local_quality.md): local SonarQube, JaCoCo and Homepage workflow
+- [Security Scanning](/documentation/security.md): Trivy repository scanning workflow and local security scan commands
 - [Tooling Architecture](/documentation/tooling.md): selected stack for CI/CD, quality, observability, monitoring, analytics, testing, and API documentation
 - [Git workflow](/documentation/git_structure.md)
 - [Roadmap](/documentation/todo.md)

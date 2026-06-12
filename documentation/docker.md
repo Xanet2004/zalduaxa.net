@@ -133,6 +133,38 @@ Files placed in `./storage/` on the host are served by the backend at `/storage/
 
 ---
 
+---
+
+## Optional tooling overlays
+
+Additional Compose files provide local quality and dashboard tools without affecting the core stack:
+
+| File | Services |
+|------|----------|
+| `docker-compose.quality.yml` | SonarQube community + dedicated PostgreSQL 16 database |
+| `docker-compose.tools.yml` | Homepage local tools dashboard (port 3001) |
+
+### Start SonarQube
+
+```bash
+docker compose -f docker-compose.quality.yml up -d
+```
+
+SonarQube is then reachable at `http://localhost:9000`.<br>
+Requires `vm.max_map_count >= 262144` on the host.
+
+### Start Homepage
+
+```bash
+docker compose -f docker-compose.tools.yml up -d
+```
+
+Homepage is then reachable at `http://localhost:3001`.
+
+See [Local Quality Tooling](local_quality.md) for the full workflow.
+
+---
+
 ## Profiles
 
 The backend has two Spring profiles:

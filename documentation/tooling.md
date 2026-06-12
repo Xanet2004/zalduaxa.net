@@ -96,6 +96,21 @@ SonarQube is the central quality dashboard. It provides visibility into code sme
 
 On the frontend side, TypeScript strict checks and ESLint (where configured) will catch type errors and common problems at build time.
 
+### Current implementation status
+
+| Component | Status | Details |
+|-----------|--------|---------|
+| Local SonarQube | Implemented | `docker-compose.quality.yml`, port 9000 |
+| Backend JaCoCo | Implemented | `jacoco-maven-plugin` in `backend/pom.xml`, `verify` phase |
+| `sonar-project.properties` | Implemented | Root-level, one project for monorepo |
+| Homepage dashboard | Implemented | `docker-compose.tools.yml`, port 3001 |
+| Quality Gate enforcement | Postponed | Will be added together with CI integration |
+| CI SonarQube integration | Postponed | Local-only; not reachable from GitHub-hosted runners |
+
+See [Local Quality Tooling](local_quality.md) for the local workflow.
+
+### Later stages
+
 Quality gates will be introduced gradually. The goal is to prevent new critical issues from accumulating, not to block development because of legacy debt inherited from earlier phases.
 
 ---
@@ -111,6 +126,21 @@ Trivy scans the repository filesystem and container images for known vulnerabili
 - Exposed secrets (basic detection).
 
 Trivy complements Dependabot by catching issues in the runtime container layer that Dependabot cannot see. It runs quickly and produces actionable output without requiring an external service.
+
+### Current implementation status
+
+| Component | Status | Details |
+|-----------|--------|---------|
+| Trivy repository scan | Implemented | `.github/workflows/security.yml` |
+| Vulnerability scanning | Implemented | Maven/npm manifests and lockfiles |
+| Secret scanning | Implemented | Repository filesystem scan |
+| Misconfiguration scanning | Implemented | Dockerfiles, Compose files and GitHub Actions workflows |
+| SARIF upload | Implemented | Uploaded to GitHub Code Scanning when available |
+| Docker image scanning | Postponed | Will be added after repository scanning is stable |
+
+The first implementation intentionally fails only on CRITICAL findings. HIGH findings are reported but do not block the workflow yet.
+
+See [Security Scanning](security.md) for the full workflow.
 
 ---
 
@@ -285,10 +315,11 @@ Each group of tools will live in its own Compose file so the base application st
 |------|----------|
 | `docker-compose.yml` | Base application: postgres, backend, frontend |
 | `docker-compose.monitoring.yml` | Prometheus, Grafana, Loki, Alloy, Uptime Kuma |
-| `docker-compose.quality.yml` | SonarQube |
+| `docker-compose.quality.yml` | SonarQube + PostgreSQL 16 (dedicated) |
+| `docker-compose.tools.yml` | Homepage local tools dashboard |
 | `docker-compose.analytics.yml` | Matomo |
 
-These files do not exist yet. They will be created as each tool is implemented.
+`docker-compose.quality.yml` and `docker-compose.tools.yml` are implemented. The others will be created as each tool is introduced.
 
 Tooling compose files extend the base project where needed and can be started independently:
 
@@ -304,9 +335,9 @@ This keeps the base `docker compose up --build` fast and focused on the applicat
 
 Tools will be introduced in this sequence. Each step builds on the previous one:
 
-1. **GitHub Actions CI** — Backend tests and frontend build on every push.
-2. **Dependabot** — Automated dependency update pull requests.
-3. **SonarQube + JaCoCo** — Quality dashboard with coverage reporting.
+1. **GitHub Actions CI** — Backend tests and frontend build on every push. Implemented.
+2. **Dependabot** — Automated dependency update pull requests. Implemented.
+3. **SonarQube + JaCoCo** — Quality dashboard with coverage reporting. Implemented locally; CI integration postponed.
 4. **Trivy** — Vulnerability scanning in CI.
 5. **Spring Boot Actuator + Micrometer** — Health and metrics endpoints.
 6. **Prometheus + Grafana** — Metrics storage and dashboards.
