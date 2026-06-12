@@ -36,13 +36,19 @@ The selected tooling stack is defined in [documentation/tooling.md](tooling.md).
 - [ ] Centralized logging with Loki and Alloy
 - [ ] Uptime monitoring with Uptime Kuma
 - [ ] Web analytics with Matomo
-- [ ] SonarQube and JaCoCo code quality
+- [x] SonarQube and JaCoCo code quality
+- [x] Local SonarQube setup (`docker-compose.quality.yml`)
+- [x] JaCoCo backend coverage (`jacoco-maven-plugin`, `verify` phase)
+- [x] Homepage local tools dashboard (`docker-compose.tools.yml`)
+- [ ] Integrate SonarQube with CI after deciding self-hosted runner or secure network exposure
+- [ ] Quality Gate enforcement
+- [ ] Frontend test coverage
 - [ ] Trivy security scanning
 - [ ] End-to-end tests with Playwright
 - [ ] Automated accessibility checks with axe-core
 - [ ] Performance audits with Lighthouse CI
 - [ ] API documentation with springdoc-openapi
-- [ ] Monitoring Docker Compose overlay files
+- [ ] Monitoring Docker Compose overlay files (Prometheus + Grafana, Loki + Alloy, Uptime Kuma)
 - [ ] Alerting strategy
 
 ---
