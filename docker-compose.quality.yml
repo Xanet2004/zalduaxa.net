@@ -1,3 +1,5 @@
+name: zalduaxa-net
+
 services:
   sonarqube-db:
     image: postgres:16
@@ -8,6 +10,8 @@ services:
       POSTGRES_PASSWORD: ${SONARQUBE_DB_PASSWORD:-sonarqube}
     volumes:
       - sonarqube_db_data:/var/lib/postgresql/data
+    networks:
+      - quality
 
   sonarqube:
     image: sonarqube:community
@@ -25,9 +29,15 @@ services:
       - sonarqube_data:/opt/sonarqube/data
       - sonarqube_extensions:/opt/sonarqube/extensions
       - sonarqube_logs:/opt/sonarqube/logs
+    networks:
+      - quality
 
 volumes:
   sonarqube_db_data:
   sonarqube_data:
   sonarqube_extensions:
   sonarqube_logs:
+
+networks:
+  quality:
+    name: zalduaxa-net-quality
