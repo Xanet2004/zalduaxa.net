@@ -72,3 +72,13 @@
         icon: mdi-database
         href: https://github.com/Xanet2004/zalduaxa.net/blob/observability/documentation/db.md
         description: Database documentation
+
+- Observability:
+    - Grafana:
+        href: http://localhost:3000
+        description: Metrics dashboards
+        icon: grafana.png
+    - Prometheus:
+        href: http://localhost:9090
+        description: Metrics query engine
+        icon: prometheus.png
