@@ -78,7 +78,18 @@
         href: http://localhost:3000
         description: Metrics dashboards
         icon: grafana.png
+        
     - Prometheus:
         href: http://localhost:9090
         description: Metrics query engine
         icon: prometheus.png
+
+    - Loki:
+        href: http://localhost:3100/ready
+        description: Log storage backend
+        icon: si-grafana
+
+    - Alloy:
+        href: http://localhost:12345
+        description: Docker log collector
+        icon: si-grafana
