@@ -53,6 +53,10 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        VITE_MATOMO_ENABLED: ${VITE_MATOMO_ENABLED:-false}
+        VITE_MATOMO_URL: ${VITE_MATOMO_URL:-http://localhost:8082/}
+        VITE_MATOMO_SITE_ID: ${VITE_MATOMO_SITE_ID:-1}
     container_name: zalduaxa-net-frontend
     depends_on:
       - backend
