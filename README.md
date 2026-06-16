@@ -18,10 +18,13 @@ cp .env.passwords.example .env.passwords
 docker compose up -d --build
 ```
 
-This starts the full local stack: app frontend, backend API, PostgreSQL database, SonarQube quality dashboard, and Homepage tools dashboard.
+This starts the full local stack: app frontend, backend API, PostgreSQL database, SonarQube quality dashboard, Homepage tools dashboard, Prometheus metrics engine, and Grafana dashboards.
 
 Access points:
 - App frontend: `http://localhost:5173`
+- Backend health: `http://localhost:8080/actuator/health`
+- Prometheus: `http://localhost:9090`
+- Grafana: `http://localhost:3000`
 - SonarQube: `http://localhost:9000`
 - Homepage: `http://localhost:3001`
 
@@ -92,6 +95,18 @@ npm run build
 - **Passwords** hashed with BCrypt + HMAC-SHA256 pepper.
 - **CORS** configured in the backend (`app.cors.origin`).
 - **CSRF** disabled (acceptable because the JWT is stored in an HttpOnly cookie).
+
+## Local observability
+
+| Tool | URL | Purpose |
+|------|-----|---------|
+| Backend health | `http://localhost:8080/actuator/health` | Backend health check |
+| Prometheus | `http://localhost:9090` | Metrics query engine |
+| Grafana | `http://localhost:3000` | Runtime metrics dashboard |
+| Homepage | `http://localhost:3001` | Local tools launchpad |
+| SonarQube | `http://localhost:9000` | Code quality dashboard |
+
+See [Tooling Architecture](documentation/tooling.md) and [Docker setup](documentation/docker.md) for detailed workflow.
 
 ## Documentation
 

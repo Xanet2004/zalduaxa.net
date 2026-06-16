@@ -160,7 +160,7 @@ Security considerations:
 
 - The health endpoint can be public or semi-public for external monitoring.
 - The Prometheus scraping endpoint must be internal-only or protected.
-- Actuator endpoints are not enabled in the codebase yet. They will be added and secured as a specific implementation step.
+- Actuator endpoints are implemented and enabled. Do not expose `/actuator/prometheus`, Prometheus (port 9090), or Grafana (port 3000) publicly without reverse proxy protection or authentication. In local development they are exposed for convenience.
 
 ---
 
@@ -168,17 +168,39 @@ Security considerations:
 
 **Selected tools: Prometheus, Grafana.**
 
-Prometheus scrapes metrics from the backend Actuator endpoint and stores them as time-series data. Grafana connects to Prometheus as a data source and provides visual dashboards.
+Prometheus scrapes metrics from the backend Actuator endpoint at `http://backend:8080/actuator/prometheus` and stores them as time-series data. Grafana connects to Prometheus as a data source and provides visual dashboards.
 
-Initial dashboard panels will cover:
+### Implementation status
+
+| Component | Status | Details |
+|-----------|--------|---------|
+| Prometheus | Implemented | `docker-compose.monitoring.yml`, port 9090, scraping backend |
+| Grafana | Implemented | `docker-compose.monitoring.yml`, port 3000 |
+| Prometheus datasource | Provisioned | Auto-connected to `http://prometheus:9090` |
+| Backend metrics dashboard | Provisioned | "Zalduaxa.net Backend Metrics" |
+
+### Grafana dashboard
+
+The provisioned dashboard covers:
 
 - JVM heap and non-heap memory usage.
-- CPU and thread activity.
-- HTTP request throughput and latency percentiles.
-- HTTP 4xx and 5xx error rates.
+- HTTP request throughput and latency (p99).
+- HTTP 5xx error rate.
 - Backend uptime.
-- Database connection pool health.
-- Container-level resource metrics (added later with cAdvisor or similar).
+- Database connection pool health (HikariCP).
+- Tomcat active sessions.
+
+### Security
+
+- Grafana admin credentials come from `.env.passwords` (`GRAFANA_ADMIN_USER`, `GRAFANA_ADMIN_PASSWORD`), not from committed compose files.
+- Sign-up is disabled (`GF_USERS_ALLOW_SIGN_UP=false`).
+- Anonymous access is disabled (`GF_AUTH_ANONYMOUS_ENABLED=false`).
+- Do not expose Grafana or Prometheus publicly without authentication or a reverse proxy.
+
+### Local URLs
+
+- Prometheus: `http://localhost:9090`
+- Grafana: `http://localhost:3000`
 
 ---
 
@@ -281,28 +303,28 @@ Access to these routes should be protected, disabled in production, or limited t
 
 ## 15. Runtime architecture
 
-The following diagram shows the target tooling architecture. Not every component is running yet — this is the selected stack that will be built incrementally.
+The following diagram shows the target tooling architecture. Components marked with ✔ are implemented. The others will be built incrementally.
 
 ```
 GitHub
-├── GitHub Actions
-├── Dependabot
-└── Repository checks
+├── GitHub Actions ✔
+├── Dependabot ✔
+└── Repository checks ✔
 
 Docker runtime
-├── frontend nginx
-├── backend Spring Boot
-│   ├── Actuator
-│   ├── Prometheus metrics
+├── frontend nginx ✔
+├── backend Spring Boot ✔
+│   ├── Actuator ✔
+│   ├── Prometheus metrics ✔
 │   └── OpenAPI docs
-├── PostgreSQL
-├── Prometheus
-├── Grafana
+├── PostgreSQL ✔
+├── Prometheus ✔
+├── Grafana ✔
 ├── Loki
 ├── Alloy
 ├── Uptime Kuma
 ├── Matomo
-└── SonarQube
+└── SonarQube ✔
 ```
 
 ---
@@ -319,7 +341,7 @@ Each group of tools will live in its own Compose file so the base application st
 | `docker-compose.tools.yml` | Homepage local tools dashboard |
 | `docker-compose.analytics.yml` | Matomo |
 
-`docker-compose.quality.yml` and `docker-compose.tools.yml` are implemented. The others will be created as each tool is introduced.
+`docker-compose.quality.yml`, `docker-compose.tools.yml`, and `docker-compose.monitoring.yml` are implemented. The others will be created as each tool is introduced.
 
 Tooling compose files extend the base project where needed and can be started independently:
 
@@ -339,8 +361,8 @@ Tools will be introduced in this sequence. Each step builds on the previous one:
 2. **Dependabot** — Automated dependency update pull requests. Implemented.
 3. **SonarQube + JaCoCo** — Quality dashboard with coverage reporting. Implemented locally; CI integration postponed.
 4. **Trivy** — Vulnerability scanning in CI.
-5. **Spring Boot Actuator + Micrometer** — Health and metrics endpoints.
-6. **Prometheus + Grafana** — Metrics storage and dashboards.
+5. **Spring Boot Actuator + Micrometer** — Health and metrics endpoints. ✔ Implemented.
+6. **Prometheus + Grafana** — Metrics storage and dashboards. ✔ Implemented.
 7. **Loki + Alloy** — Centralized log collection.
 8. **Uptime Kuma** — External availability monitoring.
 9. **Matomo** — Self-hosted web analytics.

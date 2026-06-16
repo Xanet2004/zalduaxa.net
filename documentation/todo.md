@@ -31,8 +31,8 @@ This document tracks the implementation roadmap for the portfolio platform (back
 
 The selected tooling stack is defined in [documentation/tooling.md](tooling.md).
 
-- [ ] Backend metrics with Spring Boot Actuator and Micrometer
-- [ ] Prometheus and Grafana dashboards
+- [x] Backend metrics with Spring Boot Actuator and Micrometer
+- [x] Prometheus and Grafana dashboards
 - [ ] Centralized logging with Loki and Alloy
 - [ ] Uptime monitoring with Uptime Kuma
 - [ ] Web analytics with Matomo
@@ -52,7 +52,8 @@ The selected tooling stack is defined in [documentation/tooling.md](tooling.md).
 - [ ] Automated accessibility checks with axe-core
 - [ ] Performance audits with Lighthouse CI
 - [ ] API documentation with springdoc-openapi
-- [ ] Monitoring Docker Compose overlay files (Prometheus + Grafana, Loki + Alloy, Uptime Kuma)
+- [x] Monitoring Docker Compose overlay files (Prometheus + Grafana)
+- [ ] Monitoring Docker Compose overlay files (Loki + Alloy, Uptime Kuma)
 - [ ] Alerting strategy
 
 ---

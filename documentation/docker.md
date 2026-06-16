@@ -4,14 +4,15 @@
 
 ## Overview
 
-The project uses four Docker Compose files, all under the project name `zalduaxa-net`:
+The project uses five Docker Compose files, all under the project name `zalduaxa-net`:
 
 | File | Purpose |
 |------|---------|
-| `docker-compose.yml` | **Main entrypoint.** Includes quality/tools files. Starts: postgres, backend, frontend, SonarQube, SonarQube DB, Homepage |
+| `docker-compose.yml` | **Main entrypoint.** Includes quality/tools/monitoring files. Starts: postgres, backend, frontend, SonarQube, SonarQube DB, Homepage, Prometheus, Grafana |
 | `docker-compose.dev.yml` | PostgreSQL-only helper for local backend development |
 | `docker-compose.quality.yml` | Local quality tooling: SonarQube + SonarQube DB (included by main file) |
 | `docker-compose.tools.yml` | Local tools dashboard: Homepage (included by main file) |
+| `docker-compose.monitoring.yml` | Monitoring stack: Prometheus, Grafana (included by main file) |
 
 ## Ports
 
@@ -20,6 +21,10 @@ The project uses four Docker Compose files, all under the project name `zalduaxa
 | Frontend | `http://localhost:5173` |
 | Backend | `http://localhost:8080` |
 | PostgreSQL | `localhost:5432` |
+| SonarQube | `http://localhost:9000` |
+| Prometheus | `http://localhost:9090` |
+| Grafana | `http://localhost:3000` |
+| Homepage | `http://localhost:3001` |
 
 ---
 
@@ -58,17 +63,21 @@ Start the complete local environment — app, quality tooling, and tools dashboa
 docker compose up -d --build
 ```
 
-This builds and starts all six services:
+This builds and starts all services:
 - **postgres**: App PostgreSQL 16 with persistent volume
 - **backend**: Spring Boot on port 8080
 - **frontend**: Built with Vite, served by nginx on port 5173
 - **sonarqube-db**: SonarQube PostgreSQL 16 database
 - **sonarqube**: SonarQube community on port 9000
 - **homepage**: Tools dashboard on port 3001
+- **prometheus**: Metrics storage and query engine on port 9090
+- **grafana**: Runtime metrics dashboards on port 3000
 
 Access points:
 - App frontend: `http://localhost:5173`
-- Backend API: `http://localhost:8080`
+- Backend health: `http://localhost:8080/actuator/health`
+- Prometheus: `http://localhost:9090`
+- Grafana: `http://localhost:3000`
 - SonarQube: `http://localhost:9000`
 - Homepage: `http://localhost:3001`
 
@@ -150,29 +159,28 @@ Files placed in `./storage/` on the host are served by the backend at `/storage/
 
 ---
 
----
-
 ## Docker Compose organization
 
-`docker-compose.yml` is the main entrypoint. It uses the `include` directive to compose in `docker-compose.quality.yml` and `docker-compose.tools.yml`. Running `docker compose up -d --build` from the repository root starts all services under the single project name `zalduaxa-net`.
+`docker-compose.yml` is the main entrypoint. It uses the `include` directive to compose in `docker-compose.quality.yml`, `docker-compose.tools.yml`, and `docker-compose.monitoring.yml`. Running `docker compose up -d --build` from the repository root starts all services under the single project name `zalduaxa-net`.
 
-All services are logically separated into dedicated networks:
+Services are organized across shared and dedicated networks:
 
 | Network | Services |
 |---------|----------|
-| `zalduaxa-net_default` | Core app: backend, frontend, postgres |
+| `zalduaxa-net_default` | Core app: backend, frontend, postgres, prometheus, grafana |
 | `zalduaxa-net-quality` | Quality tooling: SonarQube, SonarQube DB |
 | `zalduaxa-net-tools` | Tools dashboard: Homepage |
 
-Separate networks keep quality and tooling containers isolated from the app network. The same project name prevents Docker Desktop from splitting containers into multiple groups.
+Prometheus and Grafana share the default network with the application, so they can reach the backend at `backend:8080` and Prometheus at `prometheus:9090` via Docker DNS. Separate networks keep quality and tooling containers isolated.
 
 ### Individual file usage
 
-The quality and tools compose files can still be used standalone if needed:
+The quality, tools, and monitoring compose files can be used standalone if needed:
 
 ```bash
 docker compose -f docker-compose.quality.yml up -d
 docker compose -f docker-compose.tools.yml up -d
+docker compose -f docker-compose.monitoring.yml up -d
 ```
 
 See [Local Quality Tooling](local_quality.md) for the full quality workflow.
@@ -185,6 +193,71 @@ See [Local Quality Tooling](local_quality.md) for the full quality workflow.
 docker compose -f docker-compose.quality.yml down -v     # resets SonarQube only
 docker compose -f docker-compose.dev.yml down -v         # resets dev database only
 ```
+
+---
+
+## Monitoring stack
+
+Prometheus and Grafana run as part of `docker-compose.monitoring.yml`, included automatically by the main compose file.
+
+### Starting and stopping
+
+```bash
+docker compose up -d prometheus grafana
+docker compose logs --tail=100 prometheus
+docker compose logs --tail=100 grafana
+docker compose restart grafana
+```
+
+### Architecture
+
+```
+backend (port 8080)
+  └─ /actuator/prometheus  ──scrape──►  prometheus (port 9090)
+                                            │
+                                      http://prometheus:9090
+                                            │
+                                       grafana (port 3000)
+                                            │
+                                  Prometheus datasource (provisioned)
+                                            │
+                                  Zalduaxa.net Backend Metrics dashboard
+```
+
+### Health checks
+
+```bash
+# Backend Actuator health
+curl -i http://localhost:8080/actuator/health
+
+# Prometheus readiness
+curl -i http://localhost:9090/-/ready
+
+# Grafana API health
+curl -i http://localhost:3000/api/health
+```
+
+### Prometheus validation
+
+Open `http://localhost:9090` in a browser and run the query:
+
+```
+up
+```
+
+Expected result: `zalduaxa-backend` target with value `1`.
+
+### Grafana validation
+
+1. Open `http://localhost:3000`.
+2. Log in with the Grafana admin credentials from `.env.passwords`.
+3. Go to **Connections → Data sources** and confirm `Prometheus` is present with URL `http://prometheus:9090`.
+4. Open **Dashboards → Zalduaxa.net Backend Metrics**.
+5. Run a query in **Explore**: `up` — should return the backend target.
+
+### Volume safety warning
+
+`docker compose down -v` deletes volumes for ALL included services, including PostgreSQL, SonarQube, Prometheus (`prometheus_data`), and Grafana (`grafana_data`). Use `-v` only when you intentionally want to reset everything.
 
 ---
 
