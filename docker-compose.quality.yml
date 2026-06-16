@@ -10,6 +10,11 @@ services:
       POSTGRES_PASSWORD: ${SONARQUBE_DB_PASSWORD:-sonarqube}
     volumes:
       - sonarqube_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sonarqube -d sonarqube"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
     networks:
       - quality
 
@@ -17,7 +22,8 @@ services:
     image: sonarqube:community
     container_name: zalduaxa-sonarqube
     depends_on:
-      - sonarqube-db
+      sonarqube-db:
+        condition: service_healthy
     ports:
       - "9000:9000"
     environment:
