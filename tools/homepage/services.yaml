@@ -98,3 +98,8 @@
         href: http://localhost:3002
         description: Availability checks and uptime status
         icon: si-uptimekuma
+
+    - Matomo:
+        href: http://localhost:8082
+        description: Web analytics for visits and user behavior
+        icon: si-matomo

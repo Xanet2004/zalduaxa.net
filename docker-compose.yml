@@ -4,6 +4,7 @@ include:
   - docker-compose.quality.yml
   - docker-compose.tools.yml
   - docker-compose.monitoring.yml
+  - docker-compose.analytics.yml
 
 services:
   postgres:
