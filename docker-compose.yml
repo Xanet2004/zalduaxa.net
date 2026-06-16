@@ -3,6 +3,7 @@ name: zalduaxa-net
 include:
   - docker-compose.quality.yml
   - docker-compose.tools.yml
+  - docker-compose.monitoring.yml
 
 services:
   postgres:
