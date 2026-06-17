@@ -11,8 +11,14 @@ project-root/
 ├── db/                   # Historical SQL, reference queries, test data
 ├── documentation/        # Project docs
 ├── storage/              # Local file storage (images, assets)
-├── docker-compose.yml    # Full stack (postgres + backend + frontend)
-├── docker-compose.dev.yml # PostgreSQL-only dev helper
+├── monitoring/           # Observability configs (prometheus, grafana, loki, alloy, exporters, quality-runner)
+├── tools/                # Local tooling (Homepage config)
+├── docker-compose.yml    # Main entrypoint (includes all other compose files)
+├── docker-compose.dev.yml
+├── docker-compose.quality.yml    # SonarQube, quality-runner
+├── docker-compose.tools.yml      # Homepage
+├── docker-compose.monitoring.yml # Prometheus, Grafana, Loki, Alloy, Uptime Kuma
+├── docker-compose.analytics.yml  # Matomo + DB + cron + exporter
 └── README.md
 ```
 

@@ -10,7 +10,16 @@ target/
 # Runtime/generated files
 /storage/
 backend/guest-cookies.txt
+cookies.txt
+trivy-critical.json
+trivy-results.sarif
 *.zip
 
 # SonarQube
 .scannerwork/
+
+monitoring/prometheus/secrets/*
+!monitoring/prometheus/secrets/.gitkeep
+
+# Homepage runtime logs
+tools/homepage/logs/*.log

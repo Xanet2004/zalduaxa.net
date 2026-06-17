@@ -1,0 +1,91 @@
+name: zalduaxa-net
+
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: zalduaxa-prometheus
+    depends_on:
+      - backend
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+      - ./monitoring/prometheus/secrets/uptime_kuma_api_key:/etc/prometheus/secrets/uptime_kuma_api_key:ro
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.enable-lifecycle"
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:13.0.2
+    container_name: zalduaxa-grafana
+    depends_on:
+      - prometheus
+      - loki
+    env_file:
+      - ${APP_PASSWORD_ENV_FILE:-.env.passwords}
+    environment:
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_SERVER_HTTP_PORT: "3000"
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    restart: unless-stopped
+
+  loki:
+    image: grafana/loki:3.7.0
+    container_name: zalduaxa-loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./monitoring/loki/loki-config.yml:/etc/loki/loki-config.yml:ro
+      - loki_data:/loki
+    command:
+      - "-config.file=/etc/loki/loki-config.yml"
+    restart: unless-stopped
+
+  alloy:
+    image: grafana/alloy:v1.16.1
+    container_name: zalduaxa-alloy
+    depends_on:
+      - loki
+    ports:
+      - "12345:12345"
+    volumes:
+      - ./monitoring/alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - alloy_data:/var/lib/alloy/data
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    command:
+      - "run"
+      - "--server.http.listen-addr=0.0.0.0:12345"
+      - "--storage.path=/var/lib/alloy/data"
+      - "/etc/alloy/config.alloy"
+    restart: unless-stopped
+
+  uptime-kuma:
+    image: louislam/uptime-kuma:2.3.2
+    container_name: zalduaxa-uptime-kuma
+    depends_on:
+      - backend
+      - prometheus
+      - grafana
+      - loki
+      - alloy
+    ports:
+      - "3002:3001"
+    volumes:
+      - uptime_kuma_data:/app/data
+    restart: unless-stopped
+
+volumes:
+  prometheus_data:
+  grafana_data:
+  loki_data:
+  alloy_data:
+  uptime_kuma_data:

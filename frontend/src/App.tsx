@@ -1,8 +1,10 @@
 import { StrictMode, useEffect } from 'react'
-import { createBrowserRouter, RouterProvider } from 'react-router-dom'
+import { createBrowserRouter, Outlet, RouterProvider } from 'react-router-dom'
 
 import { SessionProvider } from '@/context/SessionContext'
 import { getSession } from '@/scripts/getSession'
+
+import MatomoPageTracker from '@/components/matomo/MatomoPageTracker'
 
 import Footer from '@/components/Footer/Footer'
 import Header from '@/components/Header/Header'
@@ -12,123 +14,79 @@ import NotFound from '@/pages/error/NotFound'
 import ProjectTypes from '@/pages/projectTypes/ProjectTypes'
 import LogIn from '@/pages/session/LogIn'
 import SignUp from '@/pages/session/SignUp'
+import LogOut from '@/pages/session/LogOut'
+import ProjectType from '@/pages/projectType/ProjectType'
+import Project from '@/pages/project/Project'
+
 import '@/styles/global.css'
 import '@/styles/tokens.css'
-import LogOut from './pages/session/LogOut'
-import ProjectType from './pages/projectType/ProjectType'
-import Project from './pages/project/Project'
+
+function RootLayout() {
+    return (
+        <>
+            <MatomoPageTracker />
+            <Header />
+            <main className="page-container">
+                <Outlet />
+            </main>
+            <Footer />
+        </>
+    )
+}
+
+const router = createBrowserRouter([
+    {
+        path: '/',
+        element: <RootLayout />,
+        errorElement: (
+            <>
+                <Header />
+                <main className="page-container">
+                    <NotFound />
+                </main>
+                <Footer />
+            </>
+        ),
+        children: [
+            {
+                index: true,
+                element: <Home />
+            },
+            {
+                path: 'user-profile',
+                element: <UserProfile />
+            },
+            {
+                path: 'signup',
+                element: <SignUp />
+            },
+            {
+                path: 'login',
+                element: <LogIn />
+            },
+            {
+                path: 'logout',
+                element: <LogOut />
+            },
+            {
+                path: 'projects',
+                element: <ProjectTypes />
+            },
+            {
+                path: 'projects/:typeSlug',
+                element: <ProjectType />
+            },
+            {
+                path: 'projects/:typeSlug/:projectSlug',
+                element: <Project />
+            }
+        ]
+    }
+])
 
 export default function App() {
-    const router = createBrowserRouter([
-        {
-            path: '/',
-            element: (
-                <>
-                    <Header />
-                    <main className="page-container">
-                        <Home />
-                    </main>
-                    <Footer />
-                </>
-            ),
-            errorElement: (
-                <>
-                    <Header />
-                    <main className="page-container">
-                        <NotFound />
-                    </main>
-                    <Footer />
-                </>
-            )
-        },
-        {
-            path: '/user-profile',
-            element: (
-                <>
-                    <Header />
-                    <main className="page-container">
-                        <UserProfile />
-                    </main>
-                    <Footer />
-                </>
-            )
-        },
-        {
-            path: '/signup',
-            element: (
-                <>
-                    <Header />
-                    <main className="page-container">
-                        <SignUp />
-                    </main>
-                    <Footer />
-                </>
-            )
-        },
-        {
-            path: '/login',
-            element: (
-                <>
-                    <Header />
-                    <main className="page-container">
-                        <LogIn />
-                    </main>
-                    <Footer />
-                </>
-            )
-        },
-        {
-            path: '/logout',
-            element: (
-                <>
-                    <Header />
-                    <main className="page-container">
-                        <LogOut />
-                    </main>
-                    <Footer />
-                </>
-            )
-        },
-        {
-            path: '/projects',
-            element: (
-                <>
-                    <Header />
-                    <main className="page-container">
-                        <ProjectTypes />
-                    </main>
-                    <Footer />
-                </>
-            )
-        },
-        {
-            path: "/projects/:typeSlug",
-            element: (
-                <>
-                    <Header />
-                    <main className="page-container">
-                        <ProjectType />
-                    </main>
-                    <Footer />
-                </>
-            )
-        },
-        {
-            path: "/projects/:typeSlug/:projectSlug",
-            element: (
-                <>
-                    <Header />
-                    <main className="page-container">
-                        <Project />
-                    </main>
-                    <Footer />
-                </>
-            )
-        }
-    ]);
-
     useEffect(() => {
-        getSession();
+        getSession()
     }, [])
 
     return (
@@ -137,5 +95,5 @@ export default function App() {
                 <RouterProvider router={router} />
             </SessionProvider>
         </StrictMode>
-    );
+    )
 }
