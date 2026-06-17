@@ -38,6 +38,30 @@ services:
     networks:
       - quality
 
+  quality-runner:
+    build:
+      context: ./monitoring/quality-runner
+      dockerfile: Dockerfile
+    container_name: zalduaxa-quality-runner
+    depends_on:
+      - frontend
+    env_file:
+      - ${APP_ENV_FILE:-.env}
+    environment:
+      QUALITY_RUNNER_PORT: ${QUALITY_RUNNER_PORT:-9102}
+      QUALITY_FRONTEND_BASE_URL: ${QUALITY_FRONTEND_BASE_URL:-http://frontend:5173}
+      QUALITY_RUNNER_INTERVAL_SECONDS: ${QUALITY_RUNNER_INTERVAL_SECONDS:-900}
+      QUALITY_ROUTE_TIMEOUT_MS: ${QUALITY_ROUTE_TIMEOUT_MS:-30000}
+      QUALITY_ROUTES: ${QUALITY_ROUTES:-/,/projects,/login,/signup,/__quality_not_found__}
+      QUALITY_LIGHTHOUSE_ROUTES: ${QUALITY_LIGHTHOUSE_ROUTES:-/,/projects,/login,/signup}
+      QUALITY_LIGHTHOUSE_ENABLED: ${QUALITY_LIGHTHOUSE_ENABLED:-true}
+      QUALITY_AXE_ENABLED: ${QUALITY_AXE_ENABLED:-true}
+    ports:
+      - "9102:9102"
+    init: true
+    shm_size: "1gb"
+    restart: unless-stopped
+
 volumes:
   sonarqube_db_data:
   sonarqube_data:

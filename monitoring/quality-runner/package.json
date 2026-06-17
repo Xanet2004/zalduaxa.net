@@ -1,0 +1,18 @@
+{
+  "name": "zalduaxa-frontend-quality-runner",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "run-once": "QUALITY_RUN_ONCE=true node src/server.js"
+  },
+  "dependencies": {
+    "@axe-core/playwright": "^4.10.2",
+    "@playwright/test": "1.53.0",
+    "axe-core": "^4.10.2",
+    "chrome-launcher": "^1.2.0",
+    "lighthouse": "^12.8.0",
+    "playwright": "1.53.0"
+  }
+}
