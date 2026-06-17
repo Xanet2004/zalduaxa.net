@@ -44,6 +44,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String token = sessionService.extractToken(request);
 
+        String path = request.getServletPath();
+
+        if (isPublicDocumentationPath(path)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         if (token == null || token.isBlank()) {
             filterChain.doFilter(request, response);
             return;
@@ -66,12 +73,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         AuthenticatedUser principal = toPrincipal(user);
 
-        UsernamePasswordAuthenticationToken authentication =
-                new UsernamePasswordAuthenticationToken(
-                        principal,
-                        null,
-                        toAuthorities(user)
-                );
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                principal,
+                null,
+                toAuthorities(user));
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
@@ -86,8 +91,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 user.getId(),
                 user.getUsername(),
                 user.getEmail(),
-                roleName
-        );
+                roleName);
     }
 
     private List<SimpleGrantedAuthority> toAuthorities(User user) {
@@ -99,5 +103,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String authority = "ROLE_" + role.getName().toUpperCase(Locale.ROOT);
         return List.of(new SimpleGrantedAuthority(authority));
+    }
+
+    private boolean isPublicDocumentationPath(String path) {
+        return path.startsWith("/v3/api-docs")
+                || path.startsWith("/swagger-ui")
+                || path.equals("/swagger-ui.html");
     }
 }

@@ -27,33 +27,40 @@ This document tracks the implementation roadmap for the portfolio platform (back
 
 ---
 
-## Phase 2 — Observability, quality, analytics & usability
+## Phase 2 — Observability, quality, analytics & usability (completed)
 
 The selected tooling stack is defined in [documentation/tooling.md](tooling.md).
 
-- [ ] Backend metrics with Spring Boot Actuator and Micrometer
-- [ ] Prometheus and Grafana dashboards
-- [ ] Centralized logging with Loki and Alloy
-- [ ] Uptime monitoring with Uptime Kuma
-- [ ] Web analytics with Matomo
-- [x] SonarQube and JaCoCo code quality
-- [x] Local SonarQube setup (`docker-compose.quality.yml`)
-- [x] JaCoCo backend coverage (`jacoco-maven-plugin`, `verify` phase)
-- [x] Homepage local tools dashboard (`docker-compose.tools.yml`)
-- [ ] Integrate SonarQube with CI after deciding self-hosted runner or secure network exposure
-- [ ] Quality Gate enforcement
-- [ ] Frontend test coverage
-- [x] Trivy repository filesystem scanning (vulnerabilities, secrets, misconfigurations)
-- [x] SARIF report upload to GitHub Code Scanning
-- [ ] Docker image scanning with Trivy
-- [ ] Decide whether HIGH severity should block pull requests
-- [ ] Add `.trivyignore` only if real false positives appear
-- [ ] End-to-end tests with Playwright
-- [ ] Automated accessibility checks with axe-core
-- [ ] Performance audits with Lighthouse CI
-- [ ] API documentation with springdoc-openapi
-- [ ] Monitoring Docker Compose overlay files (Prometheus + Grafana, Loki + Alloy, Uptime Kuma)
-- [ ] Alerting strategy
+- [x] 15. Decide and document Phase 2 tool stack
+- [x] 16. Add GitHub Actions CI
+- [x] 17. Add Dependabot
+- [x] 18.1 Add SonarQube + JaCoCo
+- [x] 18.2 Homepage dashboard
+- [x] 19. Add Trivy
+- [x] 20. Add Spring Boot Actuator
+- [x] 21.1 Prometheus
+- [x] 21.2 Grafana
+- [x] 22. Add Loki + Alloy
+- [x] 23. Add Uptime Kuma
+- [x] 24. Add Matomo analytics
+- [x] 25.1 Playwright basic smoke tests
+- [x] 25.2 axe accessibility tests
+- [x] 25.3 Lighthouse local metrics
+- [x] 26. Add OpenAPI / Swagger
+- [x] 27. Document Phase 2 workflows
+
+### Phase 2 follow-up tasks
+
+- [ ] Fix frontend accessibility issues detected by quality-runner
+- [ ] Add CI integration for quality-runner (Playwright in GitHub Actions)
+- [ ] Improve frontend quality Grafana dashboard
+- [ ] Configure Uptime Kuma notifications (email, Telegram, etc.)
+- [ ] Review Matomo privacy/cookie consent for production
+- [ ] Add production hardening for Swagger/observability endpoints
+- [ ] Integrate SonarQube with CI (self-hosted runner or secure network exposure)
+- [ ] Enable Docker image scanning with Trivy
+- [ ] Decide whether HIGH severity should block PRs
+- [ ] Add `.trivyignore` if real false positives appear
 
 ---
 
@@ -61,7 +68,6 @@ The selected tooling stack is defined in [documentation/tooling.md](tooling.md).
 
 - [ ] Project update endpoint (`PUT /projects/{slug}`)
 - [ ] Remove deprecated `/project/...` endpoints (after frontend migration is stable)
-- [ ] OpenAPI / Swagger documentation
 - [ ] Recipes (template-based content type)
 - [ ] Drawings (template-based content type)
 - [ ] Comments / likes on content items

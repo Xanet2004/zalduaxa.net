@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import net.zalduaxa.backend.project.dto.request.DeleteProjectRequest;
@@ -36,6 +37,7 @@ import net.zalduaxa.backend.project.service.ProjectTypeService;
 @RestController
 @CrossOrigin(origins = "${app.cors.origin}", allowCredentials = "true", maxAge = 3600)
 @Validated
+@Tag(name = "Projects", description = "Project and project type endpoints")
 public class ProjectController {
 
     private final ProjectTypeService projectTypeService;

@@ -1,4 +1,4 @@
-- Development:
+- Application:
     - Frontend:
         icon: mdi-react
         href: http://localhost:5173
@@ -9,6 +9,12 @@
         href: http://localhost:8080
         description: Spring Boot backend
 
+    - Homepage:
+        icon: homepage.png
+        href: http://localhost:3001
+        description: Local tools dashboard
+
+- Repository & CI:
     - GitHub Repository:
         icon: github.png
         href: https://github.com/Xanet2004/zalduaxa.net
@@ -19,56 +25,93 @@
         href: https://github.com/Xanet2004/zalduaxa.net/actions
         description: CI workflow runs
 
-- Quality:
-    - SonarQube:
-        icon: sonarqube.png
-        href: http://localhost:9000
-        description: Local code quality analysis
-
     - Dependabot PRs:
         icon: github.png
         href: https://github.com/Xanet2004/zalduaxa.net/pulls?q=is%3Apr+author%3Aapp%2Fdependabot
         description: Dependency update pull requests
 
-- Runtime:
-    - Homepage:
-        icon: homepage.png
-        href: http://localhost:3001
-        description: Local tools dashboard
+- Quality & Security:
+    - SonarQube:
+        icon: sonarqube.png
+        href: http://localhost:9000
+        description: Local code quality analysis
 
-    - PostgreSQL:
-        icon: postgres.png
-        href: http://localhost:5432
-        description: Local database port
-
-- Security:
     - GitHub Security:
         icon: github.png
         href: https://github.com/Xanet2004/zalduaxa.net/security
         description: Code scanning and repository security alerts
 
-    - Security docs:
+    - Security Docs:
         icon: mdi-shield-check
         href: https://github.com/Xanet2004/zalduaxa.net/blob/observability/documentation/security.md
         description: Local and CI security scanning workflow
 
-- Documentation:
+- API Documentation:
+    - Swagger UI:
+        icon: si-swagger
+        href: http://localhost:8080/swagger-ui.html
+        description: Interactive REST API documentation
+
+    - OpenAPI JSON:
+        icon: si-openapiinitiative
+        href: http://localhost:8080/v3/api-docs
+        description: Raw OpenAPI specification
+
+- Project Documentation:
     - README:
         icon: mdi-book-open-page-variant
         href: https://github.com/Xanet2004/zalduaxa.net/blob/observability/README.md
-        description: Project README
+        description: Project overview and setup guide
 
-    - Tooling docs:
+    - Tooling Docs:
         icon: mdi-tools
         href: https://github.com/Xanet2004/zalduaxa.net/blob/observability/documentation/tooling.md
         description: Selected tooling architecture
+
+    - Database Docs:
+        icon: mdi-database
+        href: https://github.com/Xanet2004/zalduaxa.net/blob/observability/documentation/db.md
+        description: Database structure and decisions
 
     - Todo:
         icon: mdi-checkbox-marked-outline
         href: https://github.com/Xanet2004/zalduaxa.net/blob/observability/documentation/todo.md
         description: Project implementation roadmap
 
-    - DB docs:
-        icon: mdi-database
-        href: https://github.com/Xanet2004/zalduaxa.net/blob/observability/documentation/db.md
-        description: Database documentation
+- Runtime & Data:
+    - PostgreSQL:
+        icon: postgres.png
+        href: http://localhost:5432
+        description: Local database connection endpoint
+
+- Observability:
+    - Grafana:
+        icon: grafana.png
+        href: http://localhost:3000
+        description: Metrics dashboards
+
+    - Prometheus:
+        icon: prometheus.png
+        href: http://localhost:9090
+        description: Metrics query engine
+
+    - Loki:
+        icon: si-grafana
+        href: http://localhost:3100/ready
+        description: Log storage backend readiness check
+
+    - Alloy:
+        icon: si-grafana
+        href: http://localhost:12345
+        description: Docker log collector
+
+    - Uptime Kuma:
+        icon: si-uptimekuma
+        href: http://localhost:3002
+        description: Availability checks and uptime status
+
+- Analytics:
+    - Matomo:
+        icon: si-matomo
+        href: http://localhost:8082
+        description: Web analytics for visits and user behavior

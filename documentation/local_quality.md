@@ -12,22 +12,37 @@ Local code quality workflow using SonarQube, JaCoCo, and Homepage.
 |------|------|--------|
 | SonarQube | Central quality dashboard — code smells, bugs, vulnerabilities, coverage, technical debt | `http://localhost:9000` |
 | JaCoCo | Java test coverage report (HTML + XML) | `backend/target/site/jacoco/index.html` |
+| Quality runner | Frontend Playwright + axe + Lighthouse automated checks | `http://localhost:9102/metrics` |
 | Homepage | Local tools dashboard with links to all services | `http://localhost:3001` |
 
 ---
 
 ## How to start
 
-### SonarQube
+### Full quality stack
 
 ```bash
 docker compose -f docker-compose.quality.yml up -d
+```
+
+This starts SonarQube, its database, and the frontend quality runner.
+
+### SonarQube only
+
+```bash
+docker compose -f docker-compose.quality.yml up -d sonarqube-db sonarqube
 ```
 
 Requires `vm.max_map_count >= 262144` on the host. Check with:
 
 ```bash
 sysctl vm.max_map_count
+```
+
+### Quality runner only
+
+```bash
+docker compose -f docker-compose.quality.yml up -d quality-runner
 ```
 
 ### Homepage

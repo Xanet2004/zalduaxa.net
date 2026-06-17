@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -37,6 +38,7 @@ import net.zalduaxa.backend.auth.service.SessionService;
     allowCredentials = "true",
     maxAge = 3600
 )
+@Tag(name = "Authentication", description = "Login, signup, logout and session endpoints")
 public class AuthController {
 
     private final AuthService authService;
@@ -48,6 +50,9 @@ public class AuthController {
 
     @Value("${app.auth.cookie.secure:false}")
     private boolean cookieSecure;
+
+    @Value("${app.auth.cookie.httpOnly:true}")
+    private boolean cookieHttpOnly;
 
     @Value("${app.auth.cookie.sameSite:Lax}")
     private String cookieSameSite;
@@ -102,7 +107,7 @@ public class AuthController {
 
     private ResponseCookie buildAuthCookie(String token) {
         ResponseCookie.ResponseCookieBuilder b = ResponseCookie.from(cookieName, token)
-            .httpOnly(true) // TODO: false when building the final project
+            .httpOnly(cookieHttpOnly)
             .secure(cookieSecure)
             .path(cookiePath)
             .maxAge(Duration.ofDays(cookieMaxAgeDays))
@@ -117,7 +122,7 @@ public class AuthController {
 
     private ResponseCookie deleteAuthCookie() {
         ResponseCookie.ResponseCookieBuilder b = ResponseCookie.from(cookieName, "")
-            .httpOnly(true) // TODO: false when building the final project
+            .httpOnly(cookieHttpOnly)
             .secure(cookieSecure)
             .path(cookiePath)
             .maxAge(Duration.ZERO)

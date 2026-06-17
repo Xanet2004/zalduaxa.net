@@ -67,9 +67,12 @@ The initial pipeline will include:
 - Backend compilation and test execution.
 - Frontend build verification.
 
-Later stages can add SonarQube analysis, Trivy scans, Playwright tests, Lighthouse CI reports, and Docker build validation.
+Current workflows:
 
-Workflows will be defined incrementally as each tool is introduced. No workflow files exist yet.
+| Workflow | Triggers | Purpose |
+|----------|----------|---------|
+| `ci.yml` | Push, PR | Backend tests (`./mvnw clean test`), frontend build (`npm run build`) |
+| `security.yml` | Push, PR, weekly, manual | Trivy filesystem scan (vulnerabilities, secrets, misconfigurations) |
 
 ---
 
@@ -104,6 +107,7 @@ On the frontend side, TypeScript strict checks and ESLint (where configured) wil
 | Backend JaCoCo | Implemented | `jacoco-maven-plugin` in `backend/pom.xml`, `verify` phase |
 | `sonar-project.properties` | Implemented | Root-level, one project for monorepo |
 | Homepage dashboard | Implemented | `docker-compose.tools.yml`, port 3001 |
+| Frontend quality runner | Implemented | Playwright + axe + Lighthouse, port 9102 |
 | Quality Gate enforcement | Postponed | Will be added together with CI integration |
 | CI SonarQube integration | Postponed | Local-only; not reachable from GitHub-hosted runners |
 
@@ -160,7 +164,7 @@ Security considerations:
 
 - The health endpoint can be public or semi-public for external monitoring.
 - The Prometheus scraping endpoint must be internal-only or protected.
-- Actuator endpoints are not enabled in the codebase yet. They will be added and secured as a specific implementation step.
+- Actuator endpoints are implemented and enabled. Do not expose `/actuator/prometheus`, Prometheus (port 9090), or Grafana (port 3000) publicly without reverse proxy protection or authentication. In local development they are exposed for convenience.
 
 ---
 
@@ -168,17 +172,39 @@ Security considerations:
 
 **Selected tools: Prometheus, Grafana.**
 
-Prometheus scrapes metrics from the backend Actuator endpoint and stores them as time-series data. Grafana connects to Prometheus as a data source and provides visual dashboards.
+Prometheus scrapes metrics from the backend Actuator endpoint at `http://backend:8080/actuator/prometheus` and stores them as time-series data. Grafana connects to Prometheus as a data source and provides visual dashboards.
 
-Initial dashboard panels will cover:
+### Implementation status
+
+| Component | Status | Details |
+|-----------|--------|---------|
+| Prometheus | Implemented | `docker-compose.monitoring.yml`, port 9090, scraping backend |
+| Grafana | Implemented | `docker-compose.monitoring.yml`, port 3000 |
+| Prometheus datasource | Provisioned | Auto-connected to `http://prometheus:9090` |
+| Backend metrics dashboard | Provisioned | "Zalduaxa.net Backend Metrics" |
+
+### Grafana dashboard
+
+The provisioned dashboard covers:
 
 - JVM heap and non-heap memory usage.
-- CPU and thread activity.
-- HTTP request throughput and latency percentiles.
-- HTTP 4xx and 5xx error rates.
+- HTTP request throughput and latency (p99).
+- HTTP 5xx error rate.
 - Backend uptime.
-- Database connection pool health.
-- Container-level resource metrics (added later with cAdvisor or similar).
+- Database connection pool health (HikariCP).
+- Tomcat active sessions.
+
+### Security
+
+- Grafana admin credentials come from `.env.passwords` (`GRAFANA_ADMIN_USER`, `GRAFANA_ADMIN_PASSWORD`), not from committed compose files.
+- Sign-up is disabled (`GF_USERS_ALLOW_SIGN_UP=false`).
+- Anonymous access is disabled (`GF_AUTH_ANONYMOUS_ENABLED=false`).
+- Do not expose Grafana or Prometheus publicly without authentication or a reverse proxy.
+
+### Local URLs
+
+- Prometheus: `http://localhost:9090`
+- Grafana: `http://localhost:3000`
 
 ---
 
@@ -186,16 +212,24 @@ Initial dashboard panels will cover:
 
 **Selected tools: Grafana Loki, Grafana Alloy.**
 
-Loki stores and indexes log data without the overhead of a full-text search engine like Elasticsearch. It integrates directly with Grafana, so logs appear alongside metrics dashboards.
+### Implementation status
 
-Alloy collects logs from each service and forwards them to Loki. It can also serve as a telemetry pipeline for traces and metrics in the future. Services to collect logs from:
+| Component | Status | Details |
+|-----------|--------|---------|
+| Loki | Implemented | `docker-compose.monitoring.yml`, port 3100 |
+| Alloy | Implemented | `docker-compose.monitoring.yml`, port 12345 |
+| Logs dashboard | Implemented | Grafana "Logs Overview" |
 
-- Backend Spring Boot (stdout or file‑based).
-- Frontend nginx (access and error logs).
-- PostgreSQL (slow queries and general logs).
-- Other Docker containers as the stack grows.
+### Architecture
 
-This avoids relying solely on `docker logs` for debugging, which is impractical once multiple services are running.
+Alloy reads Docker container logs via the Docker socket and forwards them to Loki. Loki stores and indexes the log data for querying in Grafana. Services collected:
+
+- Backend Spring Boot stdout.
+- Frontend nginx access and error logs.
+- Prometheus and Grafana logs.
+- All other Docker containers.
+
+The Grafana logs dashboard allows searching by service, container, or log level. This replaces relying on `docker logs` for debugging.
 
 ---
 
@@ -203,16 +237,22 @@ This avoids relying solely on `docker logs` for debugging, which is impractical 
 
 **Selected tool: Uptime Kuma.**
 
-Uptime Kuma periodically checks whether public endpoints are reachable. It provides a status dashboard, configurable check intervals, and alerting.
+### Implementation status
 
-Endpoints to monitor:
+| Component | Status | Details |
+|-----------|--------|---------|
+| Uptime Kuma | Implemented | `docker-compose.monitoring.yml`, port 3002 |
 
-- Public home page.
-- Public project types API.
-- Backend health endpoint (once available).
-- Storage route.
+Uptime Kuma periodically checks endpoint availability and exposes metrics for Prometheus scraping. Configured monitors in the UI include the frontend, backend, and other critical services.
 
-Alerts can later be routed to email, Discord, Telegram, or push notifications.
+Services monitored:
+
+- Frontend (`http://frontend:5173`)
+- Backend health (`http://backend:8080/actuator/health`)
+- Prometheus (`http://prometheus:9090/-/ready`)
+- Grafana (`http://grafana:3000/api/health`)
+
+Uptime Kuma metrics are scraped by Prometheus and displayed in Grafana. Alerts can be configured per monitor (email, Discord, Telegram, etc.).
 
 ---
 
@@ -220,45 +260,85 @@ Alerts can later be routed to email, Discord, Telegram, or push notifications.
 
 **Selected tool: Matomo.**
 
-Matomo is a privacy-friendly, self-hosted analytics platform. It tracks visitor statistics without sending data to third parties.
+### Implementation status
 
-Metrics collected:
+| Component | Status | Details |
+|-----------|--------|---------|
+| Matomo | Implemented | `docker-compose.analytics.yml`, port 8082 |
+| Matomo DB | Implemented | MariaDB, persistent volume |
+| Matomo cron | Implemented | Hourly archive processing |
+| Matomo frontend tracking | Implemented | Vite build args for Matomo URL and site ID |
+| Matomo exporter | Implemented | Python HTTP server, port 9101, scraped by Prometheus |
+| Analytics dashboards | Implemented | Grafana "Matomo Analytics" and "Matomo Overview" |
 
-- Page views, unique visitors, sessions.
-- Visit duration and bounce rate.
-- Referrers and search terms.
-- Device, browser, and operating system.
-- Country and language.
-- Specific project and project-type page views.
+### Architecture
 
-Implementation notes:
+Matomo runs as a Docker service with a MariaDB database. The `matomo-cron` container archives analytics data hourly. Frontend tracking is enabled via build-time environment variables (`VITE_MATOMO_ENABLED`, `VITE_MATOMO_URL`, `VITE_MATOMO_SITE_ID`).
 
-- Matomo must not track authenticated backend requests or session data.
-- A privacy/cookie consent mechanism will be needed before deployment.
-- Matomo runs as its own Docker Compose service with a MariaDB/MySQL database.
+The Matomo exporter (`monitoring/matomo-exporter/matomo_exporter.py`) queries the Matomo API and exposes Prometheus metrics:
+
+- `matomo_visits`, `matomo_unique_visitors`, `matomo_actions`
+- `matomo_bounces`, `matomo_avg_visit_duration_seconds`
+- `matomo_page_hits`, `matomo_page_visits` (top pages)
+- `matomo_exporter_up`, `matomo_exporter_scrape_duration_seconds`
+
+### Security
+
+- Matomo API token comes from `.env.passwords` (`MATOMO_TOKEN_AUTH`).
+- Matomo is not exposed publicly in local development.
+- A privacy/cookie consent mechanism may be needed before production deployment.
 
 ---
 
 ## 13. Frontend quality assurance
 
-**Selected tools: Playwright, axe-core, Lighthouse CI.**
+**Selected tools: Playwright, axe-core, Lighthouse.**
 
-| Tool | Role |
-|------|------|
-| Playwright | End-to-end browser tests covering real user flows |
-| axe-core | Automated accessibility audits integrated into Playwright tests |
-| Lighthouse CI | Performance, accessibility, SEO, and best-practice scoring |
+### Implementation status
 
-Initial test flows:
+| Component | Status | Details |
+|-----------|--------|---------|
+| Playwright smoke tests | Implemented | Routes: `/`, `/projects`, `/login`, `/signup`, `/__quality_not_found__` |
+| axe accessibility scans | Implemented | Violations tracked per route by impact and rule |
+| Lighthouse audits | Implemented | Scores for performance, accessibility, best-practices, SEO |
+| Prometheus metrics | Implemented | Exported on port 9102 |
+| Grafana dashboard | Implemented | "Frontend Quality" with axe violations, Lighthouse scores, route status |
 
-- Home page loads and renders project types.
-- Project type page shows projects for a given slug.
-- Project detail page loads content.
-- Login and logout round-trip.
-- Profile page for authenticated users.
-- 404 page for unknown routes.
+### Architecture
 
-These tests will run in CI and provide a safety net before each deployment.
+The quality-runner (`monitoring/quality-runner/`) is a Node.js service based on the Playwright Docker image. It runs on a configurable interval (default 15 minutes) and checks:
+
+1. **Route health** — each route loads without JS/page/network errors (`quality_route_up`).
+2. **Accessibility** — `@axe-core/playwright` scans each route for violations (`quality_axe_violations_total`, `quality_axe_violations_by_impact`, `quality_axe_violations_by_rule`).
+3. **Lighthouse** — performance, accessibility, best-practices, and SEO scores (`quality_lighthouse_score`). Timing metrics and cumulative layout shift are also reported.
+
+Metrics are exposed via an HTTP server at `/metrics` and scraped by Prometheus. The Grafana "Frontend Quality" dashboard visualizes the results.
+
+### Configuration
+
+Variables in `.env`:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `QUALITY_RUNNER_PORT` | `9102` | HTTP metrics port |
+| `QUALITY_FRONTEND_BASE_URL` | `http://frontend:5173` | Frontend URL to test |
+| `QUALITY_RUNNER_INTERVAL_SECONDS` | `900` | Run interval (15 min) |
+| `QUALITY_ROUTE_TIMEOUT_MS` | `30000` | Per-route timeout |
+| `QUALITY_ROUTES` | `/,/projects,/login,/signup,/__quality_not_found__` | Routes to check |
+| `QUALITY_LIGHTHOUSE_ROUTES` | `/,/projects,/login,/signup` | Routes for Lighthouse |
+| `QUALITY_LIGHTHOUSE_ENABLED` | `true` | Enable Lighthouse audits |
+| `QUALITY_AXE_ENABLED` | `true` | Enable axe accessibility scans |
+
+### Running a one-off check
+
+```bash
+docker compose run --rm quality-runner npm run run-once
+```
+
+### Security
+
+- The quality-runner is for local development only. Do not expose port 9102 publicly.
+- Lighthouse requires significant memory; the container uses `shm_size: "1gb"`.
 
 ---
 
@@ -266,43 +346,56 @@ These tests will run in CI and provide a safety net before each deployment.
 
 **Selected tool: springdoc-openapi.**
 
-springdoc-openapi generates OpenAPI 3 documentation directly from Spring Boot controller annotations, request DTOs, and response types. This keeps the API documentation in sync with the code and eliminates stale hand-written endpoint docs.
+### Implementation status
 
-Expected routes once enabled:
+| Component | Status | Details |
+|-----------|--------|---------|
+| OpenAPI generation | Implemented | Enabled in `dev` profile |
+| Swagger UI | Implemented | `http://localhost:8080/swagger-ui.html` |
+| OpenAPI JSON | Implemented | `http://localhost:8080/v3/api-docs` |
+
+springdoc-openapi generates OpenAPI 3 documentation from Spring Boot controller annotations, request DTOs, and response types. This keeps the API documentation in sync with the code.
+
+### Routes
 
 | Path | Purpose |
 |------|---------|
 | `/v3/api-docs` | OpenAPI JSON schema |
-| `/swagger-ui/index.html` | Interactive API explorer |
+| `/swagger-ui.html` | Interactive API explorer |
 
-Access to these routes should be protected, disabled in production, or limited to the `dev` profile.
+### Security
+
+- Swagger UI and OpenAPI JSON are **enabled in the `dev` profile only** (`springdoc.api-docs.enabled=true`, `springdoc.swagger-ui.enabled=true`).
+- In production (`prod` profile) they are **disabled** (`springdoc.api-docs.enabled=false`).
 
 ---
 
 ## 15. Runtime architecture
 
-The following diagram shows the target tooling architecture. Not every component is running yet — this is the selected stack that will be built incrementally.
+The following diagram shows the target tooling architecture. Components marked with ✔ are implemented. The others will be built incrementally.
 
 ```
 GitHub
-├── GitHub Actions
-├── Dependabot
-└── Repository checks
+├── GitHub Actions ✔
+├── Dependabot ✔
+└── Repository checks ✔
 
 Docker runtime
-├── frontend nginx
-├── backend Spring Boot
-│   ├── Actuator
-│   ├── Prometheus metrics
-│   └── OpenAPI docs
-├── PostgreSQL
-├── Prometheus
-├── Grafana
-├── Loki
-├── Alloy
-├── Uptime Kuma
-├── Matomo
-└── SonarQube
+├── frontend nginx ✔
+├── backend Spring Boot ✔
+│   ├── Actuator ✔
+│   ├── Prometheus metrics ✔
+│   └── OpenAPI docs ✔
+├── PostgreSQL ✔
+├── Prometheus ✔
+├── Grafana ✔
+├── Loki ✔
+├── Alloy ✔
+├── Uptime Kuma ✔
+├── Matomo ✔
+│   └── Matomo exporter ✔
+├── quality-runner ✔
+└── SonarQube ✔
 ```
 
 ---
@@ -315,11 +408,11 @@ Each group of tools will live in its own Compose file so the base application st
 |------|----------|
 | `docker-compose.yml` | Base application: postgres, backend, frontend |
 | `docker-compose.monitoring.yml` | Prometheus, Grafana, Loki, Alloy, Uptime Kuma |
-| `docker-compose.quality.yml` | SonarQube + PostgreSQL 16 (dedicated) |
+| `docker-compose.quality.yml` | SonarQube + DB, quality-runner |
 | `docker-compose.tools.yml` | Homepage local tools dashboard |
-| `docker-compose.analytics.yml` | Matomo |
+| `docker-compose.analytics.yml` | Matomo + DB + cron + Prometheus exporter |
 
-`docker-compose.quality.yml` and `docker-compose.tools.yml` are implemented. The others will be created as each tool is introduced.
+All five compose files are implemented. `docker-compose.yml` includes the other four via the `include` directive.
 
 Tooling compose files extend the base project where needed and can be started independently:
 
@@ -333,20 +426,20 @@ This keeps the base `docker compose up --build` fast and focused on the applicat
 
 ## 17. Implementation order
 
-Tools will be introduced in this sequence. Each step builds on the previous one:
+All tools have been introduced in this sequence. Each step builds on the previous one:
 
-1. **GitHub Actions CI** — Backend tests and frontend build on every push. Implemented.
-2. **Dependabot** — Automated dependency update pull requests. Implemented.
-3. **SonarQube + JaCoCo** — Quality dashboard with coverage reporting. Implemented locally; CI integration postponed.
-4. **Trivy** — Vulnerability scanning in CI.
-5. **Spring Boot Actuator + Micrometer** — Health and metrics endpoints.
-6. **Prometheus + Grafana** — Metrics storage and dashboards.
-7. **Loki + Alloy** — Centralized log collection.
-8. **Uptime Kuma** — External availability monitoring.
-9. **Matomo** — Self-hosted web analytics.
-10. **Playwright + axe-core + Lighthouse CI** — Frontend quality automation.
-11. **springdoc-openapi** — Generated API documentation.
-12. **Final documentation** — Monitoring and quality workflow guides.
+1. **GitHub Actions CI** — Backend tests and frontend build on every push. ✔ Implemented.
+2. **Dependabot** — Automated dependency update pull requests. ✔ Implemented.
+3. **SonarQube + JaCoCo** — Quality dashboard with coverage reporting. ✔ Implemented locally; CI integration postponed.
+4. **Trivy** — Vulnerability scanning in CI. ✔ Implemented.
+5. **Spring Boot Actuator + Micrometer** — Health and metrics endpoints. ✔ Implemented.
+6. **Prometheus + Grafana** — Metrics storage and dashboards. ✔ Implemented.
+7. **Loki + Alloy** — Centralized log collection. ✔ Implemented.
+8. **Uptime Kuma** — External availability monitoring. ✔ Implemented.
+9. **Matomo** — Self-hosted web analytics with Prometheus exporter. ✔ Implemented.
+10. **Playwright + axe-core + Lighthouse** — Frontend quality runner with Prometheus metrics. ✔ Implemented.
+11. **springdoc-openapi** — Generated API documentation (dev profile only). ✔ Implemented.
+12. **Final documentation** — This document covers the full stack.
 
 ---
 
