@@ -14,3 +14,6 @@ backend/guest-cookies.txt
 
 # SonarQube
 .scannerwork/
+
+monitoring/prometheus/secrets/*
+!monitoring/prometheus/secrets/.gitkeep

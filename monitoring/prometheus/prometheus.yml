@@ -32,3 +32,28 @@ scrape_configs:
           application: "zalduaxa-net"
           service: "alloy"
           environment: "local"
+
+  - job_name: "uptime-kuma"
+    scrape_interval: 30s
+    metrics_path: "/metrics"
+    scheme: http
+    basic_auth:
+      password_file: "/etc/prometheus/secrets/uptime_kuma_api_key"
+    static_configs:
+      - targets:
+          - "uptime-kuma:3001"
+        labels:
+          application: "zalduaxa-net"
+          service: "uptime-kuma"
+          environment: "local"
+
+  - job_name: "matomo-analytics"
+    scrape_interval: 60s
+    metrics_path: "/metrics"
+    static_configs:
+      - targets:
+          - "matomo-exporter:9101"
+        labels:
+          application: "zalduaxa-net"
+          service: "matomo-analytics"
+          environment: "local"

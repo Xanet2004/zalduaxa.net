@@ -64,6 +64,29 @@ services:
       sleep 3600;
       done"
     restart: unless-stopped
+  
+  matomo-exporter:
+    image: python:3.12-alpine
+    container_name: zalduaxa-matomo-exporter
+    depends_on:
+      - matomo
+    env_file:
+      - ${APP_ENV_FILE:-.env}
+      - ${APP_PASSWORD_ENV_FILE:-.env.passwords}
+    environment:
+      MATOMO_URL: ${MATOMO_URL:-http://matomo:80/}
+      MATOMO_SITE_ID: ${MATOMO_SITE_ID:-1}
+      MATOMO_EXPORTER_PORT: ${MATOMO_EXPORTER_PORT:-9101}
+      MATOMO_EXPORTER_CACHE_SECONDS: ${MATOMO_EXPORTER_CACHE_SECONDS:-60}
+      MATOMO_TOP_PAGES_LIMIT: ${MATOMO_TOP_PAGES_LIMIT:-10}
+    volumes:
+      - ./monitoring/matomo-exporter/matomo_exporter.py:/app/matomo_exporter.py:ro
+    command:
+      - "python"
+      - "/app/matomo_exporter.py"
+    expose:
+      - "9101"
+    restart: unless-stopped
 
 volumes:
   matomo_db_data:
