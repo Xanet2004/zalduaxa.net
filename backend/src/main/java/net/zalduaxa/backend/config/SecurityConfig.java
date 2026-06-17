@@ -72,6 +72,16 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/actuator/info").permitAll()
                         .requestMatchers(HttpMethod.GET, "/actuator/prometheus").permitAll()
 
+                        // Swagger / OpenAPI.
+                        .requestMatchers(
+                                "/auth/**",
+                                "/actuator/health",
+                                "/actuator/info",
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html")
+                        .permitAll()
+
                         .requestMatchers(HttpMethod.GET, "/storage/**").permitAll()
                         .requestMatchers("/error").permitAll()
 

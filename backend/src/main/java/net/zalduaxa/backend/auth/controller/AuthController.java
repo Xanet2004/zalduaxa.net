@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -37,6 +38,7 @@ import net.zalduaxa.backend.auth.service.SessionService;
     allowCredentials = "true",
     maxAge = 3600
 )
+@Tag(name = "Authentication", description = "Login, signup, logout and session endpoints")
 public class AuthController {
 
     private final AuthService authService;
