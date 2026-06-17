@@ -24,10 +24,11 @@ export default function LogIn() {
             const loginError = await login(form);
             if (loginError) {
                 setError(loginError instanceof Error ? loginError.message : String(loginError));
+            } else {
+                await refreshUser();
+                navigate('/');
             }
-            await refreshUser();
             setLoading(false);
-            if (!loginError) navigate('/');
         } catch (err) {
             console.error(err);
         }

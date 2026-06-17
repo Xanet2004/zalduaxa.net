@@ -51,6 +51,9 @@ public class AuthController {
     @Value("${app.auth.cookie.secure:false}")
     private boolean cookieSecure;
 
+    @Value("${app.auth.cookie.httpOnly:true}")
+    private boolean cookieHttpOnly;
+
     @Value("${app.auth.cookie.sameSite:Lax}")
     private String cookieSameSite;
 
@@ -104,7 +107,7 @@ public class AuthController {
 
     private ResponseCookie buildAuthCookie(String token) {
         ResponseCookie.ResponseCookieBuilder b = ResponseCookie.from(cookieName, token)
-            .httpOnly(true) // TODO: false when building the final project
+            .httpOnly(cookieHttpOnly)
             .secure(cookieSecure)
             .path(cookiePath)
             .maxAge(Duration.ofDays(cookieMaxAgeDays))
@@ -119,7 +122,7 @@ public class AuthController {
 
     private ResponseCookie deleteAuthCookie() {
         ResponseCookie.ResponseCookieBuilder b = ResponseCookie.from(cookieName, "")
-            .httpOnly(true) // TODO: false when building the final project
+            .httpOnly(cookieHttpOnly)
             .secure(cookieSecure)
             .path(cookiePath)
             .maxAge(Duration.ZERO)

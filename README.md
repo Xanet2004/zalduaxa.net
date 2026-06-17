@@ -8,6 +8,9 @@ A personal portfolio/project platform. Built with Spring Boot, React, PostgreSQL
 |-------|-----------|
 | Backend | Spring Boot 3, Java 21, PostgreSQL, Flyway, Spring Security JWT, BCrypt + pepper |
 | Frontend | React, TypeScript, Vite, nginx |
+| Observability | Prometheus, Grafana, Loki, Alloy, Uptime Kuma |
+| Analytics | Matomo + custom Prometheus exporter |
+| Quality | SonarQube, JaCoCo, Playwright, axe-core, Lighthouse |
 | Infrastructure | Docker Compose, env-file split, local storage volume |
 
 ## Quick start
@@ -18,24 +21,33 @@ cp .env.passwords.example .env.passwords
 docker compose up -d --build
 ```
 
-This starts the full local stack: app frontend, backend API, PostgreSQL database, SonarQube quality dashboard, Homepage tools dashboard, Prometheus metrics engine, and Grafana dashboards.
+This starts the full local stack: frontend, backend API, PostgreSQL, SonarQube, Homepage, Prometheus, Grafana, Loki, Alloy, Uptime Kuma, Matomo, and the frontend quality runner.
 
-Access points:
-- App frontend: `http://localhost:5173`
-- Backend health: `http://localhost:8080/actuator/health`
-- Prometheus: `http://localhost:9090`
-- Grafana: `http://localhost:3000`
-- SonarQube: `http://localhost:9000`
-- Homepage: `http://localhost:3001`
+### Access points
+
+| Service | URL | Purpose |
+|---------|-----|---------|
+| Frontend | `http://localhost:5173` | React application |
+| Backend health | `http://localhost:8080/actuator/health` | API health check |
+| Swagger UI | `http://localhost:8080/swagger-ui.html` | Interactive API docs |
+| OpenAPI JSON | `http://localhost:8080/v3/api-docs` | Raw API specification |
+| Prometheus | `http://localhost:9090` | Metrics query engine |
+| Grafana | `http://localhost:3000` | Dashboards for metrics, logs, analytics, quality |
+| Loki | `http://localhost:3100` | Log storage (readiness check) |
+| Alloy | `http://localhost:12345` | Docker log collector |
+| Uptime Kuma | `http://localhost:3002` | Availability monitoring |
+| Matomo | `http://localhost:8082` | Web analytics dashboard |
+| Matomo exporter | `http://localhost:9101/metrics` | Analytics Prometheus metrics |
+| Quality runner | `http://localhost:9102/metrics` | Frontend quality Prometheus metrics |
+| SonarQube | `http://localhost:9000` | Code quality dashboard |
+| Homepage | `http://localhost:3001` | Local tools launchpad |
 
 ### Run backend tests
 
 ```bash
 cd backend
-mvn clean test
+./mvnw clean test
 ```
-
-Expected: **106 tests, 0 failures, 0 errors**.
 
 ### Build frontend
 
@@ -43,6 +55,12 @@ Expected: **106 tests, 0 failures, 0 errors**.
 cd frontend
 npm install
 npm run build
+```
+
+### Run frontend quality checks once
+
+```bash
+docker compose run --rm quality-runner npm run run-once
 ```
 
 ## API endpoints
@@ -96,29 +114,25 @@ npm run build
 - **CORS** configured in the backend (`app.cors.origin`).
 - **CSRF** disabled (acceptable because the JWT is stored in an HttpOnly cookie).
 
-## Local observability
+## Secrets warning
 
-| Tool | URL | Purpose |
-|------|-----|---------|
-| Backend health | `http://localhost:8080/actuator/health` | Backend health check |
-| Prometheus | `http://localhost:9090` | Metrics query engine |
-| Grafana | `http://localhost:3000` | Runtime metrics dashboard |
-| Homepage | `http://localhost:3001` | Local tools launchpad |
-| SonarQube | `http://localhost:9000` | Code quality dashboard |
+Secrets (passwords, tokens, JWT keys) are stored in `.env.passwords` (gitignored).
+Non-secret config is stored in `.env` (gitignored).
+Templates are provided as `.env.example` and `.env.passwords.example`.
 
-See [Tooling Architecture](documentation/tooling.md) and [Docker setup](documentation/docker.md) for detailed workflow.
+**Never commit real secrets.** Do not expose `/actuator/prometheus`, Prometheus (port 9090), or Grafana (port 3000) publicly without authentication or a reverse proxy.
 
 ## Documentation
 
-- [Project structure](/documentation/project_structure.md)
-- [Docker setup](/documentation/docker.md)
-- [Database schema](/documentation/db.md)
-- [Flyway migrations](/documentation/flyway.md)
-- [Local Quality Tooling](/documentation/local_quality.md): local SonarQube, JaCoCo and Homepage workflow
-- [Security Scanning](/documentation/security.md): Trivy repository scanning workflow and local security scan commands
-- [Tooling Architecture](/documentation/tooling.md): selected stack for CI/CD, quality, observability, monitoring, analytics, testing, and API documentation
-- [Git workflow](/documentation/git_structure.md)
-- [Roadmap](/documentation/todo.md)
+- [Tooling Architecture](documentation/tooling.md): full selected stack
+- [Docker setup](documentation/docker.md): compose files, commands, monitoring workflow
+- [Local Quality Tooling](documentation/local_quality.md): SonarQube, JaCoCo, quality-runner
+- [Security Scanning](documentation/security.md): Trivy workflow
+- [Database schema](documentation/db.md)
+- [Flyway migrations](documentation/flyway.md)
+- [Project structure](documentation/project_structure.md)
+- [Git workflow](documentation/git_structure.md)
+- [Roadmap](documentation/todo.md)
 
 ## Access model
 
