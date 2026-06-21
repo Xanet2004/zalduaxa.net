@@ -64,18 +64,185 @@ The selected tooling stack is defined in [documentation/tooling.md](tooling.md).
 
 ---
 
-## Phase 3 — Product features
+## Phase 3 — Stability, Admin Console & Data Integrity
 
-- [ ] Project update endpoint (`PUT /projects/{slug}`)
-- [ ] Remove deprecated `/project/...` endpoints (after frontend migration is stable)
-- [ ] Recipes (template-based content type)
-- [ ] Drawings (template-based content type)
-- [ ] Comments / likes on content items
-- [ ] Collaborator system
-- [ ] Tags / categories
-- [ ] Admin dashboard
-- [ ] Rate limiting / brute-force protection
-- [ ] Review cookie config for production (`Secure`, `SameSite`, domain, expiration)
+This phase is NOT about product features (recipes, drawings, comments, likes, collaborators, AI). It is about making the system stronger, cleaner, more governable and more scalable before continuing feature development.
+
+### Core decisions
+
+- **Source of truth:** PostgreSQL is the source of truth for projects. Storage is physical asset storage.
+- **Storage root:** Configurable through `STORAGE_PATH`. Should live outside containers (e.g. Synology NAS / host path).
+- **Storage layout (future):** `storage/projects/{projectId}/`. Current slug-based layout will be supported during transition.
+- **Storage consistency:** Starts read-only. No auto-delete. No auto-import into DB.
+- **Audit logs:** Stored in PostgreSQL. Visible only to ROLE_ADMIN.
+- **Audit retention:** 6 months default, 12 months maximum.
+- **Admin tools:** Links and tables first. No embedded Grafana dashboards initially.
+- **No secrets/tokens** in frontend.
+
+### Block A — Audit base
+
+- [ ] 28. Add AuditLog entity and repository
+
+  * Map existing `audit_log` table.
+  * Add repository.
+  * Add action/entity constants or enums.
+  * Add Flyway indexes if needed.
+
+- [ ] 29. Add AuditService
+
+  * Central service for writing safe audit events.
+  * Sanitize metadata.
+  * Never store passwords, JWTs, cookies, tokens, peppers or secrets.
+
+- [ ] 30. Add audit hooks to important actions
+
+  * LOGIN_SUCCESS / LOGIN_FAILED / LOGOUT
+  * USER_CREATED
+  * PROJECT_CREATED / PROJECT_DELETED
+  * PROJECT_UPDATED (later, when update endpoint exists)
+  * PROJECT_TYPE_CREATED / PROJECT_TYPE_DELETED
+
+### Block B — Admin backend
+
+- [ ] 31. Add admin backend package and dashboard endpoint
+
+  * `GET /admin/dashboard` — return safe tool links/config.
+  * Protect with ROLE_ADMIN.
+
+- [ ] 32. Add admin audit logs endpoint
+
+  * `GET /admin/audit-logs` — pagination and basic filters.
+  * Protect with ROLE_ADMIN.
+
+- [ ] 33. Add admin user management endpoints
+
+  * List users.
+  * Enable/disable users.
+  * No hard delete.
+  * No role editing from frontend initially.
+
+### Block C — Admin frontend
+
+- [ ] 34. Add frontend Administrator dropdown and route guard
+
+  * Show only for admin users.
+  * Backend remains the real security layer.
+
+- [ ] 35. Add admin dashboard shell
+
+  * `/admin`, `/admin/tools`, `/admin/audit-logs`, `/admin/users`
+  * Simple UI: links and tables.
+
+- [ ] 36. Add audit logs admin page
+
+  * Paginated table.
+  * Basic filters if simple.
+
+- [ ] 37. Add users admin page
+
+  * List users.
+  * Show role/status.
+  * Enable/disable users.
+
+### Block D — Storage consistency
+
+- [ ] 38. Add storage consistency checker in read-only mode
+
+  * Compare PostgreSQL projects with storage.
+  * Detect current slug-based layout.
+  * Detect future projectId-based layout.
+  * No automatic delete.
+  * No automatic import.
+
+- [ ] 39. Add storage consistency admin endpoints
+
+  * `GET /admin/storage/reports`
+  * `GET /admin/storage/reports/{id}`
+  * `POST /admin/storage/scan` — with cooldown/rate limit.
+
+- [ ] 40. Add storage consistency admin page
+
+  * Show last scan.
+  * Show issues.
+  * Manual scan button.
+  * No destructive actions.
+
+- [ ] 41. Add storage consistency metrics
+
+  * `storage_consistency_status`
+  * `storage_orphan_folders_total`
+  * `storage_missing_project_folders_total`
+  * `storage_legacy_layout_folders_total`
+  * `storage_last_scan_timestamp_seconds`
+  * Avoid path labels in Prometheus.
+
+### Block E — Storage deletion/archive
+
+- [ ] 42. Change project deletion to soft delete + archive storage
+
+  * Use `deleted_at`.
+  * Move storage to `.trash/projects/{projectId}/`.
+  * Do not hard-delete immediately.
+  * Audit PROJECT_DELETED.
+
+- [ ] 43. Add project update endpoint
+
+  * `PUT /projects/{slug}`
+  * Audit PROJECT_UPDATED.
+  * Do not revive soft-deleted projects through PUT.
+
+- [ ] 44. Migrate storage layout toward projectId
+
+  * New layout: `storage/projects/{projectId}/`.
+  * Support legacy layout during transition.
+  * Migrate existing files manually or with a safe controlled process.
+
+### Block F — Cleanup and security
+
+- [ ] 45. Remove deprecated endpoints
+
+  * Remove legacy `@Deprecated` endpoints.
+  * Remove old SecurityConfig rules.
+  * Confirm frontend uses new endpoints.
+
+- [ ] 46. Review production cookie/security config
+
+  * httpOnly, Secure, SameSite, expiration, dev/prod behavior.
+
+- [ ] 47. Add retention cleanup jobs
+
+  * Audit log cleanup with configurable `APP_AUDIT_LOG_RETENTION_DAYS=180`.
+  * Trash cleanup later when archive behavior is stable.
+
+- [ ] 48. Add basic rate limiting / cooldowns
+
+  * Login failed attempts.
+  * Admin storage scan cooldown.
+
+### Block G — Documentation by area
+
+- [ ] 49. Update documentation by area
+
+  * Do not create `phase-3-plan.md`.
+  * Update documentation after each implemented area:
+
+    * `documentation/todo.md`
+    * database documentation
+    * security documentation
+    * Docker documentation
+    * project structure documentation
+    * tooling/observability documentation if needed
+    * README only if needed
+
+### Not in Phase 3 (out of scope)
+
+- Recipes, drawings, comments, likes, collaborators, tags / categories
+- AI file analysis
+- Complex CSS redesign
+- Grafana iframe embedding
+- Automatic storage deletion
+- Automatic storage import into DB
+- Public production exposure of admin/observability tools
 
 ---
 
